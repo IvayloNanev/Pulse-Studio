@@ -22,8 +22,9 @@ export function LoginPanel({ audience }: LoginPanelProps) {
           </h1>
         </div>
       </div>
-      <div className="flex items-center px-6 py-14 sm:px-12 lg:px-20">
-        <div className="w-full max-w-md">
+      <div className="relative flex items-center overflow-hidden px-6 py-14 sm:px-12 lg:px-20">
+        <div className="pointer-events-none absolute -right-28 top-20 size-80 rounded-full bg-[#c72c25]/10 blur-3xl" />
+        <div className="glass-panel relative w-full max-w-lg p-7 sm:p-10">
           <p className="font-mono text-xs uppercase tracking-[0.2em] text-black/45">Secure sign in</p>
           <h2 className="mt-4 text-3xl font-semibold tracking-[-0.04em]">Welcome back</h2>
           <form className="mt-10 space-y-6">

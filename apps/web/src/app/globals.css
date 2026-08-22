@@ -133,3 +133,19 @@
   background: #171717;
   color: #f7f3e9;
 }
+
+@layer components {
+  .glass-panel {
+    background: color-mix(in oklab, white 68%, transparent);
+    border: 1px solid color-mix(in oklab, black 14%, transparent);
+    box-shadow: 0 1.5rem 4rem rgb(17 17 17 / 8%);
+    backdrop-filter: blur(18px) saturate(125%);
+  }
+
+  .glass-panel-dark {
+    background: color-mix(in oklab, #171717 58%, transparent);
+    border: 1px solid rgb(255 255 255 / 18%);
+    box-shadow: 0 1.5rem 4rem rgb(0 0 0 / 24%);
+    backdrop-filter: blur(20px) saturate(115%);
+  }
+}

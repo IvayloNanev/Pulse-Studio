@@ -31,13 +31,14 @@ export function PortalShell({ eyebrow, title, description, links, children }: Po
           <LogOut className="size-3.5" aria-hidden="true" />
         </div>
       </aside>
-      <main className="px-6 py-10 sm:px-10 lg:px-14 lg:py-14">
-        <header className="max-w-4xl border-b border-black/10 pb-8">
+      <main className="relative overflow-hidden px-6 py-10 sm:px-10 lg:px-14 lg:py-14">
+        <div className="pointer-events-none absolute -right-32 -top-24 size-96 rounded-full bg-[#c72c25]/8 blur-3xl" />
+        <header className="glass-panel relative max-w-4xl p-6 sm:p-8">
           <p className="font-mono text-[0.65rem] uppercase tracking-[0.2em] text-black/45">{eyebrow}</p>
           <h1 className="mt-3 text-4xl font-semibold tracking-[-0.045em] sm:text-5xl">{title}</h1>
           <p className="mt-4 max-w-2xl text-sm leading-6 text-black/55">{description}</p>
         </header>
-        <div className="py-8">{children}</div>
+        <div className="relative py-8">{children}</div>
       </main>
     </div>
   );

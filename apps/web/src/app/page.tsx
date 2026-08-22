@@ -48,7 +48,7 @@ export default function Home() {
           <div className="absolute -right-12 top-1/2 size-[20rem] -translate-y-1/2 rounded-full border border-white/25" />
           <div className="relative flex h-full min-h-[32rem] flex-col justify-between p-8 lg:p-12">
             <span className="font-mono text-xs uppercase tracking-[0.2em] text-white/55">Pulse / NYC</span>
-            <div>
+            <div className="glass-panel-dark max-w-md p-6 sm:p-8">
               <p className="max-w-sm text-2xl font-medium leading-tight tracking-[-0.03em]">
                 Three disciplines. One membership. A schedule that meets you where you are.
               </p>
@@ -58,7 +58,8 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="px-6 py-20 sm:px-10 lg:px-16 lg:py-28">
+      <section className="relative overflow-hidden px-6 py-20 sm:px-10 lg:px-16 lg:py-28">
+        <div className="pointer-events-none absolute -right-32 top-20 size-80 rounded-full bg-[#c72c25]/8 blur-3xl" />
         <div className="mb-14 flex items-end justify-between gap-8">
           <div>
             <p className="font-mono text-xs uppercase tracking-[0.2em] text-black/50">The practice</p>
