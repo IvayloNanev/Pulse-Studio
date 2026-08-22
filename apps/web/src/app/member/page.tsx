@@ -1,5 +1,6 @@
 import { FoundationGrid } from "@/components/foundation-grid";
 import { PortalShell } from "@/components/portal-shell";
+import { requireMember } from "@/lib/auth";
 
 const links = [
   { href: "/member", label: "Overview" },
@@ -14,6 +15,7 @@ const items = [
   { href: "/member", title: "Pulse Assistant", description: "Ask about policies, classes, credits, or your reservations.", label: "Product C" },
 ];
 
-export default function MemberPortalPage() {
+export default async function MemberPortalPage() {
+  await requireMember();
   return <PortalShell eyebrow="Member portal" title="Your week at Pulse" description="The member foundation brings booking and support into one clear experience." links={links}><FoundationGrid items={items} /></PortalShell>;
 }

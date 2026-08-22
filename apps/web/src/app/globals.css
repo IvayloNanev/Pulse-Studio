@@ -161,6 +161,31 @@
   }
 }
 
+@keyframes kinetic-marquee {
+  to { transform: translateX(-50%); }
+}
+
+@keyframes glass-light-sweep {
+  0%, 18% { transform: translateX(-140%) skewX(-18deg); opacity: 0; }
+  35% { opacity: 0.55; }
+  62%, 100% { transform: translateX(240%) skewX(-18deg); opacity: 0; }
+}
+
+@keyframes atmospheric-shift {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+@keyframes editorial-rise {
+  from { opacity: 0; transform: translateY(1.5rem); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes signal-blink {
+  0%, 100% { opacity: 0.3; transform: scaleX(0.6); }
+  50% { opacity: 1; transform: scaleX(1); }
+}
+
 .sound-wave-bar {
   transform-box: fill-box;
   transform-origin: center;
@@ -175,13 +200,68 @@
 .sound-wave-bar:nth-child(7) { animation-delay: -0.72s; }
 
 .pulse-wordmark {
-  font-family: Didot, "Bodoni MT", "Times New Roman", serif;
+  font-family: var(--font-bodoni-moda), Georgia, serif;
   font-weight: 700;
   letter-spacing: -0.045em;
 }
 
+.display-pulse {
+  font-family: var(--font-bodoni-moda), Georgia, serif;
+  font-weight: 700;
+  letter-spacing: -0.055em;
+  line-height: 0.94;
+}
+
+.display-pulse em {
+  color: #c72c25;
+  font-family: inherit;
+  font-weight: 600;
+  text-transform: none;
+}
+
+.kinetic-marquee {
+  animation: kinetic-marquee 22s linear infinite;
+}
+
+.atmospheric-motion {
+  background-size: 220% 220%;
+  animation: atmospheric-shift 12s ease-in-out infinite;
+}
+
+.editorial-rise {
+  animation: editorial-rise 0.9s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.signal-line {
+  transform-origin: left center;
+  animation: signal-blink 1.6s ease-in-out infinite;
+}
+
+.glass-panel {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+}
+
+.glass-panel::after {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  inset: -40% auto -40% -35%;
+  width: 32%;
+  background: linear-gradient(90deg, transparent, rgb(255 255 255 / 55%), transparent);
+  animation: glass-light-sweep 7s ease-in-out infinite;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .sound-wave-bar {
+    animation: none;
+  }
+  .kinetic-marquee,
+  .atmospheric-motion,
+  .editorial-rise,
+  .signal-line,
+  .glass-panel::after {
     animation: none;
   }
 }

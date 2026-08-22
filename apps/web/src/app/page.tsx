@@ -1,13 +1,19 @@
 import Link from "next/link";
-import { ArrowRight, CircleArrowDown } from "lucide-react";
+import { ArrowRight, Clock3, Dumbbell, Flame, Gauge } from "lucide-react";
 
 import { SiteHeader } from "@/components/site-header";
 import { Button } from "@/components/ui/button";
 
-const disciplines = [
-  { number: "01", name: "Yoga", detail: "Control, mobility, and deliberate recovery." },
-  { number: "02", name: "Cycling", detail: "Rhythm-driven endurance with measurable intensity." },
-  { number: "03", name: "HIIT", detail: "Efficient strength and conditioning without excess." },
+const sessions = [
+  { time: "07:00", name: "Morning Flow", type: "Yoga", spots: "6 spots" },
+  { time: "09:30", name: "Pulse Ride", type: "Cycling", spots: "3 spots" },
+  { time: "12:15", name: "Core Interval", type: "HIIT", spots: "Waitlist" },
+];
+
+const programs = [
+  { number: "01", name: "Yoga", detail: "Mobility, control, recovery", icon: Gauge },
+  { number: "02", name: "Cycling", detail: "Rhythm, endurance, intensity", icon: Flame },
+  { number: "03", name: "HIIT", detail: "Strength, speed, conditioning", icon: Dumbbell },
 ];
 
 export default function Home() {
@@ -15,73 +21,100 @@ export default function Home() {
     <main className="min-h-screen bg-[#f3f0e9] text-[#111111]">
       <SiteHeader />
 
-      <section className="grid min-h-[calc(100vh-5rem)] border-b border-black/15 lg:grid-cols-[1.2fr_0.8fr]">
-        <div className="flex flex-col justify-between px-6 py-12 sm:px-10 lg:px-16 lg:py-16">
-          <p className="max-w-md text-xs font-semibold uppercase tracking-[0.24em] text-black/55">
-            A single-location studio in New York
-          </p>
-          <div className="py-20 lg:py-12">
-            <p className="mb-6 font-mono text-xs uppercase tracking-[0.2em] text-black/55">
-              Practice with purpose
-            </p>
-            <h1 className="max-w-5xl text-[clamp(4rem,10vw,9rem)] font-semibold uppercase leading-[0.82] tracking-[-0.075em]">
-              Find your
-              <br />
-              next rhythm.
-            </h1>
-          </div>
-          <div className="flex flex-col gap-5 sm:flex-row sm:items-center">
-            <Button asChild size="lg" className="h-12 rounded-none bg-[#c72c25] px-7 text-white hover:bg-[#a9231e]">
-              <Link href="/join">
-                Join now <ArrowRight aria-hidden="true" />
-              </Link>
-            </Button>
-            <Link className="inline-flex items-center gap-2 text-sm font-medium underline-offset-4 hover:underline" href="/classes">
-              Explore this week&apos;s classes <CircleArrowDown className="size-4" aria-hidden="true" />
-            </Link>
-          </div>
-        </div>
-
-        <div className="relative min-h-[32rem] overflow-hidden bg-[#161616] text-white">
-          <div className="absolute inset-0 opacity-70 [background:radial-gradient(circle_at_30%_25%,#6e6a61_0,transparent_28%),radial-gradient(circle_at_70%_65%,#36332e_0,transparent_35%),linear-gradient(145deg,#161616_10%,#2b2925_48%,#090909_100%)]" />
-          <div className="absolute -right-32 top-1/2 size-[32rem] -translate-y-1/2 rounded-full border border-white/20" />
-          <div className="absolute -right-12 top-1/2 size-[20rem] -translate-y-1/2 rounded-full border border-white/25" />
-          <div className="relative flex h-full min-h-[32rem] flex-col justify-between p-8 lg:p-12">
-            <span className="font-mono text-xs uppercase tracking-[0.2em] text-white/55">Pulse / NYC</span>
-            <div className="glass-panel-dark max-w-md rounded-3xl p-6 sm:p-8">
-              <p className="max-w-sm text-2xl font-medium leading-tight tracking-[-0.03em]">
-                Three disciplines. One membership. A schedule that meets you where you are.
+      <section className="overflow-hidden border-b border-black/15">
+        <div className="grid min-h-[calc(100vh-5rem)] lg:grid-cols-[1.15fr_0.85fr]">
+          <div className="flex flex-col justify-between border-b border-black/15 px-6 py-12 sm:px-10 lg:border-b-0 lg:border-r lg:px-16 lg:py-16">
+            <div className="flex items-center gap-3 font-mono text-xs uppercase tracking-[0.22em] text-black/55">
+              <span className="signal-line h-1 w-14 bg-[#e23b32]" aria-hidden="true" />
+              Boutique training · New York
+            </div>
+            <div className="editorial-rise py-16">
+              <p className="mb-6 text-sm font-semibold uppercase tracking-[0.2em] text-black/55">Train together. Progress individually.</p>
+              <h1 className="display-pulse max-w-5xl text-[clamp(4.4rem,11vw,10rem)] uppercase leading-[0.78]">
+                Train with
+                <br />
+                <em>intent.</em>
+              </h1>
+              <p className="mt-9 max-w-xl text-lg leading-7 text-black/60">
+                Yoga, cycling, and HIIT in one focused studio. Build consistency through coached classes and a membership designed around your week.
               </p>
-              <p className="mt-5 text-sm text-white/55">Yoga · Cycling · HIIT</p>
+            </div>
+            <div className="flex flex-wrap items-center gap-5">
+              <Button asChild size="lg" className="h-13 rounded-full bg-[#d8332c] px-8 text-white hover:bg-[#f0443b]">
+                <Link href="/join">Start membership <ArrowRight aria-hidden="true" /></Link>
+              </Button>
+              <Link href="/classes" className="inline-flex items-center gap-3 text-sm font-semibold uppercase tracking-[0.14em] text-black/60 transition hover:text-black">
+                View class schedule <ArrowRight className="size-4" aria-hidden="true" />
+              </Link>
+            </div>
+          </div>
+
+          <div className="atmospheric-motion relative flex items-center overflow-hidden bg-[linear-gradient(125deg,#0b0b0b_5%,#531512_35%,#211f1d_58%,#090909_82%,#6f1c18_100%)] px-6 py-12 text-white sm:px-10 lg:px-12">
+            <div className="absolute inset-0 bg-[linear-gradient(115deg,transparent_20%,rgba(255,255,255,0.08)_48%,transparent_70%)]" />
+            <div className="glass-panel-dark w-full rounded-[2rem] p-6 sm:p-8">
+              <div className="flex items-center justify-between border-b border-white/15 pb-5">
+                <div>
+                  <p className="font-mono text-[0.65rem] uppercase tracking-[0.22em] text-white/45">Today at Pulse</p>
+                  <h2 className="mt-2 text-3xl font-semibold tracking-[-0.045em]">Your next session.</h2>
+                </div>
+                <Clock3 className="size-6 text-[#e23b32]" aria-hidden="true" />
+              </div>
+              <div>
+                {sessions.map((session) => (
+                  <Link key={session.time} href="/classes" className="group grid grid-cols-[4.5rem_1fr_auto] items-center gap-3 border-b border-white/15 py-5">
+                    <span className="font-mono text-sm text-white/55">{session.time}</span>
+                    <span>
+                      <strong className="block text-base font-semibold">{session.name}</strong>
+                      <span className="text-xs text-white/45">{session.type}</span>
+                    </span>
+                    <span className="text-xs font-semibold uppercase tracking-[0.1em] text-white/55 transition group-hover:text-[#ff5b52]">{session.spots}</span>
+                  </Link>
+                ))}
+              </div>
+              <Link href="/classes" className="mt-6 inline-flex items-center gap-2 text-sm font-semibold text-white">Full schedule <ArrowRight className="size-4" /></Link>
             </div>
           </div>
         </div>
       </section>
 
-      <section className="relative overflow-hidden px-6 py-20 sm:px-10 lg:px-16 lg:py-28">
-        <div className="pointer-events-none absolute -right-32 top-20 size-80 rounded-full bg-[#c72c25]/8 blur-3xl" />
-        <div className="mb-14 flex items-end justify-between gap-8">
-          <div>
-            <p className="font-mono text-xs uppercase tracking-[0.2em] text-black/50">The practice</p>
-            <h2 className="mt-4 text-4xl font-semibold tracking-[-0.045em] sm:text-6xl">Choose how you move.</h2>
-          </div>
-          <Link href="/classes" className="hidden text-sm font-semibold uppercase tracking-[0.14em] hover:underline md:block">
-            View schedule
-          </Link>
-        </div>
-        <div className="border-t border-black/20">
-          {disciplines.map((discipline) => (
-            <Link
-              key={discipline.name}
-              href="/classes"
-              className="group grid gap-4 border-b border-black/20 py-7 transition-colors hover:bg-black hover:px-5 hover:text-white md:grid-cols-[5rem_1fr_1fr_auto] md:items-center"
-            >
-              <span className="font-mono text-xs text-current/55">{discipline.number}</span>
-              <span className="text-3xl font-semibold tracking-[-0.04em]">{discipline.name}</span>
-              <span className="text-sm text-current/60">{discipline.detail}</span>
-              <ArrowRight className="size-5 transition-transform group-hover:translate-x-1" aria-hidden="true" />
-            </Link>
+      <section className="overflow-hidden border-b border-black bg-black py-4 text-white" aria-label="Pulse Studio training loop">
+        <div className="kinetic-marquee flex w-max whitespace-nowrap font-mono text-xs font-semibold uppercase tracking-[0.28em]">
+          {[0, 1].map((copy) => (
+            <div key={copy} className="flex items-center">
+              {Array.from({ length: 5 }).map((_, index) => (
+                <span key={index} className="flex items-center"><span className="px-8">Train · Recover · Return · Repeat</span><span className="size-1.5 bg-[#d8332c]" /></span>
+              ))}
+            </div>
           ))}
+        </div>
+      </section>
+
+      <section className="border-b border-black/15 px-6 py-20 sm:px-10 lg:px-16 lg:py-28">
+        <div className="grid gap-12 lg:grid-cols-[0.7fr_1.3fr]">
+          <div>
+            <p className="font-mono text-xs uppercase tracking-[0.22em] text-black/45">One studio · Three disciplines</p>
+            <h2 className="display-pulse mt-5 text-5xl uppercase leading-[0.88] sm:text-7xl">Build your training <em>week.</em></h2>
+          </div>
+          <div className="border-t border-black/20">
+            {programs.map(({ number, name, detail, icon: Icon }) => (
+              <Link key={name} href="/classes" className="group grid grid-cols-[3rem_1fr_auto] items-center gap-5 border-b border-black/20 py-7 transition duration-500 hover:bg-black hover:px-5 hover:text-white">
+                <span className="font-mono text-xs text-current/45">{number}</span>
+                <span><strong className="block text-3xl uppercase tracking-[-0.045em]">{name}</strong><span className="text-sm text-current/55">{detail}</span></span>
+                <Icon className="size-6 text-[#e23b32] transition-transform duration-500 group-hover:scale-125" aria-hidden="true" />
+              </Link>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="grid bg-[#171717] text-white lg:grid-cols-2">
+        <div className="border-b border-white/15 px-6 py-16 sm:px-10 lg:border-b-0 lg:border-r lg:px-16 lg:py-24">
+          <p className="font-mono text-xs uppercase tracking-[0.22em] text-white/45">Monthly membership</p>
+          <h2 className="display-pulse mt-6 text-5xl uppercase leading-[0.88] sm:text-7xl">Make movement a <em>habit.</em></h2>
+        </div>
+        <div className="flex flex-col justify-center px-6 py-16 sm:px-10 lg:px-16">
+          <p className="max-w-xl text-lg leading-7 text-white/60">Choose the class allowance that fits your schedule, then use one connected member portal to book, waitlist, cancel, and return.</p>
+          <Link href="/membership" className="mt-8 inline-flex w-fit items-center gap-3 border-b-2 border-[#d8332c] pb-2 text-sm font-bold uppercase tracking-[0.15em]">Explore memberships <ArrowRight className="size-4" /></Link>
         </div>
       </section>
     </main>
