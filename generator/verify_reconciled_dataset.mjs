@@ -64,6 +64,88 @@ const riskById = new Map(data.risk_assessments.map(r => [r.risk_assessment_id, r
 const reservationById = new Map(data.reservations.map(r => [r.reservation_id, r]));
 const sessionById = new Map(data.class_sessions.map(r => [r.class_session_id, r]));
 const memberById = new Map(data.members.map(r => [r.member_id, r]));
+const membershipById = new Map(data.memberships.map(r => [r.membership_id, r]));
+const planById = new Map(data.membership_plans.map(r => [r.plan_id, r]));
+const membershipHistory = new Map();
+for (const row of data.membership_status_history) {
+  const rows = membershipHistory.get(row.membership_id) ?? [];
+  rows.push(row);
+  membershipHistory.set(row.membership_id, rows);
+}
+
+const newYorkOffset = (date) => {
+  if ((date >= "2025-03-09" && date < "2025-11-02") || (date >= "2026-03-08" && date < "2026-11-01")) return "-04:00";
+  return "-05:00";
+};
+const billingCycleIndex = (membership, atIso) => {
+  const at = new Date(atIso);
+  const anchor = new Date(`${membership.billing_cycle_start_date}T00:00:00${newYorkOffset(membership.billing_cycle_start_date)}`);
+  const pausedMilliseconds = (membershipHistory.get(membership.membership_id) ?? [])
+    .filter(history => history.status === "paused")
+    .reduce((total, history) => {
+      const start = new Date(history.effective_at);
+      if (start >= at) return total;
+      const end = history.ended_at ? new Date(history.ended_at) : at;
+      return total + Math.max(Math.min(end.getTime(), at.getTime()) - start.getTime(), 0);
+    }, 0);
+  const activeTime = new Date(at.getTime() - pausedMilliseconds);
+  let index = (activeTime.getUTCFullYear() - anchor.getUTCFullYear()) * 12 + activeTime.getUTCMonth() - anchor.getUTCMonth();
+  const [anchorYear, anchorMonth, anchorDay] = membership.billing_cycle_start_date.split("-").map(Number);
+  const boundaryMonth = anchorMonth - 1 + index;
+  const boundaryYear = anchorYear + Math.floor(boundaryMonth / 12);
+  const normalizedMonth = ((boundaryMonth % 12) + 12) % 12;
+  const lastDay = new Date(Date.UTC(boundaryYear, normalizedMonth + 1, 0)).getUTCDate();
+  const boundaryDate = `${boundaryYear}-${String(normalizedMonth + 1).padStart(2, "0")}-${String(Math.min(anchorDay, lastDay)).padStart(2, "0")}`;
+  const boundary = new Date(`${boundaryDate}T00:00:00${newYorkOffset(boundaryDate)}`);
+  if (activeTime < boundary) index--;
+  return Math.max(index, 0);
+};
+
+const pauseFixture = {
+  membership_id: "TEST-PAUSE-CYCLE",
+  billing_cycle_start_date: "2025-01-10",
+};
+membershipHistory.set(pauseFixture.membership_id, [{
+  status: "paused",
+  effective_at: "2025-01-20T00:00:00-05:00",
+  ended_at: "2025-02-19T00:00:00-05:00",
+}]);
+assert(billingCycleIndex(pauseFixture, "2025-03-11T12:00:00-04:00") === 0, "paused duration must extend the first billing cycle");
+assert(billingCycleIndex(pauseFixture, "2025-03-12T12:00:00-04:00") === 1, "pause-adjusted billing cycle must advance at the extended boundary");
+membershipHistory.delete(pauseFixture.membership_id);
+
+const monthEndFixture = {
+  membership_id: "TEST-MONTH-END-CYCLE",
+  billing_cycle_start_date: "2025-01-31",
+};
+assert(billingCycleIndex(monthEndFixture, "2025-02-27T12:00:00-05:00") === 0, "month-end cycle must not advance early");
+assert(billingCycleIndex(monthEndFixture, "2025-02-28T12:00:00-05:00") === 1, "month-end cycle must clamp to the last calendar day");
+
+const daylightSavingFixture = {
+  membership_id: "TEST-DST-CYCLE",
+  billing_cycle_start_date: "2025-01-10",
+};
+assert(billingCycleIndex(daylightSavingFixture, "2025-03-09T23:59:00-04:00") === 1, "billing cycle must not advance before the local boundary after daylight saving begins");
+assert(billingCycleIndex(daylightSavingFixture, "2025-03-10T00:00:00-04:00") === 2, "billing cycle must advance at local midnight after daylight saving begins");
+
+const creditUsage = new Map();
+for (const reservation of data.reservations) {
+  if (!reservation.membership_id) continue;
+  const consumesCredit = reservation.status === "confirmed"
+    || (reservation.status === "cancelled" && reservation.is_late_cancellation === "true");
+  if (!consumesCredit) continue;
+  const membership = membershipById.get(reservation.membership_id);
+  const session = sessionById.get(reservation.class_session_id);
+  if (!membership || !session) continue;
+  const key = `${membership.membership_id}|${billingCycleIndex(membership, session.starts_at)}`;
+  creditUsage.set(key, (creditUsage.get(key) ?? 0) + 1);
+}
+for (const [key, used] of creditUsage) {
+  const membershipId = key.split("|")[0];
+  const membership = membershipById.get(membershipId);
+  const allowance = Number(planById.get(membership.plan_id)?.classes_per_month);
+  assert(used <= allowance, `billing-cycle credit limit exceeded ${key}: ${used}/${allowance}`);
+}
 for (const member of data.members) {
   assert(member.preferred_channel === "email" || Boolean(member.phone), `member ${member.member_id} prefers ${member.preferred_channel} without a phone number`);
 }
@@ -166,7 +248,8 @@ if (errors.length) {
 const result = {
   status: "passed",
   acceptance_status: "PASS — accepted development dataset",
-  independent_checks: "foreign keys, counts, contact-channel eligibility, reservation chronology, 90/10 attendance, risk math, Product D outreach lifecycle/previous-send cooldown, staff/member accounts without passwords, expanded business-rule fixtures, independently detected 12-error suite, timestamped A→B→D→C→A golden journey",
+  independent_checks: "foreign keys, counts, contact-channel eligibility, reservation chronology, pause-adjusted membership billing-cycle credits, 90/10 attendance, risk math, Product D outreach lifecycle/previous-send cooldown, staff/member accounts without passwords, expanded business-rule fixtures, independently detected 12-error suite, timestamped A→B→D→C→A golden journey",
+  billing_cycle_credit_groups_checked: creditUsage.size,
   attendance_distribution: { attended: attendedCount, no_show: noShowCount, attended_rate: attendedCount / data.attendance_records.length, no_show_rate: noShowCount / data.attendance_records.length },
   intentional_rules_detected: [...detectedRules],
   rows: Object.fromEntries(tables.map(t => [t, data[t].length])),

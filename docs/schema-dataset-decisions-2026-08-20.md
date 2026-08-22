@@ -45,6 +45,7 @@ Response outcomes such as awaiting response, responded, declined contact, and no
 - Utilization: 20% below 50% / 5% at 50% / 75% above 50%
 - Reservation targets: 70% confirmed / 10% waitlisted / 10% early-cancelled / 5% late-cancelled / 5% studio-cancelled
 - Eligible confirmed attendance: 90% attended / 10% no-show
+- Membership-credit allocation uses each membership's `billing_cycle_start_date`; approved paused time extends the cycle instead of resetting credits by calendar month.
 - Risk coverage: 15 medium, 10 high, 15 insufficient-history, plus non-qualifying scenarios
 - Outreach channels: approximately 60% email / 24% SMS / 16% phone; data includes Product D simulated sending and responses
 
