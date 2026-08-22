@@ -1,6 +1,6 @@
 risk_assessment_id,member_id,attempt,response_outcome,scenario_note
 RISK-0001,MEM-0001,1,not_sent,"Product D owns draft review, simulated sending, responses, and completion; Product C is chatbot support only."
-RISK-0002,MEM-0002,1,not_sent,"Product D owns draft review, simulated sending, responses, and completion; Product C is chatbot support only."
+RISK-0002,MEM-0002,1,awaiting_response,"Product D owns draft review, simulated sending, responses, and completion; Product C is chatbot support only."
 RISK-0003,MEM-0003,1,awaiting_response,"Product D owns draft review, simulated sending, responses, and completion; Product C is chatbot support only."
 RISK-0004,MEM-0004,1,interested,"Product D owns draft review, simulated sending, responses, and completion; Product C is chatbot support only."
 RISK-0005,MEM-0005,1,not_sent,"Product D owns draft review, simulated sending, responses, and completion; Product C is chatbot support only."

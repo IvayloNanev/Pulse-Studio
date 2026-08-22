@@ -63,12 +63,22 @@ for (const r of data.outreach_records) { assert(memberIds.has(r.member_id), `out
 const riskById = new Map(data.risk_assessments.map(r => [r.risk_assessment_id, r]));
 const reservationById = new Map(data.reservations.map(r => [r.reservation_id, r]));
 const sessionById = new Map(data.class_sessions.map(r => [r.class_session_id, r]));
+const memberById = new Map(data.members.map(r => [r.member_id, r]));
+for (const member of data.members) {
+  assert(member.preferred_channel === "email" || Boolean(member.phone), `member ${member.member_id} prefers ${member.preferred_channel} without a phone number`);
+}
+for (const reservation of data.reservations) {
+  const session = sessionById.get(reservation.class_session_id);
+  assert(!session || new Date(reservation.reserved_at) < new Date(session.starts_at), `reservation ${reservation.reservation_id} was created after its class started`);
+}
 for (const r of data.risk_assessments) {
   const expected = ((Number(r.previous_visits) - Number(r.current_visits)) / Number(r.previous_visits)) * 100;
   assert(Math.abs(expected - Number(r.decline_percentage)) < 0.001, `risk math mismatch ${r.risk_assessment_id}`);
   assert((expected >= 75 ? "high" : "medium") === r.risk_level, `risk level mismatch ${r.risk_assessment_id}`);
 }
 for (const r of data.outreach_records) {
+  const member = memberById.get(r.member_id);
+  assert(r.channel === "email" || Boolean(member?.phone), `outreach ${r.outreach_id} uses ${r.channel} without a member phone number`);
   assert(riskById.get(r.risk_assessment_id)?.member_id === r.member_id, `outreach member/risk mismatch ${r.outreach_id}`);
   assert(["draft", "ready", "sent", "completed"].includes(r.status), `invalid outreach status ${r.outreach_id}`);
   if (r.status !== "draft") assert(Boolean(r.final_message), `final_message required ${r.outreach_id}`);
@@ -78,7 +88,10 @@ for (const r of data.outreach_records) {
 for (const riskId of new Set(data.outreach_records.map(r => r.risk_assessment_id))) {
   const attempts = data.outreach_records.filter(r => r.risk_assessment_id === riskId).sort((a,b) => a.created_at.localeCompare(b.created_at));
   assert(attempts.length <= 3, `more than three outreach attempts ${riskId}`);
-  for (let i = 1; i < attempts.length; i++) assert(new Date(attempts[i].created_at) - new Date(attempts[i-1].created_at) >= 14 * 86400000, `outreach cooldown violated ${riskId}`);
+  for (let i = 1; i < attempts.length; i++) {
+    assert(Boolean(attempts[i - 1].sent_at), `outreach retry follows an unsent attempt ${riskId}`);
+    assert(new Date(attempts[i].created_at) - new Date(attempts[i - 1].sent_at) >= 14 * 86400000, `outreach cooldown violated ${riskId}`);
+  }
 }
 assert(data.staff_accounts.length === 4, "staff accounts must contain one owner and three instructors");
 assert(data.member_accounts.length === 250, "member accounts must contain 250 rows");
@@ -153,7 +166,7 @@ if (errors.length) {
 const result = {
   status: "passed",
   acceptance_status: "PASS — accepted development dataset",
-  independent_checks: "foreign keys, counts, 90/10 attendance, risk math, Product D outreach lifecycle/cooldown, staff/member accounts without passwords, expanded business-rule fixtures, independently detected 12-error suite, timestamped A→B→D→C→A golden journey",
+  independent_checks: "foreign keys, counts, contact-channel eligibility, reservation chronology, 90/10 attendance, risk math, Product D outreach lifecycle/previous-send cooldown, staff/member accounts without passwords, expanded business-rule fixtures, independently detected 12-error suite, timestamped A→B→D→C→A golden journey",
   attendance_distribution: { attended: attendedCount, no_show: noShowCount, attended_rate: attendedCount / data.attendance_records.length, no_show_rate: noShowCount / data.attendance_records.length },
   intentional_rules_detected: [...detectedRules],
   rows: Object.fromEntries(tables.map(t => [t, data[t].length])),

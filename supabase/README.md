@@ -18,3 +18,7 @@ RLS is enabled without client policies in the first migration. This deliberately
 6. Commit changes on a working branch and merge through a validated pull request.
 
 Never place the database password, service-role key, personal access token, or `.env` values in Git.
+
+## Versioned dataset seed
+
+Run `node generator/build_supabase_seed.mjs` after an accepted dataset change to regenerate `supabase/seed.sql`. The seed uses ordinary SQL inserts, follows foreign-key dependency order, and runs in one transaction. It intentionally stops if the database already contains member data so it cannot duplicate or overwrite an existing environment.

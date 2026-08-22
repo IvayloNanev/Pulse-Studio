@@ -119,7 +119,7 @@ function buildMembersAndMemberships(tables) {
       last_name: lastName,
       email: `${firstName}.${lastName}.${number}@pulse.example`.toLowerCase(),
       phone: number % 10 === 0 ? "" : `+1-212-555-${pad(1000 + number, 4)}`,
-      preferred_channel: number % 5 === 0 ? "sms" : "email",
+      preferred_channel: number % 5 === 0 && number % 10 !== 0 ? "sms" : "email",
       do_not_contact: number === 25,
     });
     tables.memberships.push({
@@ -457,7 +457,8 @@ function buildRiskAndOutreach(tables, context) {
   const addOutreach = (risk, attempt, createdAt, status, responseOutcome = "") => {
     outreachNumber++;
     const member = tables.members.find((row) => row.member_id === risk.member_id);
-    const channel = channelFor((Number(risk.risk_assessment_id.slice(-4)) - 1) % 25);
+    const requestedChannel = channelFor((Number(risk.risk_assessment_id.slice(-4)) - 1) % 25);
+    const channel = requestedChannel === "email" || member.phone ? requestedChannel : "email";
     const original = `Hi ${member.first_name}, we noticed your recent attendance changed. We would be glad to help you find a class that fits your schedule.`;
     const reviewed = status !== "draft";
     const sent = ["sent", "completed"].includes(status);
@@ -493,18 +494,19 @@ function buildRiskAndOutreach(tables, context) {
     return tables.outreach_records.at(-1);
   };
 
+  const noResponseRisk = tables.risk_assessments[1];
+  const secondAttemptRisk = tables.risk_assessments[2];
   for (let index = 0; index < tables.risk_assessments.length; index++) {
     const risk = tables.risk_assessments[index];
     let status = stateFor(index);
     let response = status === "completed" ? ["interested", "needs_support", "not_interested"][index % 3] : "";
+    if (risk.risk_assessment_id === noResponseRisk.risk_assessment_id) status = "sent";
     if (risk.member_id === context.goldenMember) { status = "completed"; response = "interested"; }
     if (risk.member_id === "MEM-0025") { status = "completed"; response = "do_not_contact"; }
     addOutreach(risk, 1, "2026-01-01T09:00:00-05:00", status, response);
   }
-  const noResponseRisk = tables.risk_assessments[1];
   addOutreach(noResponseRisk, 2, "2026-01-15T12:00:00-05:00", "sent");
   addOutreach(noResponseRisk, 3, "2026-01-29T15:00:00-05:00", "sent");
-  const secondAttemptRisk = tables.risk_assessments[2];
   addOutreach(secondAttemptRisk, 2, "2026-01-15T12:00:00-05:00", "completed", "not_interested");
 
   for (const risk of tables.risk_assessments) {
@@ -684,9 +686,11 @@ function buildSchemaV2Fixtures(tables, context) {
     const member = tables.members[40 + number];
     const session = futureSessions[number];
     const reservationId = makeId("RES", nextReservation++, 6);
-    tables.reservations.push({ reservation_id: reservationId, member_id: member.member_id, class_session_id: session.class_session_id, membership_id: "", status: "confirmed", reserved_at: "2026-01-02T10:00:00-05:00", cancelled_at: number % 6 === 0 ? "2026-01-02T12:00:00-05:00" : "", is_late_cancellation: number % 6 === 0 ? false : "" });
+    const reservedAt = new Date(new Date(session.starts_at).getTime() - 7 * 24 * 60 * 60 * 1000);
+    const cancelledAt = new Date(reservedAt.getTime() + 2 * 60 * 60 * 1000);
+    tables.reservations.push({ reservation_id: reservationId, member_id: member.member_id, class_session_id: session.class_session_id, membership_id: "", status: "confirmed", reserved_at: reservedAt.toISOString(), cancelled_at: number % 6 === 0 ? cancelledAt.toISOString() : "", is_late_cancellation: number % 6 === 0 ? false : "" });
     if (number % 6 === 0) tables.reservations.at(-1).status = "cancelled";
-    tables.drop_in_payments.push({ payment_id: makeId("PAY", number, 5), reservation_id: reservationId, member_id: member.member_id, amount: 35, status: number % 6 === 0 ? "refunded" : "authorized", created_at: "2026-01-02T10:00:01-05:00", refunded_at: number % 6 === 0 ? "2026-01-02T12:00:01-05:00" : "" });
+    tables.drop_in_payments.push({ payment_id: makeId("PAY", number, 5), reservation_id: reservationId, member_id: member.member_id, amount: 35, status: number % 6 === 0 ? "refunded" : "authorized", created_at: new Date(reservedAt.getTime() + 1000).toISOString(), refunded_at: number % 6 === 0 ? new Date(cancelledAt.getTime() + 1000).toISOString() : "" });
   }
 
   for (let number = 1; number <= 10; number++) {
@@ -903,7 +907,10 @@ function validateValid(tables, context) {
     rows.sort((a, b) => a.created_at.localeCompare(b.created_at));
     assert(rows.length <= 3, "OUTREACH_MAX_THREE_ATTEMPTS", riskId);
     assert(rows.every((row, index) => Number(row.attempt_number) === index + 1), "OUTREACH_ATTEMPT_SEQUENCE", riskId);
-    for (let index = 1; index < rows.length; index++) assert(new Date(rows[index].created_at) - new Date(rows[index - 1].created_at) >= 14 * 86400000, "OUTREACH_14_DAY_COOLDOWN", riskId);
+    for (let index = 1; index < rows.length; index++) {
+      assert(Boolean(rows[index - 1].sent_at), "OUTREACH_RETRY_REQUIRES_PREVIOUS_SEND", riskId);
+      assert(new Date(rows[index].created_at) - new Date(rows[index - 1].sent_at) >= 14 * 86400000, "OUTREACH_14_DAY_COOLDOWN", riskId);
+    }
   }
   assert(tables.staff_accounts.length === 4, "STAFF_ACCOUNT_COUNT", `Expected 4, found ${tables.staff_accounts.length}`);
   assert(tables.member_accounts.length === 250, "MEMBER_ACCOUNT_COUNT", `Expected 250, found ${tables.member_accounts.length}`);
