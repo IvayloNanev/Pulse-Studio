@@ -153,9 +153,53 @@ The canonical database trigger remains authoritative: it rejects non-confirmed r
 
 The default `p_from` is the current time. Deterministic dataset and integration tests may supply the fixture clock explicitly. Product C may read these authenticated facts but directs booking and cancellation actions to Product A.
 
+## 4. Product D risk queue and member review
+
+**Database interfaces:** `public.product_d_risk_queue` and `public.product_d_member_detail`
+**Consumer:** Product D only
+**Authorization:** active authenticated staff only; no anonymous or member access
+
+### Open risk queue
+
+`product_d_risk_queue` contains only `pending` and `in_progress` assessments. One row represents one open risk case.
+
+| Field group | Included facts |
+|---|---|
+| Identity | `risk_assessment_id`, `member_id`, `member_name` |
+| Priority | `risk_level`, `risk_priority`, `review_status`, `evaluated_at` |
+| Evidence | Both 30-day windows, previous/current visits, decline, plain-language `risk_reason`, `last_attended_at` |
+| Collaboration | `active_note_count` |
+| Latest outreach | Identifier, attempt, status, response, and last send time |
+| Eligibility | `cooldown_until`, `can_start_outreach`, and `outreach_blocked_reason` |
+
+Consumers sort `risk_priority` ascending, then the oldest unresolved case first. High risk has priority `1`; medium risk has priority `2`. The database exposes both the Boolean action flag and a staff-readable reason when outreach is blocked.
+
+### Member review detail
+
+`product_d_member_detail` retains all assessment states, including resolved and dismissed history. It provides:
+
+- member email, phone, preferred channel, and do-not-contact state;
+- complete assessment periods and calculation inputs;
+- attended session evidence from the two evaluation windows;
+- non-deleted coworker notes with author display name and edit metadata;
+- every outreach attempt with original/final messages, state timestamps, response, and cooldown boundary;
+- the next available class recommendation, preferring the member's historically attended class type.
+
+The class recommendation is nullable when no future non-cancelled class has capacity. It is derived from the shared public schedule and is never stored as an independent fact.
+
+### Product D action rules
+
+- Product D owns risk review, notes, outreach creation, editing, approval, simulated sending, response recording, and completion.
+- Product C has no Product D write contract.
+- New outreach is blocked for paused/cancelled memberships and members with `do_not_contact`.
+- A first attempt may begin when no attempt exists.
+- A later attempt requires the previous attempt to be `sent`, unanswered, at least 14 full days old, and below the three-attempt maximum.
+- Existing database triggers remain authoritative for sequential attempts, exact cooldown, immutable original messages, channel eligibility, and `draft → ready → sent → completed` transitions.
+- Deleted notes remain stored for accountability but are excluded from the normal detail interface.
+- The narrowly scoped `staff_display_name(staff_id)` helper reveals only an active coworker's display name and only to another active staff caller.
+
 ## Planned next interfaces
 
-- `product_d_risk_queue`
-- `product_d_member_detail`
+All initially planned shared read interfaces are now defined. Write-command wrappers may be added incrementally as the product UI is implemented; canonical RLS policies and triggers already protect direct table writes.
 
 Each interface will be added and tested in a separate increment.
