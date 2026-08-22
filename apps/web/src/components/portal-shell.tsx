@@ -20,7 +20,7 @@ export function PortalShell({ eyebrow, title, description, links, children }: Po
           <p className="mt-10 font-mono text-[0.65rem] uppercase tracking-[0.2em] text-white/45">{eyebrow}</p>
           <nav className="mt-5 flex gap-2 overflow-x-auto lg:flex-col" aria-label={`${eyebrow} navigation`}>
             {links.map((link) => (
-              <Link key={link.href} href={link.href} className="whitespace-nowrap border-l border-white/15 px-4 py-2.5 text-sm text-white/70 transition hover:border-white hover:text-white">
+              <Link key={`${link.href}-${link.label}`} href={link.href} className="whitespace-nowrap border-l border-white/15 px-4 py-2.5 text-sm text-white/70 transition hover:border-white hover:text-white">
                 {link.label}
               </Link>
             ))}
