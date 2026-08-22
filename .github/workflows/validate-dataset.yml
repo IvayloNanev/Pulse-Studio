@@ -30,3 +30,6 @@ jobs:
 
       - name: Validate database migration contract
         run: node generator/verify_database_migration.mjs
+
+      - name: Validate authentication and RLS contract
+        run: node generator/verify_auth_rls_migration.mjs
