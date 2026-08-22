@@ -36,3 +36,6 @@ jobs:
 
       - name: Validate shared API contracts
         run: node generator/verify_shared_api_migration.mjs
+
+      - name: Validate Product B roster contract
+        run: node generator/verify_staff_roster_api_migration.mjs
