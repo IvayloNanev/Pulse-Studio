@@ -1,0 +1,52 @@
+{"kind":"workbook","id":"wb/tyri3w","sheets":20}
+{"kind":"sheet","id":"ws/hzixlc","name":"Summary","index":0,"range":"A1:F30","address":"A1:F30","formulas":31}
+{"kind":"formula","sheet":"Summary","address":"B5","formula":"=COUNTA('Members'!A2:A30000)"}
+{"kind":"formula","sheet":"Summary","address":"F5","formula":"=IF(B5=250,\"PASS\",\"FAIL\")"}
+{"kind":"formula","sheet":"Summary","address":"B6","formula":"=COUNTA('Plans'!A2:A30000)"}
+{"kind":"formula","sheet":"Summary","address":"F6","formula":"=IF(ABS(COUNTIF('Attendance'!C2:C16807,\"no_show\")/COUNTA('Attendance'!A2:A16807)-10%)<=0.01%,\"PASS\",\"FAIL\")"}
+{"kind":"formula","sheet":"Summary","address":"B7","formula":"=COUNTA('Memberships'!A2:A30000)"}
+{"kind":"formula","sheet":"Summary","address":"F7","formula":"=IF(AND(COUNTIF('Risks'!K2:K26,\"medium\")=15,COUNTIF('Risks'!K2:K26,\"high\")=10),\"PASS\",\"FAIL\")"}
+{"kind":"formula","sheet":"Summary","address":"B8","formula":"=COUNTA('Status History'!A2:A30000)"}
+{"kind":"formula","sheet":"Summary","address":"F8","formula":"=IF(COUNTA('Error Manifest'!A2:A13)=12,\"PASS\",\"FAIL\")"}
+{"kind":"formula","sheet":"Summary","address":"B9","formula":"=COUNTA('Sessions'!A2:A30000)"}
+{"kind":"formula","sheet":"Summary","address":"F9","formula":"=IF(COUNTIF('Error Manifest'!D2:D13,\"FK_RESERVATION_MEMBER\")+COUNTIF('Error Manifest'!D2:D13,\"FK_ATTENDANCE_RESERVATION\")=2,\"PASS\",\"FAIL\")"}
+{"kind":"formula","sheet":"Summary","address":"B10","formula":"=COUNTA('Reservations'!A2:A30000)"}
+{"kind":"formula","sheet":"Summary","address":"F10","formula":"=IF(COUNTIF('Members'!A2:A251,\"MEM-0016\")=1,\"PASS\",\"FAIL\")"}
+{"kind":"formula","sheet":"Summary","address":"B11","formula":"=COUNTA('Attendance'!A2:A30000)"}
+{"kind":"formula","sheet":"Summary","address":"F11","formula":"=IF(COUNTIFS('Risks'!B2:B26,\"MEM-0016\",'Risks'!H2:H26,8,'Risks'!I2:I26,2,'Risks'!J2:J26,75,'Risks'!K2:K26,\"high\")=1,\"PASS\",\"FAIL\")"}
+{"kind":"formula","sheet":"Summary","address":"B12","formula":"=COUNTA('Attendance Fixes'!A2:A30000)"}
+{"kind":"formula","sheet":"Summary","address":"F12","formula":"=IF(COUNTIFS('Outreach'!C2:C40,\"MEM-0016\",'Outreach'!H2:H40,\"completed\")=1,\"PASS\",\"FAIL\")"}
+{"kind":"formula","sheet":"Summary","address":"B13","formula":"=COUNTA('Risks'!A2:A30000)"}
+{"kind":"formula","sheet":"Summary","address":"F13","formula":"=IF(COUNTIFS('Reservations'!A2:A25000,\"RES-024010\",'Reservations'!B2:B25000,\"MEM-0016\",'Reservations'!E2:E25000,\"confirmed\")=1,\"PASS\",\"FAIL\")"}
+{"kind":"formula","sheet":"Summary","address":"B14","formula":"=COUNTA('Outreach'!A2:A30000)"}
+{"kind":"formula","sheet":"Summary","address":"F14","formula":"=IF(COUNTIF(F5:F13,\"FAIL\")=0,\"PASS\",\"FAIL\")"}
+{"kind":"formula","sheet":"Summary","address":"B15","formula":"=COUNTA('Staff Accounts'!A2:A30000)"}
+{"kind":"formula","sheet":"Summary","address":"B16","formula":"=COUNTA('Member Accounts'!A2:A30000)"}
+{"kind":"formula","sheet":"Summary","address":"B17","formula":"=COUNTA('Pause Requests'!A2:A30000)"}
+{"kind":"formula","sheet":"Summary","address":"B18","formula":"=COUNTA('Drop-ins'!A2:A30000)"}
+{"kind":"formula","sheet":"Summary","address":"B19","formula":"=COUNTA('Promotions'!A2:A30000)"}
+{"kind":"formula","sheet":"Summary","address":"B20","formula":"=COUNTA('Risk Notes'!A2:A30000)"}
+{"kind":"formula","sheet":"Summary","address":"B21","formula":"=COUNTA('Notifications'!A2:A30000)"}
+{"kind":"formula","sheet":"Summary","address":"B22","formula":"=COUNTA('Outreach Audit'!A2:A30000)"}
+{"kind":"formula","sheet":"Summary","address":"B26","formula":"=COUNTIF('Attendance'!C2:C16807,\"attended\")"}
+{"kind":"formula","sheet":"Summary","address":"B27","formula":"=COUNTIF('Attendance'!C2:C16807,\"no_show\")"}
+{"kind":"formula","sheet":"Summary","address":"B28","formula":"=B27/(B26+B27)"}
+{"kind":"sheet","id":"ws/hkccv7","name":"Members","index":1,"range":"A1:G251","address":"A1:G251"}
+{"kind":"sheet","id":"ws/tleqyq","name":"Plans","index":2,"range":"A1:D4","address":"A1:D4"}
+{"kind":"sheet","id":"ws/giys9n","name":"Memberships","index":3,"range":"A1:H251","address":"A1:H251"}
+{"kind":"sheet","id":"ws/hgy0hh","name":"Status History","index":4,"range":"A1:E351","address":"A1:E351"}
+{"kind":"sheet","id":"ws/phblad","name":"Sessions","index":5,"range":"A1:G1186","address":"A1:G1186"}
+{"kind":"sheet","id":"ws/hplv7f","name":"Reservations","index":6,"range":"A1:H24033","address":"A1:H24033"}
+{"kind":"sheet","id":"ws/3xg8bj","name":"Attendance","index":7,"range":"A1:D16807","address":"A1:D16807"}
+{"kind":"sheet","id":"ws/h6fev1","name":"Attendance Fixes","index":8,"range":"A1:G9","address":"A1:G9"}
+{"kind":"sheet","id":"ws/70689g","name":"Risks","index":9,"range":"A1:N26","address":"A1:N26"}
+{"kind":"sheet","id":"ws/g38klp","name":"Outreach","index":10,"range":"A1:Q29","address":"A1:Q29"}
+{"kind":"sheet","id":"ws/x3i3u4","name":"Staff Accounts","index":11,"range":"A1:H5","address":"A1:H5"}
+{"kind":"sheet","id":"ws/18et6h","name":"Member Accounts","index":12,"range":"A1:F251","address":"A1:F251"}
+{"kind":"sheet","id":"ws/ajy15a","name":"Pause Requests","index":13,"range":"A1:I13","address":"A1:I13"}
+{"kind":"sheet","id":"ws/yhbqe6","name":"Drop-ins","index":14,"range":"A1:G13","address":"A1:G13"}
+{"kind":"sheet","id":"ws/hsck8v","name":"Promotions","index":15,"range":"A1:E6","address":"A1:E6"}
+{"kind":"sheet","id":"ws/0lh520","name":"Risk Notes","index":16,"range":"A1:J31","address":"A1:J31"}
+{"kind":"sheet","id":"ws/clu9cc","name":"Notifications","index":17,"range":"A1:H46","address":"A1:H46"}
+{"kind":"sheet","id":"ws/x1jtgw","name":"Outreach Audit","index":18,"range":"A1:E75","address":"A1:E75"}
+{"kind":"sheet","id":"ws/7070tx","name":"Error Manifest","index":19,"range":"A1:H13","address":"A1:H13"}

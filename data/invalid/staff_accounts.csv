@@ -1,0 +1,2 @@
+staff_id,auth_subject,first_name,last_name,email,role,account_status,created_at
+STF-ERR-007,auth_staff_imported_0007,Mina,Patel,imported.manager@pulse.example,manager,active,2025-01-02T09:00:00-05:00

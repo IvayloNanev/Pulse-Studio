@@ -1,0 +1,45 @@
+{
+  "status": "passed",
+  "acceptance_status": "PASS — accepted development dataset",
+  "independent_checks": "foreign keys, counts, 90/10 attendance, risk math, Product D outreach lifecycle/cooldown, staff/member accounts without passwords, expanded business-rule fixtures, independently detected 12-error suite, timestamped A→B→D→C→A golden journey",
+  "attendance_distribution": {
+    "attended": 15125,
+    "no_show": 1681,
+    "attended_rate": 0.899976198976556,
+    "no_show_rate": 0.100023801023444
+  },
+  "intentional_rules_detected": [
+    "FK_RESERVATION_MEMBER",
+    "FK_ATTENDANCE_RESERVATION",
+    "SESSION_CAPACITY_EXCEEDED",
+    "LATE_CANCELLATION_MISMATCH",
+    "APPROVED_PAUSE_FEE",
+    "DROP_IN_AMOUNT",
+    "STAFF_ROLE_ENUM",
+    "NO_SHOW_TOO_EARLY",
+    "ATTENDANCE_REQUIRES_CONFIRMED",
+    "ATTENDANCE_RESERVATION_UNIQUE",
+    "RISK_COUNTS_RECOMPUTE",
+    "RISK_PERCENT_LEVEL_RECOMPUTE"
+  ],
+  "rows": {
+    "members": 250,
+    "membership_plans": 3,
+    "memberships": 250,
+    "membership_status_history": 350,
+    "class_sessions": 1185,
+    "reservations": 24032,
+    "attendance_records": 16806,
+    "attendance_corrections": 8,
+    "risk_assessments": 25,
+    "outreach_records": 28,
+    "staff_accounts": 4,
+    "member_accounts": 250,
+    "membership_pause_requests": 12,
+    "drop_in_payments": 12,
+    "waitlist_promotions": 5,
+    "risk_case_notes": 30,
+    "notifications": 45,
+    "outreach_actions": 74
+  }
+}

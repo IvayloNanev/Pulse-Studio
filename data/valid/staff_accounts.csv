@@ -1,0 +1,5 @@
+staff_id,auth_subject,first_name,last_name,email,role,account_status,created_at
+STF-0001,auth_staff_owner_0001,Reymund,Santos,reymund.santos@pulse.example,owner_admin,active,2025-01-01T09:00:00-05:00
+STF-0002,auth_staff_instructor_0002,Mina,Patel,mina.patel@pulse.example,instructor,active,2025-01-02T09:00:00-05:00
+STF-0003,auth_staff_instructor_0003,Daniel,Kim,daniel.kim@pulse.example,instructor,active,2025-01-02T09:15:00-05:00
+STF-0004,auth_staff_instructor_0004,Aisha,Brooks,aisha.brooks@pulse.example,instructor,active,2025-01-02T09:30:00-05:00

@@ -1,0 +1,4 @@
+plan_id,plan_name,classes_per_month,monthly_price
+PLAN-004,4 Classes Monthly,4,99
+PLAN-008,8 Classes Monthly,8,179
+PLAN-012,12 Classes Monthly,12,249

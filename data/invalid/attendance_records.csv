@@ -1,0 +1,5 @@
+attendance_record_id,reservation_id,attendance_status,recorded_at
+ATT-ERR-002,RES-SYNC-PENDING-002,attended,2025-11-03T12:05:00.000Z
+ATT-ERR-008,RES-SUPPORT-008,no_show,2025-01-01T12:10:00.000Z
+ATT-ERR-009,RES-016807,attended,2025-01-07T12:05:00.000Z
+ATT-ERR-010,RES-000011,attended,2025-12-04T17:05:00.000Z

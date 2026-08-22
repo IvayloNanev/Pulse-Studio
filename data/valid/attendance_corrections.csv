@@ -1,0 +1,9 @@
+correction_id,attendance_record_id,previous_status,new_status,reason,corrected_by_staff_id,corrected_at
+CORR-0001,ATT-015203,no_show,attended,Instructor verified a delayed scanner sync after class.,STF-0002,2025-12-31T18:00:00-05:00
+CORR-0002,ATT-015208,no_show,attended,Instructor verified a delayed scanner sync after class.,STF-0003,2025-12-31T18:00:00-05:00
+CORR-0003,ATT-015209,no_show,attended,Instructor verified a delayed scanner sync after class.,STF-0004,2025-12-31T18:00:00-05:00
+CORR-0004,ATT-015210,no_show,attended,Instructor verified a delayed scanner sync after class.,STF-0002,2025-12-31T18:00:00-05:00
+CORR-0005,ATT-015211,no_show,attended,Instructor verified a delayed scanner sync after class.,STF-0003,2025-12-31T18:00:00-05:00
+CORR-0006,ATT-015212,no_show,attended,Instructor verified a delayed scanner sync after class.,STF-0004,2025-12-31T18:00:00-05:00
+CORR-0007,ATT-015213,no_show,attended,Instructor verified a delayed scanner sync after class.,STF-0002,2025-12-31T18:00:00-05:00
+CORR-0008,ATT-015214,no_show,attended,Instructor verified a delayed scanner sync after class.,STF-0003,2025-12-31T18:00:00-05:00

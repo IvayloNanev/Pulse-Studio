@@ -1,0 +1,29 @@
+name: Validate Pulse Studio Dataset
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    name: Schema and dataset validation
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Run independent validator
+        env:
+          PULSE_DATASET_ROOT: ${{ github.workspace }}
+        run: node generator/verify_reconciled_dataset.mjs

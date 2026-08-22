@@ -1,0 +1,1 @@
+risk_assessment_id,member_id,evaluated_at,previous_period_start,previous_period_end,current_period_start,current_period_end,previous_visits,current_visits,decline_percentage,risk_level,review_status,resolved_at,resolution_reason

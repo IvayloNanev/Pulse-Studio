@@ -1,0 +1,205 @@
+{
+  "member_id": "MEM-0016",
+  "membership_id": "MSP-0016",
+  "risk_assessment_id": "RISK-0016",
+  "outreach_id": "OUT-00016",
+  "rebooking_reservation_id": "RES-024010",
+  "previous_visits": 8,
+  "current_visits": 2,
+  "decline_percentage": 75,
+  "risk_level": "high",
+  "trace": [
+    {
+      "step": 1,
+      "product": "A",
+      "event": "member_reserves_classes",
+      "timestamp": "2025-11-12T12:00:00.000Z",
+      "record_ids": [
+        "RES-000181",
+        "RES-000182",
+        "RES-000183",
+        "RES-000184",
+        "RES-000185",
+        "RES-000186",
+        "RES-000187",
+        "RES-000188",
+        "RES-000189",
+        "RES-000190"
+      ]
+    },
+    {
+      "step": 2,
+      "product": "B",
+      "event": "attendance_recorded",
+      "timestamp": "2025-12-30T17:05:00.000Z",
+      "record_ids": [
+        "ATT-000181",
+        "ATT-000182",
+        "ATT-000183",
+        "ATT-000184",
+        "ATT-000185",
+        "ATT-000186",
+        "ATT-000187",
+        "ATT-000188",
+        "ATT-000189",
+        "ATT-000190"
+      ],
+      "evidence": [
+        {
+          "reservation_id": "RES-000181",
+          "reserved_at": "2025-11-12T12:00:00.000Z",
+          "class_session_id": "SESSION-00967",
+          "session_starts_at": "2025-11-19T07:00:00-05:00",
+          "attendance_record_id": "ATT-000181",
+          "attendance_status": "attended",
+          "recorded_at": "2025-11-19T12:05:00.000Z"
+        },
+        {
+          "reservation_id": "RES-000182",
+          "reserved_at": "2025-11-12T17:00:00.000Z",
+          "class_session_id": "SESSION-00968",
+          "session_starts_at": "2025-11-19T12:00:00-05:00",
+          "attendance_record_id": "ATT-000182",
+          "attendance_status": "attended",
+          "recorded_at": "2025-11-19T17:05:00.000Z"
+        },
+        {
+          "reservation_id": "RES-000183",
+          "reserved_at": "2025-11-12T23:00:00.000Z",
+          "class_session_id": "SESSION-00969",
+          "session_starts_at": "2025-11-19T18:00:00-05:00",
+          "attendance_record_id": "ATT-000183",
+          "attendance_status": "attended",
+          "recorded_at": "2025-11-19T23:05:00.000Z"
+        },
+        {
+          "reservation_id": "RES-000184",
+          "reserved_at": "2025-11-13T12:00:00.000Z",
+          "class_session_id": "SESSION-00970",
+          "session_starts_at": "2025-11-20T07:00:00-05:00",
+          "attendance_record_id": "ATT-000184",
+          "attendance_status": "attended",
+          "recorded_at": "2025-11-20T12:05:00.000Z"
+        },
+        {
+          "reservation_id": "RES-000185",
+          "reserved_at": "2025-11-13T17:00:00.000Z",
+          "class_session_id": "SESSION-00971",
+          "session_starts_at": "2025-11-20T12:00:00-05:00",
+          "attendance_record_id": "ATT-000185",
+          "attendance_status": "attended",
+          "recorded_at": "2025-11-20T17:05:00.000Z"
+        },
+        {
+          "reservation_id": "RES-000186",
+          "reserved_at": "2025-11-13T23:00:00.000Z",
+          "class_session_id": "SESSION-00972",
+          "session_starts_at": "2025-11-20T18:00:00-05:00",
+          "attendance_record_id": "ATT-000186",
+          "attendance_status": "attended",
+          "recorded_at": "2025-11-20T23:05:00.000Z"
+        },
+        {
+          "reservation_id": "RES-000187",
+          "reserved_at": "2025-11-14T12:00:00.000Z",
+          "class_session_id": "SESSION-00973",
+          "session_starts_at": "2025-11-21T07:00:00-05:00",
+          "attendance_record_id": "ATT-000187",
+          "attendance_status": "attended",
+          "recorded_at": "2025-11-21T12:05:00.000Z"
+        },
+        {
+          "reservation_id": "RES-000188",
+          "reserved_at": "2025-11-14T17:00:00.000Z",
+          "class_session_id": "SESSION-00974",
+          "session_starts_at": "2025-11-21T12:00:00-05:00",
+          "attendance_record_id": "ATT-000188",
+          "attendance_status": "attended",
+          "recorded_at": "2025-11-21T17:05:00.000Z"
+        },
+        {
+          "reservation_id": "RES-000189",
+          "reserved_at": "2025-12-23T12:00:00.000Z",
+          "class_session_id": "SESSION-01090",
+          "session_starts_at": "2025-12-30T07:00:00-05:00",
+          "attendance_record_id": "ATT-000189",
+          "attendance_status": "attended",
+          "recorded_at": "2025-12-30T12:05:00.000Z"
+        },
+        {
+          "reservation_id": "RES-000190",
+          "reserved_at": "2025-12-23T17:00:00.000Z",
+          "class_session_id": "SESSION-01091",
+          "session_starts_at": "2025-12-30T12:00:00-05:00",
+          "attendance_record_id": "ATT-000190",
+          "attendance_status": "attended",
+          "recorded_at": "2025-12-30T17:05:00.000Z"
+        }
+      ]
+    },
+    {
+      "step": 3,
+      "product": "D",
+      "event": "decline_evaluated",
+      "timestamp": "2026-01-01T00:00:00-05:00",
+      "record_ids": [
+        "RISK-0016"
+      ],
+      "evidence": {
+        "previous_visits": 8,
+        "current_visits": 2,
+        "decline_percentage": 75,
+        "risk_level": "high"
+      }
+    },
+    {
+      "step": 4,
+      "product": "D",
+      "event": "outreach_draft_created",
+      "timestamp": "2026-01-01T09:00:00-05:00",
+      "record_ids": [
+        "OUT-00016"
+      ]
+    },
+    {
+      "step": 5,
+      "product": "D",
+      "event": "outreach_reviewed_sent_and_completed",
+      "timestamp": "2026-01-02T20:00:00.000Z",
+      "record_ids": [
+        "OUT-00016"
+      ],
+      "evidence": {
+        "status": "completed",
+        "approved_at": "2026-01-01T16:00:00.000Z",
+        "sent_at": "2026-01-01T17:00:00.000Z",
+        "completed_at": "2026-01-02T20:00:00.000Z",
+        "response_outcome": "interested",
+        "final_message": "Hi Lena, we noticed your recent attendance changed. We would be glad to help you find a class that fits your schedule. View the upcoming Pulse Studio schedule when you are ready."
+      }
+    },
+    {
+      "step": 6,
+      "product": "C",
+      "event": "member_receives_chatbot_support",
+      "timestamp": "2026-01-03T10:00:00-05:00",
+      "record_ids": [
+        "MEM-0016"
+      ],
+      "evidence": {
+        "scope": "class and booking questions only; Product C does not mutate outreach"
+      }
+    },
+    {
+      "step": 7,
+      "product": "A",
+      "event": "member_rebooks",
+      "timestamp": "2026-01-04T10:00:00-05:00",
+      "record_ids": [
+        "RES-024010",
+        "SESSION-01123"
+      ]
+    }
+  ],
+  "expected_result": "A reservation → B attendance → D risk, reviewed outreach, simulated send, and completion → C chatbot support → A rebooking, with preserved identifiers"
+}

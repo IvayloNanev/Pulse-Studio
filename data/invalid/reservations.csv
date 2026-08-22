@@ -1,0 +1,4 @@
+reservation_id,member_id,class_session_id,membership_id,status,reserved_at,cancelled_at,is_late_cancellation
+RES-ERR-001,MEM-RETIRED-042,SESSION-00001,MSP-0001,cancelled,2024-12-22T12:00:00.000Z,2024-12-31T12:00:00.000Z,false
+RES-ERR-003,MEM-0001,SESSION-00019,MSP-0001,confirmed,2024-12-22T12:00:00.000Z,,
+RES-ERR-004,MEM-0001,SESSION-00001,MSP-0001,cancelled,2024-12-22T12:00:00.000Z,2025-01-01T00:01:00.000Z,false

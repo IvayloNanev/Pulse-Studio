@@ -1,0 +1,17 @@
+{
+  "schema_version": "2.0.0",
+  "generator_version": "3.0.0",
+  "assumptions_version": "2026-08-22.2",
+  "random_seed": 20260820,
+  "timezone": "America/New_York",
+  "historical_start": "2025-01-01",
+  "historical_end": "2025-12-31",
+  "evaluation_time": "2026-01-01T00:00:00-05:00",
+  "upcoming_start": "2026-01-01",
+  "upcoming_end": "2026-01-30",
+  "member_count": 250,
+  "historical_session_count": 1095,
+  "upcoming_session_count": 90,
+  "session_capacity": 30,
+  "intentional_error_count": 12
+}

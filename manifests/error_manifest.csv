@@ -1,0 +1,13 @@
+error_id,table_name,record_id,rule_code,realistic_cause,expected_problem,affected_products,expected_action
+ERR-001,reservations,RES-ERR-001,FK_RESERVATION_MEMBER,Duplicate member profiles were merged but an imported reservation retained the retired ID.,Reservation member FK does not resolve.,A|B|D|shared,quarantine
+ERR-002,attendance_records,ATT-ERR-002,FK_ATTENDANCE_RESERVATION,A check-in synchronized before its booking record.,Attendance reservation FK does not resolve.,A|B|D|shared,quarantine
+ERR-003,reservations,RES-ERR-003,SESSION_CAPACITY_EXCEEDED,Two simultaneous requests confirmed the final spot.,Confirmed reservations exceed capacity by one.,A|B,quarantine
+ERR-004,reservations,RES-ERR-004,LATE_CANCELLATION_MISMATCH,The cancellation boundary was calculated as 12 rounded hours instead of exact elapsed time.,A cancellation 11h59m before class is incorrectly marked early.,A|shared,quarantine
+ERR-005,membership_pause_requests,PAUSE-ERR-005,APPROVED_PAUSE_FEE,An approval was saved before the $25 administrative fee was attached.,Approved pause has no $25 fee.,A|staff|shared,quarantine
+ERR-006,drop_in_payments,PAY-ERR-006,DROP_IN_AMOUNT,An old $30 test price remained cached during checkout.,Authorized drop-in payment is not the approved $35 amount.,A|shared,quarantine
+ERR-007,staff_accounts,STF-ERR-007,STAFF_ROLE_ENUM,A legacy staff export used the unsupported role label manager.,Staff role is outside owner_admin/instructor.,B|D|shared,quarantine
+ERR-008,attendance_records,ATT-ERR-008,NO_SHOW_TOO_EARLY,A timezone configuration caused the no-show job to run before the check-in window closed.,No-show recorded before start plus 20 minutes.,B|D,quarantine
+ERR-009,attendance_records,ATT-ERR-009,ATTENDANCE_REQUIRES_CONFIRMED,Staff checked in a waitlisted member who had not been promoted.,Attendance references a waitlisted reservation.,A|B|D,quarantine
+ERR-010,attendance_records,ATT-ERR-010,ATTENDANCE_RESERVATION_UNIQUE,A scanner retry submitted the same check-in twice.,A second attendance row references the same reservation.,B|D,quarantine
+ERR-011,risk_assessments,RISK-ERR-011,RISK_COUNTS_RECOMPUTE,A timezone-boundary defect placed one visit in the wrong 30-day period.,Stored previous visit count does not match attendance evidence.,B|D,quarantine
+ERR-012,risk_assessments,RISK-ERR-012,RISK_PERCENT_LEVEL_RECOMPUTE,A spreadsheet rounded the percentage before applying the classification threshold.,Stored risk level does not match the recomputed percentage.,D,quarantine

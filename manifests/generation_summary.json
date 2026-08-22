@@ -1,0 +1,150 @@
+{
+  "schema_version": "2.0.0",
+  "generator_version": "3.0.0",
+  "assumptions_version": "2026-08-22.2",
+  "random_seed": 20260820,
+  "timezone": "America/New_York",
+  "historical_start": "2025-01-01",
+  "historical_end": "2025-12-31",
+  "evaluation_time": "2026-01-01T00:00:00-05:00",
+  "upcoming_start": "2026-01-01",
+  "upcoming_end": "2026-01-30",
+  "member_count": 250,
+  "historical_session_count": 1095,
+  "upcoming_session_count": 90,
+  "session_capacity": 30,
+  "intentional_error_count": 12,
+  "generated_at": "2026-08-20T12:00:00-04:00",
+  "tables": {
+    "members": {
+      "valid": 250,
+      "invalid": 0,
+      "invalid_support": 0
+    },
+    "membership_plans": {
+      "valid": 3,
+      "invalid": 0,
+      "invalid_support": 0
+    },
+    "memberships": {
+      "valid": 250,
+      "invalid": 0,
+      "invalid_support": 0
+    },
+    "membership_status_history": {
+      "valid": 350,
+      "invalid": 0,
+      "invalid_support": 0
+    },
+    "class_sessions": {
+      "valid": 1185,
+      "invalid": 0,
+      "invalid_support": 0
+    },
+    "reservations": {
+      "valid": 24032,
+      "invalid": 3,
+      "invalid_support": 1
+    },
+    "attendance_records": {
+      "valid": 16806,
+      "invalid": 4,
+      "invalid_support": 0
+    },
+    "attendance_corrections": {
+      "valid": 8,
+      "invalid": 0,
+      "invalid_support": 0
+    },
+    "risk_assessments": {
+      "valid": 25,
+      "invalid": 2,
+      "invalid_support": 0
+    },
+    "outreach_records": {
+      "valid": 28,
+      "invalid": 0,
+      "invalid_support": 0
+    },
+    "staff_accounts": {
+      "valid": 4,
+      "invalid": 1,
+      "invalid_support": 0
+    },
+    "member_accounts": {
+      "valid": 250,
+      "invalid": 0,
+      "invalid_support": 0
+    },
+    "membership_pause_requests": {
+      "valid": 12,
+      "invalid": 1,
+      "invalid_support": 0
+    },
+    "drop_in_payments": {
+      "valid": 12,
+      "invalid": 1,
+      "invalid_support": 0
+    },
+    "waitlist_promotions": {
+      "valid": 5,
+      "invalid": 0,
+      "invalid_support": 0
+    },
+    "risk_case_notes": {
+      "valid": 30,
+      "invalid": 0,
+      "invalid_support": 0
+    },
+    "notifications": {
+      "valid": 45,
+      "invalid": 0,
+      "invalid_support": 0
+    },
+    "outreach_actions": {
+      "valid": 74,
+      "invalid": 0,
+      "invalid_support": 0
+    }
+  },
+  "expected_validation_totals": {
+    "valid_errors": 0,
+    "intentional_errors": 12,
+    "detected_intentional_errors": 12,
+    "unexpected_errors": 0,
+    "orphan_foreign_keys": 2
+  },
+  "attendance_distribution": {
+    "total": 16806,
+    "attended": 15125,
+    "no_show": 1681,
+    "attended_rate": 0.9,
+    "no_show_rate": 0.1
+  },
+  "schema_v2_fixture_summary": {
+    "dropInReservations": 12,
+    "promotedWaitlists": 5,
+    "staffAccounts": 4,
+    "notes": 30
+  },
+  "reproducibility_hashes": {
+    "members.csv": "8c7fdea7ad8693740ca054caba3febaba88f8f5cbb4822c0801794862ca4acfd",
+    "membership_plans.csv": "83608371ebde09433aa58d274a43869df7b3fcdcebb2ca222980bece9e78588d",
+    "memberships.csv": "a726d80c8cbd5e6333d40979a437f1992704f163bfb45bb4822af89a67ac4f2a",
+    "membership_status_history.csv": "a95484323a8ef303bbaa3dcf41c3aa2b5eafc3d37bdf08b34d011b5557e8f1be",
+    "class_sessions.csv": "515eed91d7b4ad129e31630033ecbc65ccd959ef964378896ddabf490e2b4fd4",
+    "reservations.csv": "44b72760596c770662a8fdf9466f9ca88c7951f3131be821ddf5b5f80233f681",
+    "attendance_records.csv": "48c763ba53a80f027ab203427888916c26c9f7fb53df47802498dbe1afbec794",
+    "attendance_corrections.csv": "6880fa905710304e04461bc3ba904cb74eacad80c63a457d9718b4dbb8217efe",
+    "risk_assessments.csv": "d79b2ef6c6980da2c386bd15ed8bc3084d1d59aa7687a0f1b109d22a5a3bf150",
+    "outreach_records.csv": "a84a6c99532343e7611a82960f956416d3a23dd9a748ac7e747af63bd43f81ae",
+    "staff_accounts.csv": "dd5e21524bc1dd5fd6c7a857196a36789d2b19de415713bec8f37cfbc9d16153",
+    "member_accounts.csv": "bfa4c392fb4b2ed6a0573a45e567aaff66036eb016dfef9af4f0e7a4baadeb99",
+    "membership_pause_requests.csv": "87073d674b5406eae94321e956426d9c70600dcc1280f661abcf7c5c1b111c5a",
+    "drop_in_payments.csv": "b134d24bc2d8f513af8d89b3d28a4078e8b363a6edbacee12459606d9ddd82db",
+    "waitlist_promotions.csv": "8bd3d167e186cc1e72603d2c31e0d22d94150b7b60593e645f00004b67c72d9f",
+    "risk_case_notes.csv": "9d4ffa01f7571b7471bde22a75763445134f80d7371c012e511b070f1297bbd3",
+    "notifications.csv": "43040ff6a786f26242a0edc232649d080f41385bc6a006dacf594079b4a27044",
+    "outreach_actions.csv": "3033575ea8f73d5eb786a15898f8f599009f3a061b1eb191cc69851568a9d1d9"
+  }
+}
