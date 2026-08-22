@@ -27,6 +27,7 @@ The authoritative implementation rules are in `docs/04-business-rules-v1.md`.
 - `reports/` — validation evidence.
 - `artifacts/` — human-readable Excel review workbook.
 - `generator/` — deterministic generation and independent verification scripts.
+- `supabase/` — versioned PostgreSQL migrations and backend configuration.
 
 ## Dataset size
 

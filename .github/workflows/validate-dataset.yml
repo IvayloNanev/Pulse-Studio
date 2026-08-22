@@ -27,3 +27,6 @@ jobs:
         env:
           PULSE_DATASET_ROOT: ${{ github.workspace }}
         run: node generator/verify_reconciled_dataset.mjs
+
+      - name: Validate database migration contract
+        run: node generator/verify_database_migration.mjs
