@@ -33,3 +33,6 @@ jobs:
 
       - name: Validate authentication and RLS contract
         run: node generator/verify_auth_rls_migration.mjs
+
+      - name: Validate shared API contracts
+        run: node generator/verify_shared_api_migration.mjs
