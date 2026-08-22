@@ -1,7 +1,7 @@
 {
   "schema_version": "2.0.0",
-  "generator_version": "3.0.0",
-  "assumptions_version": "2026-08-22.2",
+  "generator_version": "3.1.0",
+  "assumptions_version": "2026-08-22.3",
   "random_seed": 20260820,
   "timezone": "America/New_York",
   "historical_start": "2025-01-01",

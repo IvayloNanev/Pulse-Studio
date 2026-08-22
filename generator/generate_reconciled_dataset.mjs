@@ -213,19 +213,44 @@ function buildBookingsAndAttendance(tables) {
       history.status === "active" && iso >= history.effective_at && (!history.ended_at || iso < history.ended_at)
     );
   };
-  const credits = new Map();
-  const useCredit = (memberId, sessionDate) => {
+  const billingCycleIndex = (memberId, atIso) => {
     const membership = membershipsByMember.get(memberId);
-    const key = `${memberId}|${sessionDate.slice(0, 7)}`;
+    const at = new Date(atIso);
+    const anchor = new Date(localTs(membership.billing_cycle_start_date, "00:00:00"));
+    const pausedMilliseconds = (historiesByMembership.get(membership.membership_id) ?? [])
+      .filter((history) => history.status === "paused")
+      .reduce((total, history) => {
+        const pauseStart = new Date(history.effective_at);
+        if (pauseStart >= at) return total;
+        const pauseEnd = history.ended_at ? new Date(history.ended_at) : at;
+        return total + Math.max(Math.min(pauseEnd.getTime(), at.getTime()) - pauseStart.getTime(), 0);
+      }, 0);
+    const activeTime = new Date(at.getTime() - pausedMilliseconds);
+    let monthIndex = (activeTime.getUTCFullYear() - anchor.getUTCFullYear()) * 12
+      + activeTime.getUTCMonth() - anchor.getUTCMonth();
+    const [anchorYear, anchorMonth, anchorDay] = membership.billing_cycle_start_date.split("-").map(Number);
+    const boundaryMonth = anchorMonth - 1 + monthIndex;
+    const boundaryYear = anchorYear + Math.floor(boundaryMonth / 12);
+    const normalizedMonth = ((boundaryMonth % 12) + 12) % 12;
+    const lastDay = new Date(Date.UTC(boundaryYear, normalizedMonth + 1, 0)).getUTCDate();
+    const boundaryDate = `${boundaryYear}-${pad(normalizedMonth + 1, 2)}-${pad(Math.min(anchorDay, lastDay), 2)}`;
+    const boundary = new Date(localTs(boundaryDate, "00:00:00"));
+    if (activeTime < boundary) monthIndex--;
+    return Math.max(monthIndex, 0);
+  };
+  const creditKey = (memberId, atIso) => {
+    const membership = membershipsByMember.get(memberId);
+    return `${membership.membership_id}|${billingCycleIndex(memberId, atIso)}`;
+  };
+  const credits = new Map();
+  const useCredit = (memberId, sessionStartsAt) => {
+    const membership = membershipsByMember.get(memberId);
+    const key = creditKey(memberId, sessionStartsAt);
     const used = credits.get(key) ?? 0;
     const allowance = planAllowance.get(membership.plan_id);
     if (used >= allowance) return false;
     credits.set(key, used + 1);
     return true;
-  };
-  const releaseCredit = (memberId, sessionDate) => {
-    const key = `${memberId}|${sessionDate.slice(0, 7)}`;
-    credits.set(key, Math.max((credits.get(key) ?? 1) - 1, 0));
   };
 
   const historical = tables.class_sessions.filter((row) => dateOnly(row.starts_at) <= config.historical_end);
@@ -274,7 +299,7 @@ function buildBookingsAndAttendance(tables) {
     if (hasNonCancelled(memberId, session.class_session_id)) return false;
     const reservedAt = addHours(session.starts_at, -24 * 7);
     if (!activeAt(memberId, reservedAt) || !activeAt(memberId, session.starts_at)) return false;
-    if (!useCredit(memberId, dateOnly(session.starts_at))) return false;
+    if (!useCredit(memberId, session.starts_at)) return false;
     const reservation = createReservation(memberId, session, "confirmed", { reservedAt });
     confirmedRows.push(reservation);
     confirmedLoad.set(session.class_session_id, (confirmedLoad.get(session.class_session_id) ?? 0) + 1);
@@ -353,7 +378,7 @@ function buildBookingsAndAttendance(tables) {
       const reservedAt = addHours(session.starts_at, -24 * 10);
       if (!activeAt(memberId, reservedAt) || !activeAt(memberId, session.starts_at)) continue;
       if (status === "waitlisted" && hasNonCancelled(memberId, session.class_session_id)) continue;
-      if (status === "cancelled_late" && !useCredit(memberId, dateOnly(session.starts_at))) continue;
+      if (status === "cancelled_late" && !useCredit(memberId, session.starts_at)) continue;
       if (status === "cancelled_early") {
         createReservation(memberId, session, "cancelled", { reservedAt, cancelledAt: addHours(session.starts_at, -24), isLateCancellation: false });
         made++;
