@@ -1,5 +1,4 @@
-import Link from "next/link";
-
+import { Brand } from "@/components/brand";
 import { Button } from "@/components/ui/button";
 
 type LoginPanelProps = {
@@ -12,7 +11,7 @@ export function LoginPanel({ audience }: LoginPanelProps) {
   return (
     <section className="grid min-h-screen bg-[#f3f0e9] text-[#111] lg:grid-cols-2">
       <div className="flex min-h-[18rem] flex-col justify-between bg-[#171717] p-8 text-white sm:p-12 lg:p-16">
-        <Link href="/" className="text-lg font-bold uppercase tracking-[-0.03em]">Pulse Studio</Link>
+        <Brand inverse prominent />
         <div>
           <p className="font-mono text-xs uppercase tracking-[0.2em] text-white/45">
             {isStaff ? "Private staff access" : "Member access"}
@@ -22,9 +21,9 @@ export function LoginPanel({ audience }: LoginPanelProps) {
           </h1>
         </div>
       </div>
-      <div className="relative flex items-center overflow-hidden px-6 py-14 sm:px-12 lg:px-20">
-        <div className="pointer-events-none absolute -right-28 top-20 size-80 rounded-full bg-[#c72c25]/10 blur-3xl" />
-        <div className="glass-panel relative w-full max-w-lg p-7 sm:p-10">
+      <div className="relative flex items-center overflow-hidden bg-[linear-gradient(135deg,#b9b2aa_0%,#eeeae3_38%,#d4cdc4_68%,#a7a09a_100%)] px-6 py-14 sm:px-12 lg:px-20">
+        <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(115deg,transparent_10%,rgba(255,255,255,0.48)_42%,transparent_68%)]" />
+        <div className="glass-panel relative w-full max-w-lg rounded-[2rem] p-7 sm:p-10">
           <p className="font-mono text-xs uppercase tracking-[0.2em] text-black/45">Secure sign in</p>
           <h2 className="mt-4 text-3xl font-semibold tracking-[-0.04em]">Welcome back</h2>
           <form className="mt-10 space-y-6">

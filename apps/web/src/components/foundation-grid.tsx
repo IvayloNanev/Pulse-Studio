@@ -11,7 +11,7 @@ export function FoundationGrid({ items }: { items: Item[] }) {
     <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
       {items.map((item) => (
         <Link href={item.href} key={item.title} className="group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black">
-          <Card className="glass-panel h-full rounded-none bg-white/60 py-5 shadow-none transition group-hover:-translate-y-1 group-hover:bg-white/80 group-hover:ring-black/30">
+          <Card className="glass-panel h-full rounded-2xl bg-white/25 py-5 transition group-hover:-translate-y-1 group-hover:bg-white/45 group-hover:ring-black/20">
             <CardHeader>
               <div className="mb-7 flex items-start justify-between">
                 <Badge variant="outline" className="rounded-none font-mono text-[0.62rem] uppercase tracking-[0.14em]">{item.label}</Badge>

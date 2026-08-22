@@ -32,8 +32,9 @@ export function PortalShell({ eyebrow, title, description, links, children }: Po
         </div>
       </aside>
       <main className="relative overflow-hidden px-6 py-10 sm:px-10 lg:px-14 lg:py-14">
-        <div className="pointer-events-none absolute -right-32 -top-24 size-96 rounded-full bg-[#c72c25]/8 blur-3xl" />
-        <header className="glass-panel relative max-w-4xl p-6 sm:p-8">
+        <div className="pointer-events-none absolute -right-32 -top-24 size-96 rounded-full bg-[#c72c25]/25 blur-3xl" />
+        <div className="pointer-events-none absolute -left-24 top-72 size-80 rounded-full bg-black/10 blur-3xl" />
+        <header className="glass-panel relative max-w-4xl rounded-3xl p-6 sm:p-8">
           <p className="font-mono text-[0.65rem] uppercase tracking-[0.2em] text-black/45">{eyebrow}</p>
           <h1 className="mt-3 text-4xl font-semibold tracking-[-0.045em] sm:text-5xl">{title}</h1>
           <p className="mt-4 max-w-2xl text-sm leading-6 text-black/55">{description}</p>
