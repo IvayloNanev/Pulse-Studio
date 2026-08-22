@@ -27,6 +27,7 @@ The authoritative implementation rules are in `docs/04-business-rules-v1.md`.
 - `reports/` — validation evidence.
 - `artifacts/` — human-readable Excel review workbook.
 - `generator/` — deterministic generation and independent verification scripts.
+- `supabase/` — versioned PostgreSQL migrations and backend configuration.
 
 ## Dataset size
 
@@ -37,7 +38,7 @@ The authoritative implementation rules are in `docs/04-business-rules-v1.md`.
 | Memberships | 250 |
 | Membership status history | 350 |
 | Class sessions | 1,185 |
-| Reservations | 24,010 |
+| Reservations | 24,032 |
 | Attendance records | 16,806 |
 | Attendance corrections | 8 |
 | Risk assessments | 25 |
@@ -48,8 +49,8 @@ The authoritative implementation rules are in `docs/04-business-rules-v1.md`.
 | Drop-in payments | 12 |
 | Waitlist promotions | 5 |
 | Risk case notes | 30 |
-| Notifications | 45 |
-| Outreach actions | 74 |
+| Notifications | 46 |
+| Outreach actions | 75 |
 
 ## Important rule
 

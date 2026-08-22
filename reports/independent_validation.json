@@ -1,7 +1,7 @@
 {
   "status": "passed",
   "acceptance_status": "PASS — accepted development dataset",
-  "independent_checks": "foreign keys, counts, 90/10 attendance, risk math, Product D outreach lifecycle/cooldown, staff/member accounts without passwords, expanded business-rule fixtures, independently detected 12-error suite, timestamped A→B→D→C→A golden journey",
+  "independent_checks": "foreign keys, counts, contact-channel eligibility, reservation chronology, 90/10 attendance, risk math, Product D outreach lifecycle/previous-send cooldown, staff/member accounts without passwords, expanded business-rule fixtures, independently detected 12-error suite, timestamped A→B→D→C→A golden journey",
   "attendance_distribution": {
     "attended": 15125,
     "no_show": 1681,
@@ -39,7 +39,7 @@
     "drop_in_payments": 12,
     "waitlist_promotions": 5,
     "risk_case_notes": 30,
-    "notifications": 45,
-    "outreach_actions": 74
+    "notifications": 46,
+    "outreach_actions": 75
   }
 }

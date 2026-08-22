@@ -31,8 +31,8 @@
 | drop_in_payments | 12 | 1 | 0 |
 | waitlist_promotions | 5 | 0 | 0 |
 | risk_case_notes | 30 | 0 | 0 |
-| notifications | 45 | 0 | 0 |
-| outreach_actions | 74 | 0 | 0 |
+| notifications | 46 | 0 | 0 |
+| outreach_actions | 75 | 0 | 0 |
 
 ## Intentional error checks
 

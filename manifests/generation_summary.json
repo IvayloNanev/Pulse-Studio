@@ -97,12 +97,12 @@
       "invalid_support": 0
     },
     "notifications": {
-      "valid": 45,
+      "valid": 46,
       "invalid": 0,
       "invalid_support": 0
     },
     "outreach_actions": {
-      "valid": 74,
+      "valid": 75,
       "invalid": 0,
       "invalid_support": 0
     }
@@ -128,23 +128,23 @@
     "notes": 30
   },
   "reproducibility_hashes": {
-    "members.csv": "8c7fdea7ad8693740ca054caba3febaba88f8f5cbb4822c0801794862ca4acfd",
+    "members.csv": "c762ef302ea494fc5ed931f8b16e349524e29ca1136c83e6a4c82203ed57ecb1",
     "membership_plans.csv": "83608371ebde09433aa58d274a43869df7b3fcdcebb2ca222980bece9e78588d",
     "memberships.csv": "a726d80c8cbd5e6333d40979a437f1992704f163bfb45bb4822af89a67ac4f2a",
     "membership_status_history.csv": "a95484323a8ef303bbaa3dcf41c3aa2b5eafc3d37bdf08b34d011b5557e8f1be",
     "class_sessions.csv": "515eed91d7b4ad129e31630033ecbc65ccd959ef964378896ddabf490e2b4fd4",
-    "reservations.csv": "44b72760596c770662a8fdf9466f9ca88c7951f3131be821ddf5b5f80233f681",
+    "reservations.csv": "fe1c2c9c0128ab5bcb6ce49a16ea66216b95f2c1a65f36b48d7f06d805d841c5",
     "attendance_records.csv": "48c763ba53a80f027ab203427888916c26c9f7fb53df47802498dbe1afbec794",
     "attendance_corrections.csv": "6880fa905710304e04461bc3ba904cb74eacad80c63a457d9718b4dbb8217efe",
     "risk_assessments.csv": "d79b2ef6c6980da2c386bd15ed8bc3084d1d59aa7687a0f1b109d22a5a3bf150",
-    "outreach_records.csv": "a84a6c99532343e7611a82960f956416d3a23dd9a748ac7e747af63bd43f81ae",
+    "outreach_records.csv": "87e79688cf43df9797b59c1f896dedab5108ee61f8b4bb0ac06a3a88c0bc09ca",
     "staff_accounts.csv": "dd5e21524bc1dd5fd6c7a857196a36789d2b19de415713bec8f37cfbc9d16153",
     "member_accounts.csv": "bfa4c392fb4b2ed6a0573a45e567aaff66036eb016dfef9af4f0e7a4baadeb99",
     "membership_pause_requests.csv": "87073d674b5406eae94321e956426d9c70600dcc1280f661abcf7c5c1b111c5a",
-    "drop_in_payments.csv": "b134d24bc2d8f513af8d89b3d28a4078e8b363a6edbacee12459606d9ddd82db",
+    "drop_in_payments.csv": "5513b05c803efbb0284ee4b5e73e0f417c8243b64c4a95264d7c7d8c7c5cc72a",
     "waitlist_promotions.csv": "8bd3d167e186cc1e72603d2c31e0d22d94150b7b60593e645f00004b67c72d9f",
     "risk_case_notes.csv": "9d4ffa01f7571b7471bde22a75763445134f80d7371c012e511b070f1297bbd3",
-    "notifications.csv": "43040ff6a786f26242a0edc232649d080f41385bc6a006dacf594079b4a27044",
-    "outreach_actions.csv": "3033575ea8f73d5eb786a15898f8f599009f3a061b1eb191cc69851568a9d1d9"
+    "notifications.csv": "df0182278f43b10c86c8a22a3120626b620e0d3c5ddf36f0bdd9526e6713f084",
+    "outreach_actions.csv": "9c7c3c0ddc150a3e8138bfb7ec6a6661dae474021f4ee1a874a02b234c86e655"
   }
 }
