@@ -42,3 +42,6 @@ jobs:
 
       - name: Validate Product A member dashboard contract
         run: node generator/verify_member_dashboard_api_migration.mjs
+
+      - name: Validate Product D risk contracts
+        run: node generator/verify_product_d_api_migration.mjs
