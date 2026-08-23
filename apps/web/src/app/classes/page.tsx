@@ -16,9 +16,6 @@ type ScheduleSession = {
   instructor_name: string;
 };
 
-const DEMO_WEEK_START = "2026-01-01T00:00:00-05:00";
-const DEMO_WEEK_END = "2026-01-08T00:00:00-05:00";
-
 const classNames: Record<ScheduleSession["class_type"], string> = {
   yoga: "Studio Flow",
   cycling: "Pulse Ride",
@@ -52,11 +49,13 @@ function groupByDate(sessions: ScheduleSession[]) {
 
 export default async function ClassesPage() {
   const supabase = await createClient();
+  const now = new Date();
+  const through = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
   const { data, error } = await supabase
     .from("public_class_schedule")
     .select("class_session_id,class_type,class_type_label,starts_at,ends_at,capacity,confirmed_reservations,waitlisted_reservations,available_spots,is_full,instructor_staff_id,instructor_name")
-    .gte("starts_at", DEMO_WEEK_START)
-    .lt("starts_at", DEMO_WEEK_END)
+    .gte("starts_at", now.toISOString())
+    .lt("starts_at", through.toISOString())
     .order("starts_at", { ascending: true });
 
   const sessions = (data ?? []) as ScheduleSession[];
@@ -67,8 +66,8 @@ export default async function ClassesPage() {
       <section className="px-6 py-16 sm:px-10 lg:px-16 lg:py-24">
         <div className="mb-12 flex flex-col justify-between gap-4 border-b border-black/20 pb-6 sm:flex-row sm:items-end">
           <div>
-            <p className="font-mono text-xs uppercase tracking-[0.2em] text-black/45">January 1–7, 2026 · New York</p>
-            <h2 className="display-pulse mt-3 text-4xl sm:text-5xl">Development dataset week.</h2>
+            <p className="font-mono text-xs uppercase tracking-[0.2em] text-black/45">Next 30 days · New York</p>
+            <h2 className="display-pulse mt-3 text-4xl sm:text-5xl">Live studio schedule.</h2>
           </div>
           <p className="max-w-sm text-sm leading-6 text-black/55">Capacity and waitlist counts are live from the shared Supabase contract.</p>
         </div>
@@ -78,7 +77,7 @@ export default async function ClassesPage() {
             The class schedule is temporarily unavailable. Please refresh and try again.
           </div>
         ) : sessions.length === 0 ? (
-          <div className="border border-black/15 p-8 text-sm text-black/55">No sessions are scheduled for this demo week.</div>
+          <div className="border border-black/15 p-8 text-sm text-black/55">No sessions are currently scheduled in the next 30 days.</div>
         ) : (
           <div className="space-y-14">
             {[...groupedSessions.entries()].map(([date, daySessions]) => (
