@@ -6,3 +6,5 @@ dataset-build/
 !.env.example
 .supabase/
 supabase/.temp/
+playwright-report/
+test-results/

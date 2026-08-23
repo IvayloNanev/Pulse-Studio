@@ -66,7 +66,7 @@ export default async function Home() {
 
           <div className="atmospheric-motion relative flex items-center overflow-hidden bg-[linear-gradient(125deg,#0b0b0b_5%,#531512_35%,#211f1d_58%,#090909_82%,#6f1c18_100%)] px-6 py-12 text-white sm:px-10 lg:px-12">
             <div className="absolute inset-0 bg-[linear-gradient(115deg,transparent_20%,rgba(255,255,255,0.08)_48%,transparent_70%)]" />
-            <div className="glass-panel-dark w-full rounded-[2rem] p-6 sm:p-8">
+            <div className="glass-panel-dark relative z-10 w-full rounded-[2rem] p-6 sm:p-8">
               <div className="flex items-center justify-between border-b border-white/15 pb-5">
                 <div>
                   <p className="font-mono text-[0.65rem] uppercase tracking-[0.22em] text-white/45">Coming up at Pulse</p>
