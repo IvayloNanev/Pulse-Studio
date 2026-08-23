@@ -102,6 +102,15 @@ jobs:
           NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ci-placeholder-key
         run: pnpm --dir apps/web run build
 
+      - name: Install browser used by release-gate tests
+        run: pnpm --dir apps/web exec playwright install --with-deps chromium
+
+      - name: Run browser release-gate tests
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: https://example.supabase.co
+          NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ci-placeholder-key
+        run: pnpm --dir apps/web run test:e2e
+
   database-tests:
     name: Executable database integration tests
     runs-on: ubuntu-latest
