@@ -217,6 +217,23 @@ Only the authenticated member who owns an open `confirmed` or `waitlisted` reser
 
 The response contains the cancelled reservation facts and the promoted reservation identifier when a promotion occurred.
 
+### Membership pause commands
+
+Members use `request_membership_pause(p_membership_id, p_starts_at, p_ends_at)`. The command verifies ownership, current active status, at least 30 days' notice, a 30–90 day duration, no existing pending request, one approved pause per rolling 12 months, and that the requested range fits within an active membership interval.
+
+Owner/admin staff use `approve_membership_pause(p_pause_request_id, p_decision_reason)` or `deny_membership_pause(p_pause_request_id, p_reason)`. Direct member or staff writes to pause requests are prohibited.
+
+Approval locks the request, membership, and affected history interval, then atomically:
+
+- divides the active interval into active, paused, and resumed intervals without overlap;
+- records the approving owner/admin and decision time;
+- records an append-only simulated $25 administration-fee transaction;
+- changes every confirmed or waitlisted reservation during `[starts_at, ends_at)` to `membership_paused`;
+- refunds authorized simulated drop-in payments for those reservations;
+- creates a simulated notification for every affected reservation.
+
+Denial requires a reason and records the owner/admin actor and decision time. A `membership_paused` reservation consumes neither capacity nor an included credit and is distinct from member cancellation and studio cancellation.
+
 ## 4. Product D risk queue and member review
 
 **Database interfaces:** `public.product_d_risk_queue` and `public.product_d_member_detail`

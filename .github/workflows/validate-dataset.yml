@@ -58,6 +58,9 @@ jobs:
       - name: Validate transactional studio cancellation
         run: node generator/verify_studio_cancellation_command.mjs
 
+      - name: Validate membership pause workflows
+        run: node generator/verify_membership_pause_commands.mjs
+
       - name: Validate Product B attendance commands
         run: node generator/verify_product_b_attendance_commands.mjs
 
