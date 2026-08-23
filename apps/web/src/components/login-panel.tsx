@@ -13,6 +13,14 @@ type LoginPanelProps = {
   initialError?: string | null;
 };
 
+function signInErrorMessage(error: unknown) {
+  if (error instanceof Error && /invalid login credentials/i.test(error.message)) {
+    return "The email or password is incorrect. Try again, or use ‘Forgot or need to create your password?’ below.";
+  }
+
+  return error instanceof Error ? error.message : "Sign in failed. Please try again.";
+}
+
 export function LoginPanel({ audience, initialNotice = null, initialError = null }: LoginPanelProps) {
   const isStaff = audience === "staff";
   const router = useRouter();
@@ -66,7 +74,7 @@ export function LoginPanel({ audience, initialNotice = null, initialError = null
       router.replace(isStaff ? "/staff" : "/member");
       router.refresh();
     } catch (caughtError) {
-      setError(caughtError instanceof Error ? caughtError.message : "Sign in failed. Please try again.");
+      setError(signInErrorMessage(caughtError));
     } finally {
       setIsSubmitting(false);
     }
