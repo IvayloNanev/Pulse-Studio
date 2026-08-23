@@ -61,6 +61,9 @@ jobs:
       - name: Validate membership pause workflows
         run: node generator/verify_membership_pause_commands.mjs
 
+      - name: Validate password recovery flow
+        run: node generator/verify_password_recovery_flow.mjs
+
       - name: Validate Product B attendance commands
         run: node generator/verify_product_b_attendance_commands.mjs
 

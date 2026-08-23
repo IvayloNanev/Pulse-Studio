@@ -8,7 +8,19 @@ import { Brand } from "@/components/brand";
 import { Button } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase/client";
 
-export function UpdatePasswordForm() {
+type UpdatePasswordFormProps = {
+  audience: "member" | "staff";
+  sessionReady: boolean;
+  recoveryError: string | null;
+};
+
+const recoveryMessages: Record<string, string> = {
+  missing_code: "This recovery link is incomplete. Request a new link from the login page.",
+  invalid_or_expired: "This recovery link is invalid or has expired. Request a new link from the login page.",
+  missing_session: "A secure recovery session could not be verified. Request a new link from the login page.",
+};
+
+export function UpdatePasswordForm({ audience, sessionReady, recoveryError }: UpdatePasswordFormProps) {
   const router = useRouter();
   const [password, setPassword] = useState("");
   const [confirmation, setConfirmation] = useState("");
@@ -31,14 +43,15 @@ export function UpdatePasswordForm() {
     setIsSubmitting(true);
     const supabase = createClient();
     const { error: updateError } = await supabase.auth.updateUser({ password });
-    setIsSubmitting(false);
 
     if (updateError) {
+      setIsSubmitting(false);
       setError(updateError.message);
       return;
     }
 
-    router.replace("/staff");
+    await supabase.auth.signOut();
+    router.replace(audience === "staff" ? "/staff/login?password=updated" : "/login?password=updated");
     router.refresh();
   }
 
@@ -58,11 +71,18 @@ export function UpdatePasswordForm() {
             <input required minLength={8} type="password" autoComplete="new-password" value={confirmation} onChange={(event) => setConfirmation(event.target.value)} className="mt-2 h-12 w-full border border-black/25 bg-transparent px-3 outline-none focus:border-black" />
           </label>
           {error ? <p role="alert" className="text-sm leading-6 text-[#9f1f1a]">{error}</p> : null}
-          <Button disabled={isSubmitting} type="submit" className="h-12 w-full rounded-none bg-[#c72c25] text-white hover:bg-[#a9231e] disabled:opacity-60">
+          {recoveryError ? (
+            <p role="alert" className="text-sm leading-6 text-[#9f1f1a]">
+              {recoveryMessages[recoveryError] ?? recoveryMessages.missing_session}
+            </p>
+          ) : null}
+          <Button disabled={isSubmitting || !sessionReady} type="submit" className="h-12 w-full rounded-none bg-[#c72c25] text-white hover:bg-[#a9231e] disabled:cursor-not-allowed disabled:opacity-60">
             {isSubmitting ? "Updating password…" : "Set new password"}
           </Button>
         </form>
-        <Link href="/staff/login" className="mt-7 inline-block text-sm underline underline-offset-4">Return to staff login</Link>
+        <Link href={audience === "staff" ? "/staff/login" : "/login"} className="mt-7 inline-block text-sm underline underline-offset-4">
+          Return to {audience} login
+        </Link>
       </section>
     </main>
   );
