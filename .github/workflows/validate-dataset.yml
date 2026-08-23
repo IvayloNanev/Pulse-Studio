@@ -64,8 +64,10 @@ jobs:
       - name: Validate Product D case and outreach commands
         run: node generator/verify_product_d_case_outreach_commands.mjs
 
-      - name: Enable Corepack
-        run: corepack enable
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11.19.0
 
       - name: Install web dependencies
         run: pnpm --dir apps/web install --frozen-lockfile
