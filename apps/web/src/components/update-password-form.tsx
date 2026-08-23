@@ -61,25 +61,20 @@ export function UpdatePasswordForm({ audience, sessionReady, recoveryError }: Up
         <Brand prominent />
         <p className="mt-10 font-mono text-xs uppercase tracking-[0.2em] text-black/45">Secure account recovery</p>
         <h1 className="display-pulse mt-4 text-5xl">Create a new password.</h1>
-        <form className="mt-10 space-y-6" onSubmit={handleSubmit}>
+        {sessionReady ? <form className="mt-10 space-y-6" onSubmit={handleSubmit}>
           <label className="block text-sm font-medium">
             New password
-            <input required minLength={8} type="password" autoComplete="new-password" value={password} onChange={(event) => setPassword(event.target.value)} className="mt-2 h-12 w-full border border-black/25 bg-transparent px-3 outline-none focus:border-black" />
+            <input required minLength={8} type="password" autoComplete="new-password" value={password} onChange={(event) => setPassword(event.target.value)} className="mt-2 h-12 w-full border border-black/25 bg-transparent px-3 focus-visible:border-black focus-visible:outline-2 focus-visible:outline-offset-2" />
           </label>
           <label className="block text-sm font-medium">
             Confirm new password
-            <input required minLength={8} type="password" autoComplete="new-password" value={confirmation} onChange={(event) => setConfirmation(event.target.value)} className="mt-2 h-12 w-full border border-black/25 bg-transparent px-3 outline-none focus:border-black" />
+            <input required minLength={8} type="password" autoComplete="new-password" value={confirmation} onChange={(event) => setConfirmation(event.target.value)} className="mt-2 h-12 w-full border border-black/25 bg-transparent px-3 focus-visible:border-black focus-visible:outline-2 focus-visible:outline-offset-2" />
           </label>
           {error ? <p role="alert" className="text-sm leading-6 text-[#9f1f1a]">{error}</p> : null}
-          {recoveryError ? (
-            <p role="alert" className="text-sm leading-6 text-[#9f1f1a]">
-              {recoveryMessages[recoveryError] ?? recoveryMessages.missing_session}
-            </p>
-          ) : null}
-          <Button disabled={isSubmitting || !sessionReady} type="submit" className="h-12 w-full rounded-none bg-[#c72c25] text-white hover:bg-[#a9231e] disabled:cursor-not-allowed disabled:opacity-60">
+          <Button disabled={isSubmitting} type="submit" className="h-12 w-full rounded-none bg-[#c72c25] text-white hover:bg-[#a9231e] disabled:cursor-not-allowed disabled:opacity-60">
             {isSubmitting ? "Updating password…" : "Set new password"}
           </Button>
-        </form>
+        </form> : <div className="mt-10"><p role="alert" className="text-sm leading-6 text-[#9f1f1a]">{recoveryMessages[recoveryError ?? "missing_session"] ?? recoveryMessages.missing_session}</p><Link href={audience === "staff" ? "/staff/login" : "/login"} className="mt-5 inline-flex min-h-11 items-center bg-black px-5 text-sm font-semibold text-white focus-visible:outline-2 focus-visible:outline-offset-2">Request a new recovery link</Link></div>}
         <Link href={audience === "staff" ? "/staff/login" : "/login"} className="mt-7 inline-block text-sm underline underline-offset-4">
           Return to {audience} login
         </Link>
