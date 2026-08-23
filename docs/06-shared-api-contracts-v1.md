@@ -253,3 +253,13 @@ The commands enforce `draft → ready → sent → completed`, a non-empty final
 All initially planned shared read interfaces are now defined. Write-command wrappers may be added incrementally as the product UI is implemented; canonical RLS policies and triggers already protect direct table writes.
 
 Each interface will be added and tested in a separate increment.
+
+## 5. Product C read-only assistant context
+
+**Database interfaces:** `public.product_c_policy_answers`, `public.product_c_member_context(p_from, p_as_of)`, and the existing `public_class_schedule`
+
+**Authorization:** policy answers and public schedule are public read; member context is limited to the authenticated member
+
+Product C retrieves general answers from approved, source-labelled policy records and live availability from the shared schedule. When the rules do not define a requested detail—such as class-specific preparation—the approved answer explicitly directs the member to staff instead of inventing content.
+
+After login, `product_c_member_context` composes the existing member dashboard and reservation interfaces into one response containing only the caller's membership/credit summary and upcoming reservations. It has no write command. Product C cannot create or mutate reservations, attendance, risks, notes, outreach, or staff data; booking and cancellation actions remain in Product A.
