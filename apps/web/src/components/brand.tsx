@@ -4,7 +4,7 @@ export function Brand({ inverse = false, prominent = false }: { inverse?: boolea
   return (
     <Link
       href="/"
-      className={`inline-flex max-w-full min-w-0 items-center ${prominent ? "gap-3 sm:gap-5" : "gap-3"} ${inverse ? "text-white" : "text-black"}`}
+      className={`inline-flex max-w-full min-w-0 items-center rounded-md focus-visible:outline-2 focus-visible:outline-offset-4 ${inverse ? "focus-visible:outline-white" : "focus-visible:outline-[#c72c25]"} ${prominent ? "gap-3 sm:gap-5" : "gap-3"} ${inverse ? "text-white" : "text-black"}`}
       aria-label="Pulse Studio home"
     >
       <svg viewBox="0 0 64 40" className={prominent ? "h-12 w-16 shrink-0 overflow-visible sm:h-16 sm:w-24" : "h-9 w-14 shrink-0 overflow-visible"} aria-hidden="true">

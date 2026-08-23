@@ -44,7 +44,7 @@ export default async function StaffRostersPage() {
   const sessions = (data ?? []) as StaffSession[];
 
   return (
-    <PortalShell eyebrow="Staff portal · Product B" title="Class rosters" description="Open a live session roster, review confirmed and waitlisted members, and record authoritative attendance outcomes." links={links}>
+    <PortalShell audience="staff" eyebrow="Staff portal · Product B" title="Class rosters" description="Open a live session roster, review confirmed and waitlisted members, and record authoritative attendance outcomes." links={links}>
       {error ? (
         <div role="alert" className="border border-[#c72c25]/35 bg-[#c72c25]/5 p-6 text-sm text-[#8e211c]">The staff schedule could not be loaded.</div>
       ) : sessions.length === 0 ? (
@@ -67,4 +67,3 @@ export default async function StaffRostersPage() {
     </PortalShell>
   );
 }
-

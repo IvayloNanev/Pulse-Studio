@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { Brand } from "@/components/brand";
@@ -21,6 +21,11 @@ function signInErrorMessage(error: unknown) {
   return error instanceof Error ? error.message : "Sign in failed. Please try again.";
 }
 
+function recoveryCooldownSeconds(message: string) {
+  const match = message.match(/after\s+(\d+)\s+seconds?/i);
+  return match ? Number(match[1]) : 0;
+}
+
 export function LoginPanel({ audience, initialNotice = null, initialError = null }: LoginPanelProps) {
   const isStaff = audience === "staff";
   const router = useRouter();
@@ -28,14 +33,27 @@ export function LoginPanel({ audience, initialNotice = null, initialError = null
   const [password, setPassword] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSendingRecovery, setIsSendingRecovery] = useState(false);
-  const [notice, setNotice] = useState<string | null>(initialNotice);
+  const [notice] = useState<string | null>(initialNotice);
   const [error, setError] = useState<string | null>(initialError);
+  const [recoveryNotice, setRecoveryNotice] = useState<string | null>(null);
+  const [recoveryError, setRecoveryError] = useState<string | null>(null);
+  const [recoveryCooldown, setRecoveryCooldown] = useState(0);
+
+  useEffect(() => {
+    if (recoveryCooldown <= 0) return;
+
+    const timer = window.setInterval(() => {
+      setRecoveryCooldown((seconds) => Math.max(0, seconds - 1));
+    }, 1000);
+
+    return () => window.clearInterval(timer);
+  }, [recoveryCooldown]);
 
   async function sendPasswordRecovery() {
-    setError(null);
-    setNotice(null);
+    setRecoveryError(null);
+    setRecoveryNotice(null);
     if (!email) {
-      setError("Enter your email address first.");
+      setRecoveryError("Enter your email address above before requesting a recovery link.");
       return;
     }
 
@@ -47,15 +65,23 @@ export function LoginPanel({ audience, initialNotice = null, initialError = null
     setIsSendingRecovery(false);
 
     if (recoveryError) {
-      setError(recoveryError.message);
+      const seconds = recoveryCooldownSeconds(recoveryError.message);
+      if (seconds > 0) {
+        setRecoveryCooldown(seconds);
+        setRecoveryError("A recovery email was requested recently. You can request another when the countdown ends.");
+      } else {
+        setRecoveryError("We could not send a recovery email. Please try again in a moment.");
+      }
       return;
     }
-    setNotice("Check your email for a secure password-recovery link.");
+    setRecoveryNotice("Recovery email sent. Open the newest Pulse Studio email and use its secure link.");
   }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError(null);
+    setRecoveryError(null);
+    setRecoveryNotice(null);
     setIsSubmitting(true);
 
     try {
@@ -112,8 +138,16 @@ export function LoginPanel({ audience, initialNotice = null, initialError = null
             <Button disabled={isSubmitting} type="submit" className="h-12 w-full rounded-none bg-[#c72c25] text-white hover:bg-[#a9231e] disabled:cursor-not-allowed disabled:opacity-60">
               {isSubmitting ? "Signing in…" : `Sign in as ${isStaff ? "staff" : "member"}`}
             </Button>
-            <button disabled={isSendingRecovery} type="button" onClick={sendPasswordRecovery} className="min-h-11 w-full text-sm underline underline-offset-4 focus-visible:outline-2 focus-visible:outline-offset-2 disabled:opacity-60">
-              {isSendingRecovery ? "Sending recovery email…" : "Forgot or need to create your password?"}
+            <div className="space-y-2 border-t border-black/15 pt-4">
+              {recoveryError ? <p role="alert" className="text-sm leading-6 text-[#9f1f1a]">{recoveryError}</p> : null}
+              {recoveryNotice ? <p role="status" className="text-sm leading-6 text-black/65">{recoveryNotice}</p> : null}
+            </div>
+            <button disabled={isSendingRecovery || recoveryCooldown > 0} type="button" onClick={sendPasswordRecovery} className="min-h-11 w-full text-sm underline underline-offset-4 focus-visible:outline-2 focus-visible:outline-offset-2 disabled:cursor-not-allowed disabled:no-underline disabled:opacity-60">
+              {isSendingRecovery
+                ? "Sending recovery email…"
+                : recoveryCooldown > 0
+                  ? `Request another recovery email in ${recoveryCooldown}s`
+                  : "Forgot or need to create your password?"}
             </button>
           </form>
           <p className="mt-6 text-xs leading-5 text-black/50">
