@@ -69,7 +69,7 @@ Plan records are normalized and reusable. The dataset contract must use the plan
 | `membership_id` | string | yes | Primary key |
 | `member_id` | string | yes | FK → `members.member_id` |
 | `plan_id` | string | yes | FK → `membership_plans.plan_id` |
-| `status` | `membership_status` | yes | Current state |
+| `status` | `membership_status` | yes | Compatibility snapshot for imports and administration; not authoritative for time-sensitive eligibility |
 | `start_date` | date | yes | On or before `end_date`, when present |
 | `billing_cycle_start_date` | date | yes | Anchor for monthly credit calculation |
 | `end_date` | date | no | Required when the membership has ended |
@@ -88,6 +88,8 @@ This is the one history table retained in assignment scope because pauses, resum
 | `ended_at` | timestamp | no | Must be after `effective_at` |
 
 Intervals for the same membership must not overlap. A pause freezes the billing cycle and available credits; resumption is represented by a new `active` interval and continues from the frozen position rather than consuming paused time. The billing-cycle end is extended by the exact total duration of all non-overlapping pause intervals in that cycle.
+
+`membership_status_history` is the authoritative source for status at any point in time. Booking, member-dashboard, credit, and Product D eligibility rules must resolve the interval containing the event timestamp through `membership_status_at(membership_id, timestamp)`. They must not combine that result with the `memberships.status` compatibility snapshot.
 
 ### 3.5 `class_sessions`
 

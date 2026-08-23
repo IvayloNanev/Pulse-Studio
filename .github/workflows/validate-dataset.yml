@@ -76,6 +76,9 @@ jobs:
       - name: Validate Product D concurrency protection
         run: node generator/verify_product_d_concurrency.mjs
 
+      - name: Validate membership status authority
+        run: node generator/verify_membership_status_authority.mjs
+
       - name: Validate Product D case and outreach commands
         run: node generator/verify_product_d_case_outreach_commands.mjs
 
