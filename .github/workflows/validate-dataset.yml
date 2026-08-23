@@ -98,7 +98,7 @@ jobs:
 
       - name: Build web application
         env:
-          NEXT_PUBLIC_SUPABASE_URL: https://example.supabase.co
+          NEXT_PUBLIC_SUPABASE_URL: http://127.0.0.1:54329
           NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ci-placeholder-key
         run: pnpm --dir apps/web run build
 
@@ -107,7 +107,7 @@ jobs:
 
       - name: Run browser release-gate tests
         env:
-          NEXT_PUBLIC_SUPABASE_URL: https://example.supabase.co
+          NEXT_PUBLIC_SUPABASE_URL: http://127.0.0.1:54329
           NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ci-placeholder-key
         run: pnpm --dir apps/web run test:e2e
 
