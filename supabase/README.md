@@ -19,6 +19,18 @@ RLS is enabled without client policies in the first migration. This deliberately
 
 Never place the database password, service-role key, personal access token, or `.env` values in Git.
 
+## Executable database tests
+
+The pgTAP suite in `tests/database/` runs real commands against an isolated local Supabase database. Run it with:
+
+```sh
+supabase start
+supabase test db
+supabase stop --no-backup
+```
+
+The suite wraps its fixtures in a transaction and rolls them back. GitHub Actions runs the same tests for every pull request, independently of the hosted development database.
+
 ## Versioned dataset seed
 
 Run `node generator/build_supabase_seed.mjs` after an accepted dataset change to regenerate `supabase/seed.sql`. The seed uses ordinary SQL inserts, follows foreign-key dependency order, and runs in one transaction. It intentionally stops if the database already contains member data so it cannot duplicate or overwrite an existing environment.

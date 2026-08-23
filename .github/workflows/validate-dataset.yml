@@ -79,6 +79,9 @@ jobs:
       - name: Validate membership status authority
         run: node generator/verify_membership_status_authority.mjs
 
+      - name: Validate executable database test contract
+        run: node generator/verify_database_integration_tests.mjs
+
       - name: Validate Product D case and outreach commands
         run: node generator/verify_product_d_case_outreach_commands.mjs
 
@@ -98,3 +101,26 @@ jobs:
           NEXT_PUBLIC_SUPABASE_URL: https://example.supabase.co
           NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ci-placeholder-key
         run: pnpm --dir apps/web run build
+
+  database-tests:
+    name: Executable database integration tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Supabase CLI
+        uses: supabase/setup-cli@v1
+        with:
+          version: 2.115.0
+
+      - name: Start isolated Supabase stack
+        run: supabase start
+
+      - name: Execute pgTAP business workflow tests
+        run: supabase test db
+
+      - name: Stop isolated Supabase stack
+        if: always()
+        run: supabase stop --no-backup
