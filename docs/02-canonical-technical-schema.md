@@ -26,7 +26,7 @@ Pulse Studio's assignment timezone is `America/New_York`. Stored timestamps stil
 |---|---|
 | `class_type` | `yoga`, `cycling`, `hiit` |
 | `membership_status` | `active`, `paused`, `cancelled` |
-| `reservation_status` | `confirmed`, `waitlisted`, `cancelled`, `studio_cancelled` |
+| `reservation_status` | `confirmed`, `waitlisted`, `cancelled`, `studio_cancelled`, `membership_paused` |
 | `attendance_status` | `attended`, `no_show` |
 | `risk_level` | `medium`, `high` |
 | `outreach_status` | `draft`, `ready`, `sent`, `completed` |
@@ -247,6 +247,7 @@ These tables are part of the simulation contract and keep runtime facts separate
 | `staff_accounts` | `staff_id`, auth provider subject, identity, email, role, account status, created time. One owner/admin and three instructors; no passwords or password hashes are stored. |
 | `member_accounts` | `account_id`, `member_id`, auth provider subject, email verification flag, account status, created time. No passwords or hashes. |
 | `membership_pause_requests` | Request/start/end/status, owner approval, approval time, and $25 fee; approved duration is 30–90 days with 30 days' notice. |
+| `membership_fee_transactions` | Append-only simulated $25 pause-administration fee linked to its membership, request, approving owner/admin, and timestamp. |
 | `drop_in_payments` | Reservation/member, $35 amount, authorized/refunded state, created/refunded times. |
 | `waitlist_promotions` | Reservation/session, promotion time, and linked notification. Promotion is automatic while capacity exists and the class has not started. |
 | `class_session_actions` | Append-only owner/admin schedule action with session, action type, required reason, actor, and timestamp. |
