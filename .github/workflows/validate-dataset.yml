@@ -52,6 +52,9 @@ jobs:
       - name: Validate Product A hardening corrections
         run: node generator/verify_product_a_hardening.mjs
 
+      - name: Validate staff authorization hardening
+        run: node generator/verify_staff_authorization_hardening.mjs
+
       - name: Validate Product B attendance commands
         run: node generator/verify_product_b_attendance_commands.mjs
 
