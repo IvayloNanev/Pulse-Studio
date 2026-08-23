@@ -153,6 +153,35 @@ The canonical database trigger remains authoritative: it rejects non-confirmed r
 
 The default `p_from` is the current time. Deterministic dataset and integration tests may supply the fixture clock explicitly. Product C may read these authenticated facts but directs booking and cancellation actions to Product A.
 
+### Book class command
+
+**Database command:** `public.book_class_session(p_class_session_id)`
+
+**Authorization:** authenticated active member only
+
+The command, rather than the browser, determines the booking result. It locks the requested session, rejects cancelled or started sessions and duplicate open bookings, resolves the caller through `current_member_id()`, and verifies that the membership is active both when booking and when the class occurs.
+
+- If confirmed capacity remains, the command requires an available membership credit and creates a `confirmed` reservation.
+- If confirmed capacity is full, the command creates a `waitlisted` reservation and does not hold a credit.
+- Capacity, membership identity, credit availability, reservation status, and reservation identifiers are never accepted from the client.
+- Concurrent requests for the same session are serialized by the session-row lock, preventing overbooking.
+
+The response contains `reservation_id`, `class_session_id`, `reservation_status`, `reserved_at`, and `available_spots_after_booking`.
+
+### Cancel reservation command
+
+**Database command:** `public.cancel_member_reservation(p_reservation_id)`
+
+Only the authenticated member who owns an open `confirmed` or `waitlisted` reservation may cancel it. The command locks both the reservation and its class session and rejects cancellation after the class starts.
+
+- A confirmed cancellation strictly less than 12 hours before the class is late and consumes its credit.
+- A cancellation exactly 12 hours before the class is early and does not consume a credit.
+- Cancelling a waitlist entry is never a late cancellation and consumes no credit.
+- When a confirmed spot opens, the earliest eligible waitlist entry is promoted under the same session lock.
+- Cancellation and promotion notifications are simulated and persisted; a promotion also creates its audit record.
+
+The response contains the cancelled reservation facts and the promoted reservation identifier when a promotion occurred.
+
 ## 4. Product D risk queue and member review
 
 **Database interfaces:** `public.product_d_risk_queue` and `public.product_d_member_detail`
