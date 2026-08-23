@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ArrowLeft, LogOut } from "lucide-react";
 
 import { Brand } from "@/components/brand";
+import { signOut } from "@/app/auth/actions";
 
 type PortalShellProps = {
   eyebrow: string;
@@ -26,9 +27,13 @@ export function PortalShell({ eyebrow, title, description, links, children }: Po
             ))}
           </nav>
         </div>
-        <div className="mt-8 flex items-center justify-between border-t border-white/15 pt-5 text-xs text-white/50">
+        <div className="mt-8 flex items-center justify-between gap-4 border-t border-white/15 pt-5 text-xs text-white/50">
           <Link href="/" className="inline-flex items-center gap-2 hover:text-white"><ArrowLeft className="size-3.5" /> Public site</Link>
-          <LogOut className="size-3.5" aria-hidden="true" />
+          <form action={signOut}>
+            <button type="submit" className="inline-flex min-h-11 items-center gap-2 px-2 font-semibold text-white/70 transition hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white">
+              <LogOut className="size-3.5" aria-hidden="true" /> Sign out
+            </button>
+          </form>
         </div>
       </aside>
       <main className="relative overflow-hidden px-6 py-10 sm:px-10 lg:px-14 lg:py-14">

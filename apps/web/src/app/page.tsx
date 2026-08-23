@@ -3,12 +3,19 @@ import { ArrowRight, Clock3, Dumbbell, Flame, Gauge } from "lucide-react";
 
 import { SiteHeader } from "@/components/site-header";
 import { Button } from "@/components/ui/button";
+import { createClient } from "@/lib/supabase/server";
 
-const sessions = [
-  { time: "07:00", name: "Morning Flow", type: "Yoga", spots: "6 spots" },
-  { time: "09:30", name: "Pulse Ride", type: "Cycling", spots: "3 spots" },
-  { time: "12:15", name: "Core Interval", type: "HIIT", spots: "Waitlist" },
-];
+type HomeSession = {
+  class_session_id: string;
+  class_type: "yoga" | "cycling" | "hiit";
+  class_type_label: string;
+  starts_at: string;
+  available_spots: number;
+  is_full: boolean;
+};
+
+const classNames = { yoga: "Studio Flow", cycling: "Pulse Ride", hiit: "Power Interval" };
+const sessionTime = new Intl.DateTimeFormat("en-US", { timeZone: "America/New_York", hour: "numeric", minute: "2-digit" });
 
 const programs = [
   { number: "01", name: "Yoga", detail: "Mobility, control, recovery", icon: Gauge },
@@ -16,7 +23,15 @@ const programs = [
   { number: "03", name: "HIIT", detail: "Strength, speed, conditioning", icon: Dumbbell },
 ];
 
-export default function Home() {
+export default async function Home() {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("public_class_schedule")
+    .select("class_session_id,class_type,class_type_label,starts_at,available_spots,is_full")
+    .gte("starts_at", new Date().toISOString())
+    .order("starts_at", { ascending: true })
+    .limit(3);
+  const sessions = (data ?? []) as HomeSession[];
   return (
     <main className="min-h-screen bg-[#f3f0e9] text-[#111111]">
       <SiteHeader />
@@ -54,22 +69,23 @@ export default function Home() {
             <div className="glass-panel-dark w-full rounded-[2rem] p-6 sm:p-8">
               <div className="flex items-center justify-between border-b border-white/15 pb-5">
                 <div>
-                  <p className="font-mono text-[0.65rem] uppercase tracking-[0.22em] text-white/45">Today at Pulse</p>
+                  <p className="font-mono text-[0.65rem] uppercase tracking-[0.22em] text-white/45">Coming up at Pulse</p>
                   <h2 className="mt-2 text-3xl font-semibold tracking-[-0.045em]">Your next session.</h2>
                 </div>
                 <Clock3 className="size-6 text-[#e23b32]" aria-hidden="true" />
               </div>
               <div>
                 {sessions.map((session) => (
-                  <Link key={session.time} href="/classes" className="group grid grid-cols-[4.5rem_1fr_auto] items-center gap-3 border-b border-white/15 py-5">
-                    <span className="font-mono text-sm text-white/55">{session.time}</span>
+                  <Link key={session.class_session_id} href="/classes" className="group grid grid-cols-[4.5rem_1fr_auto] items-center gap-3 border-b border-white/15 py-5">
+                    <span className="font-mono text-sm text-white/55">{sessionTime.format(new Date(session.starts_at))}</span>
                     <span>
-                      <strong className="block text-base font-semibold">{session.name}</strong>
-                      <span className="text-xs text-white/45">{session.type}</span>
+                      <strong className="block text-base font-semibold">{classNames[session.class_type]}</strong>
+                      <span className="text-xs text-white/45">{session.class_type_label}</span>
                     </span>
-                    <span className="text-xs font-semibold uppercase tracking-[0.1em] text-white/55 transition group-hover:text-[#ff5b52]">{session.spots}</span>
+                    <span className="text-xs font-semibold uppercase tracking-[0.1em] text-white/55 transition group-hover:text-[#ff5b52]">{session.is_full ? "Waitlist" : `${session.available_spots} spots`}</span>
                   </Link>
                 ))}
+                {sessions.length === 0 && <p className="py-8 text-sm text-white/55">The next schedule is being prepared.</p>}
               </div>
               <Link href="/classes" className="mt-6 inline-flex items-center gap-2 text-sm font-semibold text-white">Full schedule <ArrowRight className="size-4" /></Link>
             </div>
