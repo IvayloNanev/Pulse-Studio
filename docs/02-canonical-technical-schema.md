@@ -249,6 +249,7 @@ These tables are part of the simulation contract and keep runtime facts separate
 | `membership_pause_requests` | Request/start/end/status, owner approval, approval time, and $25 fee; approved duration is 30–90 days with 30 days' notice. |
 | `drop_in_payments` | Reservation/member, $35 amount, authorized/refunded state, created/refunded times. |
 | `waitlist_promotions` | Reservation/session, promotion time, and linked notification. Promotion is automatic while capacity exists and the class has not started. |
+| `class_session_actions` | Append-only owner/admin schedule action with session, action type, required reason, actor, and timestamp. |
 | `attendance_corrections` | Attendance row, previous/new status, reason, correcting staff member, and timestamp. |
 | `risk_case_notes` | Member/assessment note with creator, edit, and soft-delete actor/timestamps. |
 | `notifications` | Simulated booking, cancellation, schedule-change, promotion, and outreach messages with channel/status and related record. |
