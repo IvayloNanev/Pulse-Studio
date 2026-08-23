@@ -80,6 +80,8 @@ export function LoginPanel({ audience, initialNotice = null, initialError = null
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError(null);
+    setRecoveryError(null);
+    setRecoveryNotice(null);
     setIsSubmitting(true);
 
     try {

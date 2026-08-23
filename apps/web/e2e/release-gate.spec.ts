@@ -57,7 +57,7 @@ for (const audience of ["member", "staff"] as const) {
     await page.goto(route);
     await page.getByRole("button", { name: "Forgot or need to create your password?" }).click();
     const formAlert = page.locator('p[role="alert"]');
-    await expect(formAlert).toHaveText("Enter your email address first.");
+    await expect(formAlert).toHaveText("Enter your email address above before requesting a recovery link.");
 
     await page.getByLabel("Email address").fill(`${audience}@example.invalid`);
     await page.getByLabel("Password").fill("not-a-real-password");
