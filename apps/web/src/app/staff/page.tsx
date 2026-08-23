@@ -4,15 +4,14 @@ import { requireStaff } from "@/lib/auth";
 
 const links = [
   { href: "/staff", label: "Overview" },
-  { href: "/staff", label: "Rosters" },
-  { href: "/staff", label: "Attendance" },
-  { href: "/staff", label: "Member retention" },
+  { href: "/staff/rosters", label: "Rosters" },
+  { href: "/staff/retention", label: "Member retention" },
 ];
 
 const items = [
-  { href: "/staff", title: "Class rosters", description: "Review session capacity and the confirmed member roster.", label: "Product B" },
-  { href: "/staff", title: "Record attendance", description: "Record attended or no-show outcomes after each session.", label: "Product B" },
-  { href: "/staff", title: "Flagged members", description: "Review risk evidence and manage staff-approved outreach.", label: "Product D" },
+  { href: "/staff/rosters", title: "Class rosters", description: "Open upcoming sessions and review confirmed and waitlisted members.", label: "Product B" },
+  { href: "/staff/rosters", title: "Record attendance", description: "Record attended or no-show outcomes within the approved window.", label: "Product B" },
+  { href: "/staff/retention", title: "Flagged members", description: "Review risk evidence and manage staff-approved outreach.", label: "Product D" },
 ];
 
 export default async function StaffPortalPage() {
