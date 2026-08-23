@@ -242,6 +242,12 @@ The command is idempotent for the same member and evaluation time. It does not c
 
 A qualifying assessment creates attempt-one draft outreach only when the member is active and contactable. The database selects the member's valid preferred channel, generates and preserves the original message, attributes creation to the acting staff member, and appends the creation audit action. Paused, cancelled, and do-not-contact members may retain factual assessments without receiving outreach.
 
+### Product D staff commands
+
+Product D uses authoritative staff commands for note CRUD, starting or dismissing review, editing and approving drafts, simulated sending, response completion, eligible retries, and three-attempt no-response resolution. Every command resolves the actor from the authenticated staff account and uses database timestamps. Note edits and soft deletion preserve creator and later-actor metadata. Outreach creation, editing, approval, sending, and completion append action-audit records.
+
+The commands enforce `draft → ready → sent → completed`, a non-empty final message before approval, response outcome at completion, exactly 14 full days before retry, a three-attempt maximum, active/contactable eligibility, and `no_response` resolution after the third unanswered cooldown. Simulated sending creates a notification fact but never contacts a real provider. Broad direct staff writes to risk, outreach, note, and action tables are removed; staff retains read access through RLS and writes only through the commands.
+
 ## Planned next interfaces
 
 All initially planned shared read interfaces are now defined. Write-command wrappers may be added incrementally as the product UI is implemented; canonical RLS policies and triggers already protect direct table writes.
