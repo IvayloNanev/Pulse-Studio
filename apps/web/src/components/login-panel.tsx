@@ -32,7 +32,7 @@ export function LoginPanel({ audience }: LoginPanelProps) {
     setIsSendingRecovery(true);
     const supabase = createClient();
     const { error: recoveryError } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/auth/update-password`,
+      redirectTo: `${window.location.origin}/auth/callback?audience=${audience}`,
     });
     setIsSendingRecovery(false);
 
