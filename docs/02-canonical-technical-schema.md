@@ -108,7 +108,8 @@ Intervals for the same membership must not overlap. A pause freezes the billing 
 | `reservation_id` | string | yes | Primary key |
 | `member_id` | string | yes | FK → `members.member_id` |
 | `class_session_id` | string | yes | FK → `class_sessions.class_session_id` |
-| `membership_id` | string | conditional | FK → `memberships.membership_id`; blank only when an authorized $35 drop-in payment exists |
+| `membership_id` | string | conditional | FK → `memberships.membership_id`; blank for a selected simulated drop-in path |
+| `uses_drop_in` | boolean | yes | True when the member selected the simulated $35 drop-in path; a waitlist selection is charged only after promotion |
 | `status` | `reservation_status` | yes | Current reservation state |
 | `reserved_at` | timestamp | yes | On or before session start |
 | `cancelled_at` | timestamp | no | Required for member cancellation |

@@ -45,3 +45,38 @@ jobs:
 
       - name: Validate Product D risk contracts
         run: node generator/verify_product_d_api_migration.mjs
+
+      - name: Validate Product A booking commands
+        run: node generator/verify_product_a_booking_migration.mjs
+
+      - name: Validate Product A hardening corrections
+        run: node generator/verify_product_a_hardening.mjs
+
+      - name: Validate Product B attendance commands
+        run: node generator/verify_product_b_attendance_commands.mjs
+
+      - name: Validate Product C read-only contract
+        run: node generator/verify_product_c_read_only_contract.mjs
+
+      - name: Validate Product D risk evaluation command
+        run: node generator/verify_product_d_risk_evaluation_command.mjs
+
+      - name: Validate Product D case and outreach commands
+        run: node generator/verify_product_d_case_outreach_commands.mjs
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11.19.0
+
+      - name: Install web dependencies
+        run: pnpm --dir apps/web install --frozen-lockfile
+
+      - name: Lint web application
+        run: pnpm --dir apps/web run lint
+
+      - name: Build web application
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: https://example.supabase.co
+          NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ci-placeholder-key
+        run: pnpm --dir apps/web run build

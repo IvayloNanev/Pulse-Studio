@@ -162,16 +162,18 @@ The default `p_from` is the current time. Deterministic dataset and integration 
 
 ### Book class command
 
-**Database command:** `public.book_class_session(p_class_session_id)`
+**Database command:** `public.book_class_session(p_class_session_id, p_use_drop_in default false)`
 
 **Authorization:** authenticated active member only
 
 The command, rather than the browser, determines the booking result. It locks the requested session, rejects cancelled or started sessions and duplicate open bookings, resolves the caller through `current_member_id()`, and verifies that the membership is active both when booking and when the class occurs.
 
-- If confirmed capacity remains, the command requires an available membership credit and creates a `confirmed` reservation.
-- If confirmed capacity is full, the command creates a `waitlisted` reservation and does not hold a credit.
+- If confirmed capacity remains, the command uses a membership credit from the billing cycle containing the class session, or creates a simulated $35 drop-in payment when `p_use_drop_in` is true.
+- If confirmed capacity is full, the command creates a `waitlisted` reservation and neither holds a credit nor creates a payment. A selected drop-in choice is retained and charged only if the reservation is promoted.
+- A confirmed booking with no remaining class-cycle credit is rejected unless the member explicitly chooses the simulated drop-in option.
 - Capacity, membership identity, credit availability, reservation status, and reservation identifiers are never accepted from the client.
 - Concurrent requests for the same session are serialized by the session-row lock, preventing overbooking.
+- Members cannot insert or update reservation or payment rows directly; booking and cancellation must use these authoritative commands.
 
 The response contains `reservation_id`, `class_session_id`, `reservation_status`, `reserved_at`, and `available_spots_after_booking`.
 
@@ -184,6 +186,7 @@ Only the authenticated member who owns an open `confirmed` or `waitlisted` reser
 - A confirmed cancellation strictly less than 12 hours before the class is late and consumes its credit.
 - A cancellation exactly 12 hours before the class is early and does not consume a credit.
 - Cancelling a waitlist entry is never a late cancellation and consumes no credit.
+- An early confirmed drop-in cancellation creates a simulated refund; a late drop-in cancellation does not.
 - When a confirmed spot opens, the earliest eligible waitlist entry is promoted under the same session lock.
 - Cancellation and promotion notifications are simulated and persisted; a promotion also creates its audit record.
 
