@@ -5,6 +5,15 @@
 
 These interfaces are shared boundaries for Products A–D. Product code should consume these contracts instead of reproducing joins or renaming fields independently.
 
+### Authorization boundary
+
+- Members and staff may read only the records granted by RLS for their role.
+- Product workflow tables are not general-purpose writable APIs.
+- Reservations, class-session cancellation, simulated payments, notifications, waitlist promotions, attendance, risk cases, notes, and outreach are changed only through explicit database commands.
+- A command resolves the authenticated actor, validates the complete business rule, locks affected rows, derives timestamps and identifiers, and records required audit or notification side effects in one transaction.
+- Instructors may operate rosters, attendance, and Product D through their approved commands. Membership administration, schedule mutation, studio cancellation, and exceptional overrides require an owner/admin command.
+- Possession of an authenticated session never grants broad table mutation rights.
+
 ## 1. Public class schedule
 
 **Database interface:** `public.public_class_schedule`  
