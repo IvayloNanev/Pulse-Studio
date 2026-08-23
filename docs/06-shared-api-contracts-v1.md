@@ -88,6 +88,13 @@ Product B records an initial outcome by inserting into `public.attendance_record
 
 The canonical database trigger remains authoritative: it rejects non-confirmed reservations, cancelled sessions, duplicate outcomes, attended timestamps outside the −15/+20 minute window, and no-shows before the +20-minute boundary. Later changes use `attendance_corrections` so the previous value, new value, reason, staff member, and time remain auditable.
 
+Product B writes through two authenticated staff commands:
+
+- `record_attendance(p_reservation_id, p_attendance_status)` creates the initial outcome using the database clock and a generated stable identifier. The client supplies neither `recorded_at` nor `attendance_record_id`.
+- `correct_attendance(p_attendance_record_id, p_new_status, p_reason)` requires a non-empty reason, records the previous and new outcomes with the active staff identifier and correction time, and then updates the current attendance outcome.
+
+Direct attendance-status changes without a matching correction created in the same transaction are rejected. The original reservation association and original recording time remain immutable.
+
 ## 3. Product A member dashboard
 
 **Database interfaces:** `public.member_dashboard(p_as_of)` and `public.member_reservations(p_from)`
