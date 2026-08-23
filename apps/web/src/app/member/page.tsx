@@ -1,35 +1,24 @@
-import { FoundationGrid } from "@/components/foundation-grid";
+import Link from "next/link";
+
+import { MemberHome } from "@/components/member-home";
+import type { MemberDashboardReservation, MemberDashboardSummary } from "@/components/member-dashboard";
+import { MemberStatusMessage } from "@/components/member-status-message";
 import { PortalShell } from "@/components/portal-shell";
 import { requireMember } from "@/lib/auth";
+import { memberLinks } from "@/lib/member-navigation";
 
-const links = [
-  { href: "/member", label: "Overview" },
-  { href: "/member/classes", label: "Class schedule" },
-  { href: "/member/reservations", label: "Reservations" },
-  { href: "/member/assistant", label: "Pulse Assistant" },
-];
-
-const items = [
-  { href: "/member/classes", title: "Browse classes", description: "Reserve with a credit, choose drop-in, or join a waitlist.", label: "Product A" },
-  { href: "/member/reservations", title: "My reservations", description: "Review upcoming bookings, waitlists, and cancellations.", label: "Product A" },
-  { href: "/member/assistant", title: "Pulse Assistant", description: "Ask about policies, classes, credits, or your reservations.", label: "Product C" },
-];
-
-export default async function MemberPortalPage() {
+export default async function MemberPortalPage({ searchParams }: { searchParams: Promise<{ success?: string; error?: string }> }) {
   const { supabase } = await requireMember();
-  const { data } = await supabase.rpc("member_dashboard", { p_as_of: new Date().toISOString() });
-  const dashboard = data?.[0];
+  const params = await searchParams;
+  const now = new Date().toISOString();
+  const [{ data: dashboardData, error: dashboardError }, { data: reservationData, error: reservationError }] = await Promise.all([
+    supabase.rpc("member_dashboard", { p_as_of: now }),
+    supabase.rpc("member_reservations", { p_from: now }),
+  ]);
+  const dashboard = dashboardData?.[0] as MemberDashboardSummary | undefined;
 
-  return (
-    <PortalShell eyebrow="Member portal" title={dashboard ? `Welcome, ${dashboard.member_name}` : "Your week at Pulse"} description="Book classes, manage reservations, and see your current membership in one place." links={links}>
-      {dashboard && (
-        <section className="glass-panel mb-8 grid gap-5 rounded-3xl p-6 sm:grid-cols-3" aria-label="Membership summary">
-          <div><p className="font-mono text-xs uppercase tracking-[0.16em] text-black/50">Plan</p><p className="mt-2 text-xl font-semibold">{dashboard.plan_name}</p></div>
-          <div><p className="font-mono text-xs uppercase tracking-[0.16em] text-black/50">Credits remaining</p><p className="mt-2 text-xl font-semibold">{dashboard.classes_remaining} of {dashboard.classes_per_month}</p></div>
-          <div><p className="font-mono text-xs uppercase tracking-[0.16em] text-black/50">Membership</p><p className="mt-2 text-xl font-semibold capitalize">{dashboard.membership_status}</p></div>
-        </section>
-      )}
-      <FoundationGrid items={items} />
-    </PortalShell>
-  );
+  return <PortalShell audience="member" eyebrow="Member portal" title="Home" description="Your Pulse Studio home." links={memberLinks} showHeader={false}>
+    <MemberStatusMessage success={params.success} error={params.error} />
+    {dashboardError ? <div role="alert" className="rounded-3xl border border-[#c72c25]/35 bg-[#c72c25]/5 p-6 text-sm text-[#8e211c]">Your membership details could not be loaded. Refresh and try again.</div> : dashboard ? <MemberHome summary={dashboard} reservations={(reservationData ?? []) as MemberDashboardReservation[]} reservationError={reservationError ? "Your reservations are temporarily unavailable." : undefined} /> : <div className="rounded-3xl border border-black/10 bg-white/60 p-8"><h1 className="text-2xl font-semibold">Membership details are not available</h1><p className="mt-2 max-w-xl text-sm leading-6 text-black/65">Your account is connected, but there is no active or paused membership to display.</p><Link href="/member?assistant=open" className="mt-5 inline-flex min-h-11 items-center rounded-full bg-black px-5 text-sm font-semibold text-white">Ask Pulse for guidance</Link></div>}
+  </PortalShell>;
 }

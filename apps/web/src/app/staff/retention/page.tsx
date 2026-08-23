@@ -33,7 +33,7 @@ export default async function RetentionQueuePage() {
   const cases = (data ?? []) as RiskQueueItem[];
 
   return (
-    <PortalShell eyebrow="Staff portal · Product D" title="Members needing attention" description="Prioritized attendance-decline cases with factual evidence, coworker notes, and controlled outreach." links={links}>
+    <PortalShell audience="staff" eyebrow="Staff portal · Product D" title="Members needing attention" description="Prioritized attendance-decline cases with factual evidence, coworker notes, and controlled outreach." links={links}>
       {error ? (
         <div role="alert" className="border border-[#c72c25]/35 bg-[#c72c25]/5 p-6 text-sm text-[#8e211c]">The retention queue could not be loaded.</div>
       ) : cases.length === 0 ? (
@@ -61,4 +61,3 @@ export default async function RetentionQueuePage() {
     </PortalShell>
   );
 }
-

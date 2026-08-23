@@ -16,5 +16,5 @@ const items = [
 
 export default async function StaffPortalPage() {
   await requireStaff();
-  return <PortalShell eyebrow="Staff portal" title="Today at Pulse" description="A separate operational workspace for schedules, attendance, and member re-engagement." links={links}><FoundationGrid items={items} /></PortalShell>;
+  return <PortalShell audience="staff" eyebrow="Staff portal" title="Today at Pulse" description="A separate operational workspace for schedules, attendance, and member re-engagement." links={links}><FoundationGrid items={items} /></PortalShell>;
 }

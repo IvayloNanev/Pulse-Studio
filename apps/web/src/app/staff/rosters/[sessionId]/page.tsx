@@ -55,7 +55,7 @@ export default async function StaffRosterPage({
   const session = roster[0];
 
   return (
-    <PortalShell eyebrow="Staff portal · Product B" title={session ? `${session.class_type_label} roster` : "Session roster"} description={session ? formatter.format(new Date(session.starts_at)) : "Review reservations and attendance eligibility for this session."} links={links}>
+    <PortalShell audience="staff" eyebrow="Staff portal · Product B" title={session ? `${session.class_type_label} roster` : "Session roster"} description={session ? formatter.format(new Date(session.starts_at)) : "Review reservations and attendance eligibility for this session."} links={links}>
       <MemberStatusMessage success={messages.success} error={messages.error} />
       <Link href="/staff/rosters" className="mb-6 inline-flex text-sm font-semibold underline underline-offset-4">← All sessions</Link>
       {error ? (
@@ -90,4 +90,3 @@ export default async function StaffRosterPage({
     </PortalShell>
   );
 }
-

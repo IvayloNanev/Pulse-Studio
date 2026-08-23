@@ -59,7 +59,7 @@ export default async function RetentionDetailPage({ params, searchParams }: { pa
   const latest = detail?.outreach_attempts.at(-1);
 
   return (
-    <PortalShell eyebrow="Staff portal · Product D" title={detail?.member_name ?? "Retention case"} description={detail?.risk_reason ?? "Review factual attendance evidence and staff-approved outreach."} links={links}>
+    <PortalShell audience="staff" eyebrow="Staff portal · Product D" title={detail?.member_name ?? "Retention case"} description={detail?.risk_reason ?? "Review factual attendance evidence and staff-approved outreach."} links={links}>
       <MemberStatusMessage success={messages.success} error={messages.error ?? error?.message} />
       <Link href="/staff/retention" className="mb-6 inline-flex text-sm font-semibold underline underline-offset-4">← Retention queue</Link>
       {detail && (
