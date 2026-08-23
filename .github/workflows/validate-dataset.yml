@@ -55,6 +55,9 @@ jobs:
       - name: Validate staff authorization hardening
         run: node generator/verify_staff_authorization_hardening.mjs
 
+      - name: Validate transactional studio cancellation
+        run: node generator/verify_studio_cancellation_command.mjs
+
       - name: Validate Product B attendance commands
         run: node generator/verify_product_b_attendance_commands.mjs
 

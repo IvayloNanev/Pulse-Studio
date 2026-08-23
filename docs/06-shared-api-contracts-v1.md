@@ -104,6 +104,22 @@ Product B writes through two authenticated staff commands:
 
 Direct attendance-status changes without a matching correction created in the same transaction are rejected. The original reservation association and original recording time remain immutable.
 
+### Studio cancellation command
+
+**Database command:** `public.cancel_class_session(p_class_session_id, p_reason)`
+
+**Authorization:** owner/admin only
+
+The command locks a future, non-cancelled class session and performs the complete studio-cancellation workflow in one transaction:
+
+- marks the class session cancelled so it disappears from the public schedule and accepts no bookings;
+- changes every open confirmed or waitlisted reservation to `studio_cancelled`;
+- refunds every authorized simulated drop-in payment associated with the session;
+- creates one simulated cancellation notification for each affected reservation;
+- appends a `class_session_actions` record containing the required reason, authenticated owner/admin actor, and database timestamp.
+
+Started or completed sessions cannot be cancelled through this command. Instructors may read the resulting roster and audit facts but cannot invoke an owner/admin schedule mutation successfully. The response reports the cancellation time and counts for affected reservations, refunds, and notifications.
+
 ## 3. Product A member dashboard
 
 **Database interfaces:** `public.member_dashboard(p_as_of)` and `public.member_reservations(p_from)`
