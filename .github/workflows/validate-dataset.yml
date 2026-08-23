@@ -73,6 +73,9 @@ jobs:
       - name: Validate Product D risk evaluation command
         run: node generator/verify_product_d_risk_evaluation_command.mjs
 
+      - name: Validate Product D concurrency protection
+        run: node generator/verify_product_d_concurrency.mjs
+
       - name: Validate Product D case and outreach commands
         run: node generator/verify_product_d_case_outreach_commands.mjs
 

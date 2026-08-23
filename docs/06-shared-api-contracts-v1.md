@@ -285,6 +285,8 @@ The class recommendation is nullable when no future non-cancelled class has capa
 
 The command is idempotent for the same member and evaluation time. It does not create a second assessment while an episode is open, and a closed episode requires at least one later attended visit before another independently qualifying episode may be stored. Medium covers 50 through less than 75 percent; high begins at exactly 75 percent.
 
+Evaluations are serialized with a transaction-scoped lock derived from `member_id`, so two staff requests may evaluate different members concurrently but cannot race for the same member. A partial unique database index independently guarantees at most one `pending` or `in_progress` assessment per member, including for future write paths outside the evaluator.
+
 A qualifying assessment creates attempt-one draft outreach only when the member is active and contactable. The database selects the member's valid preferred channel, generates and preserves the original message, attributes creation to the acting staff member, and appends the creation audit action. Paused, cancelled, and do-not-contact members may retain factual assessments without receiving outreach.
 
 ### Product D staff commands
