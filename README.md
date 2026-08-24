@@ -56,6 +56,12 @@ The authoritative implementation rules are in `docs/04-business-rules-v1.md`.
 
 Application code must use only `data/valid/`. The other data folders exist exclusively for validator and stress-testing exercises.
 
+The hosted development environment also contains `MEM-DEMO-ETHAN`, a named
+operational demo profile linked to `ethannanev@gmail.com`. It remains separate
+from the frozen 250-member synthetic baseline and uses only a display-safe
+simulated Visa ending in `4242`; Pulse stores no password, full card number, or
+security code in the application schema.
+
 ## Reproducibility
 
 The dataset uses seed `20260820`, timezone `America/New_York`, and schema version `2.0.0`.
