@@ -36,11 +36,11 @@ Statuses:
 |---:|---|---|---|
 | 1 | What membership plan am I on? | READY | `member_dashboard.plan_name` |
 | 2 | Is my membership active or paused? | READY | `member_dashboard.membership_status` |
-| 3 | What is my actual monthly price? | CONTRACT | Use `agreed_monthly_price`, never catalog price |
+| 3 | What is my actual monthly price? | READY | Use private deterministic `agreed_monthly_price`, never catalog price or external model context |
 | 4 | When does my current billing cycle end? | READY | `member_dashboard.billing_cycle_end_at` |
 | 5 | How many classes do I have available? | READY | `classes_remaining` |
 | 6 | How many credits are currently reserved? | READY | `classes_reserved` |
-| 7 | How many credits have I used? | CONTRACT | Add `classes_used` to sanitized context |
+| 7 | How many credits have I used? | READY | Authenticated `classes_used` from sanitized context |
 | 8 | Do unused credits roll over? | READY | Business Rules §3: they expire and do not roll over |
 | 9 | What outcomes use a credit? | READY | Business Rules §7 |
 | 10 | Can I book after using all credits? | READY | Approved simulated $35 drop-in rule |
@@ -71,12 +71,12 @@ Statuses:
 
 | # | Canonical question | Status | Authority / required behavior |
 |---:|---|---|---|
-| 28 | What classes are available today? | CONTRACT | Query `public_class_schedule` using New York calendar bounds |
-| 29 | Is there yoga tomorrow? | CONTRACT | Filter live schedule by date and class type |
-| 30 | Which classes still have space? | CONTRACT | Use `available_spots`; never infer from stale copy |
-| 31 | Is this class full? | CONTRACT | Use current `is_full` |
-| 32 | Who teaches this class? | CONTRACT | Use `instructor_name` |
-| 33 | What time does this class start and end? | CONTRACT | Use `starts_at` / `ends_at` in New York time |
+| 28 | What classes are available today? | READY | Query the next 14 days of `public_class_schedule` using New York dates |
+| 29 | Is there yoga tomorrow? | READY | Filter live schedule by date and class type |
+| 30 | Which classes still have space? | READY | Use `available_spots`; never infer from stale copy |
+| 31 | Is this class full? | READY | Use current `is_full` |
+| 32 | Who teaches this class? | READY | Use `instructor_name` |
+| 33 | What time does this class start and end? | READY | Use `starts_at` / `ends_at` in New York time |
 | 34 | What class types does Pulse offer? | READY | Yoga, cycling, and HIIT |
 
 ### Preparation and studio attendance policy
@@ -121,16 +121,26 @@ For an immediate health or safety emergency, instruct the member to contact loca
 
 ## 5. Context and privacy contract
 
-Allowed model context is limited to the minimum required fields:
+Allowed external-model context is limited to the minimum required fields:
 
-- membership status, plan name, agreed monthly price, cycle boundary, and derived credit counts;
+- membership status, plan name, and formatted cycle boundary;
 - the signed-in member's upcoming reservations and recent attendance summary;
 - requested public schedule rows and live capacity;
 - approved policies with stable keys, owner/source, effective date, and escalation route.
 
+Exact agreed price and derived credit counts remain in private deterministic server logic and are not sent to the external model. Previous personalized Assistant answers and conversation history also remain inside Pulse Studio; short follow-ups are resolved server-side.
+
 Do not send email, phone, member/authentication identifiers, full payment information, security codes, internal notes, risk assessments, or another member's data to the model. Member name is omitted unless the question requires a natural greeting.
 
-## 6. Evaluation and release gate
+## 6. Automatic operational protection
+
+- Each authenticated member may submit up to 20 Assistant requests per rolling minute.
+- Each authenticated member may trigger up to 50 external-model calls per New York calendar day.
+- Deterministic personal facts and approved policy answers do not consume the external-model allowance.
+- When the model allowance is exhausted or quota verification is unavailable, the Assistant falls back to a verified deterministic response rather than attempting an unbudgeted model call.
+- Usage counters are private database state; members cannot read or modify them directly.
+
+## 7. Evaluation and release gate
 
 Before release approval:
 
@@ -145,6 +155,6 @@ Before release approval:
 9. Deterministic p95 latency is under 1 second; grounded LLM calls have a 5-second hard timeout.
 10. Production smoke tests simulate Gateway failure and verify that member facts remain truthful and useful.
 
-## 7. Business decision status
+## 8. Business decision status
 
 All business decisions required by this v1 coverage specification are approved. Any new policy domain or changed operational promise reopens the decision gate before implementation.

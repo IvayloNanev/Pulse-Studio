@@ -29,6 +29,7 @@ type RawScheduleSession = {
   available_spots?: unknown;
   is_full?: unknown;
 };
+type AssistantQuota = { allowed?: boolean; retry_after_seconds?: number; remaining?: number };
 
 const assistantModel = "poolside/laguna-s-2.1-free";
 const studioDateTimeFormatter = new Intl.DateTimeFormat("en-US", {
@@ -152,6 +153,12 @@ async function authenticateMember() {
   return { supabase };
 }
 
+async function consumeAssistantQuota(supabase: AssistantSupabase, bucket: "request" | "model") {
+  const { data, error } = await supabase.rpc("consume_product_c_assistant_quota", { p_bucket: bucket });
+  if (error) throw new Error("ASSISTANT_QUOTA_UNAVAILABLE");
+  return ((data?.[0] ?? {}) as AssistantQuota);
+}
+
 export async function GET() {
   const authentication = await authenticateMember();
   if (authentication.error) return authentication.error;
@@ -183,6 +190,19 @@ export async function POST(request: Request) {
   }
   const resolvedQuestion = resolvePulseFollowUpQuestion(question, conversation);
 
+  let requestQuota: AssistantQuota;
+  try {
+    requestQuota = await consumeAssistantQuota(authentication.supabase, "request");
+  } catch {
+    return NextResponse.json({ error: "Pulse Assistant protection is temporarily unavailable." }, { status: 503 });
+  }
+  if (!requestQuota.allowed) {
+    return NextResponse.json(
+      { error: "You’re asking questions too quickly. Please wait a moment and try again." },
+      { status: 429, headers: { "Retry-After": String(requestQuota.retry_after_seconds ?? 60) } },
+    );
+  }
+
   let grounding: Awaited<ReturnType<typeof loadAssistantGrounding>>;
   try {
     grounding = await loadAssistantGrounding(authentication.supabase);
@@ -196,6 +216,14 @@ export async function POST(request: Request) {
   }
   if (!process.env.AI_GATEWAY_API_KEY) {
     return NextResponse.json({ answer: fallback, mode: "deterministic" });
+  }
+  try {
+    const modelQuota = await consumeAssistantQuota(authentication.supabase, "model");
+    if (!modelQuota.allowed) {
+      return NextResponse.json({ answer: fallback, mode: "deterministic", limit: "daily-model-budget" });
+    }
+  } catch {
+    return NextResponse.json({ answer: fallback, mode: "deterministic", limit: "quota-unavailable" });
   }
 
   try {
