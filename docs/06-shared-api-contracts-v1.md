@@ -14,6 +14,10 @@ These interfaces are shared boundaries for Products A–D. Product code should c
 - Instructors may operate rosters, attendance, and Product D through their approved commands. Membership administration, schedule mutation, studio cancellation, and exceptional overrides require an owner/admin command.
 - Possession of an authenticated session never grants broad table mutation rights.
 
+### Simulated payment boundary
+
+Membership application intake accepts test-card details through `submit_membership_application`. The command validates the complete test number, security code, expiry, and billing ZIP, but persists only safe display facts in `simulated_payment_methods`. Full card numbers and security codes are never stored. Existing members read only their own active methods through RLS. Simulated drop-in payment rows reference the member's active default method, assigned atomically by the database.
+
 ## 1. Public class schedule
 
 **Database interface:** `public.public_class_schedule`  

@@ -251,6 +251,7 @@ These tables are part of the simulation contract and keep runtime facts separate
 | `membership_pause_requests` | Request/start/end/status, owner approval, approval time, and $25 fee; approved duration is 30–90 days with 30 days' notice. |
 | `membership_fee_transactions` | Append-only simulated $25 pause-administration fee linked to its membership, request, approving owner/admin, and timestamp. |
 | `drop_in_payments` | Reservation/member, $35 amount, authorized/refunded state, created/refunded times. |
+| `simulated_payment_methods` | Member or pending-application owner, cardholder, brand, last four, expiry, billing ZIP, default/status, and timestamps. Exactly one owner is required; full card number and security code are prohibited. |
 | `waitlist_promotions` | Reservation/session, promotion time, and linked notification. Promotion is automatic while capacity exists and the class has not started. |
 | `class_session_actions` | Append-only owner/admin schedule action with session, action type, required reason, actor, and timestamp. |
 | `attendance_corrections` | Attendance row, previous/new status, reason, correcting staff member, and timestamp. |

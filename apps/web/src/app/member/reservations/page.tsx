@@ -48,11 +48,11 @@ export default async function ReservationsPage({ searchParams }: { searchParams:
   }, []);
 
   return (
-    <PortalShell audience="member" eyebrow="Reservations" title="Manage your classes" description="Review and manage your upcoming reservations." links={memberLinks} showHeader={false}>
+    <PortalShell audience="member" eyebrow="Activity" title="Your activity" description="Review and manage your upcoming reservations." links={memberLinks} showHeader={false}>
       <MemberStatusMessage success={params.success} error={params.error} />
       <header className="overflow-hidden rounded-3xl border border-white/60 bg-[linear-gradient(135deg,rgba(255,255,255,0.86),rgba(238,230,220,0.62))] p-4 shadow-[0_1.25rem_3rem_rgba(17,17,17,0.10),inset_0_1px_0_rgba(255,255,255,0.9)] backdrop-blur-2xl sm:p-6">
         <div className="flex flex-col justify-between gap-5 sm:flex-row sm:items-end">
-          <div><p className="flex items-center gap-2 font-mono text-xs uppercase tracking-[0.16em] text-black/65"><CalendarDays className="size-4 text-[#c72c25]" aria-hidden="true" /> Reservations</p><h1 className="mt-2 text-3xl font-semibold tracking-[-0.045em] sm:text-4xl">Manage your classes</h1><p className="mt-2 text-sm text-black/65">{reservations.length} upcoming {reservations.length === 1 ? "reservation" : "reservations"} · updated {timeFormatter.format(new Date(fetchedAt))}</p></div>
+          <div><p className="flex items-center gap-2 font-mono text-xs uppercase tracking-[0.16em] text-black/65"><CalendarDays className="size-4 text-[#c72c25]" aria-hidden="true" /> Activity</p><h1 className="mt-2 text-3xl font-semibold tracking-[-0.045em] sm:text-4xl">Your upcoming classes</h1><p className="mt-2 text-sm text-black/65">{reservations.length} upcoming {reservations.length === 1 ? "reservation" : "reservations"} · updated {timeFormatter.format(new Date(fetchedAt))}</p></div>
           <div className="flex flex-wrap gap-2"><MemberRefreshButton className="rounded-full border border-black/15 bg-white/65 px-4 text-sm" /><Link href="/member/classes" className="inline-flex min-h-11 items-center gap-2 rounded-full bg-black px-5 text-sm font-semibold text-white transition hover:bg-[#c72c25] focus-visible:outline-2 focus-visible:outline-[#c72c25] focus-visible:outline-offset-2">Book another class <ArrowRight className="size-4" aria-hidden="true" /></Link></div>
         </div>
       </header>

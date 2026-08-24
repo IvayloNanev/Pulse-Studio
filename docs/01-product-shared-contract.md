@@ -112,9 +112,20 @@ Pulse Studio uses the `America/New_York` timezone for assignment policy calculat
 
 Classes used and classes remaining are derived for the relevant membership billing cycle. They are not independently editable stored totals.
 
+## Simulated payment policy
+
+Pulse Studio uses simulated payments only; no real charge is processed. Membership registration requires one test payment method. The system validates a test card number and security code during submission but never stores either value. It retains only cardholder name, brand, last four digits, expiration month/year, billing ZIP, default status, and ownership.
+
+- Every active synthetic member has one active default simulated payment method.
+- A pending membership application owns its submitted method until a future activation workflow transfers it to the created member.
+- Confirmed simulated drop-in payments reference the member's active default method.
+- Members may read only their own methods; active staff may read display-only facts for support.
+- Full card numbers, security codes, processor tokens, and real billing credentials are prohibited from the schema and dataset.
+- Expired, removed, cross-member, or missing methods cannot authorize a new simulated charge.
+
 ## Data-category boundary
 
-**Stored facts:** members, plans, memberships, sessions, reservations, attendance outcomes, and outreach actions.
+**Stored facts:** members, plans, memberships, simulated payment display facts, sessions, reservations, attendance outcomes, and outreach actions.
 
 **Derived values:** available spots, classes used, classes remaining, utilization, decline percentage, and days since last visit.
 

@@ -10,6 +10,11 @@ values ('TEST-MEM-001', 'Integration', 'Member', 'integration.member@pulse.examp
 insert into public.member_accounts (account_id, member_id, auth_subject, email_verified, account_status, created_at)
 values ('TEST-ACC-001', 'TEST-MEM-001', '11111111-1111-4111-8111-111111111111', true, 'active', now());
 
+insert into public.simulated_payment_methods (
+  payment_method_id, member_id, cardholder_name, card_brand, last_four,
+  expiration_month, expiration_year, billing_zip, is_default, status
+) values ('TEST-SPM-001', 'TEST-MEM-001', 'Integration Member', 'visa', '4242', 12, 2030, '10001', true, 'active');
+
 insert into public.memberships (
   membership_id, member_id, plan_id, status, start_date,
   billing_cycle_start_date, end_date, agreed_monthly_price

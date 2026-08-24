@@ -61,6 +61,9 @@ jobs:
       - name: Validate membership pause workflows
         run: node generator/verify_membership_pause_commands.mjs
 
+      - name: Validate simulated payment methods
+        run: node generator/verify_simulated_payment_methods.mjs
+
       - name: Validate password recovery flow
         run: node generator/verify_password_recovery_flow.mjs
 

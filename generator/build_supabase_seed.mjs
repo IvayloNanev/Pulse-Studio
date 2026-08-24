@@ -111,6 +111,13 @@ for (const table of tableOrder) {
       "",
     );
   }
+  if (table === "members") {
+    blocks.push(
+      "insert into public.simulated_payment_methods (payment_method_id, member_id, cardholder_name, card_brand, last_four, expiration_month, expiration_year, billing_zip, is_default, status, created_at, updated_at)",
+      "select 'SPM-' || member_id, member_id, concat_ws(' ', first_name, last_name), case mod(length(member_id), 3) when 0 then 'visa' when 1 then 'mastercard' else 'amex' end, right('0000' || coalesce(nullif(regexp_replace(member_id, '[^0-9]', '', 'g'), ''), '4242'), 4), mod(length(member_id), 12) + 1, 2029 + mod(length(member_id), 3), '10001', true, 'active', now(), now() from public.members;",
+      "",
+    );
+  }
 }
 
 blocks.push("commit;", "");
