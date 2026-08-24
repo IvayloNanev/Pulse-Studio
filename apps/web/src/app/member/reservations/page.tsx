@@ -59,7 +59,7 @@ function monthHref(year: number, month: number, offset: number) {
   return `/member/reservations?month=${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, "0")}`;
 }
 
-export default async function ActivityPage({ searchParams }: { searchParams: Promise<{ month?: string; success?: string; error?: string }> }) {
+export default async function ActivityPage({ searchParams }: { searchParams: Promise<{ month?: string; day?: string; success?: string; error?: string }> }) {
   const { supabase } = await requireMember();
   const params = await searchParams;
   const now = new Date();
@@ -82,6 +82,10 @@ export default async function ActivityPage({ searchParams }: { searchParams: Pro
     const key = dateKey(activity.starts_at);
     activityByDay.set(key, [...(activityByDay.get(key) ?? []), activity]);
   }
+  const selectedDay = params.day && activityByDay.has(params.day) ? params.day : null;
+  const visibleActivityDays = selectedDay
+    ? [[selectedDay, activityByDay.get(selectedDay) ?? []] as const]
+    : Array.from(activityByDay.entries());
 
   return (
     <PortalShell audience="member" eyebrow="Activity" title="Your activity" description="Your classes, attendance, and reservations." links={memberLinks} showHeader={false}>
@@ -102,7 +106,10 @@ export default async function ActivityPage({ searchParams }: { searchParams: Pro
           const dayActivities = activityByDay.get(key) ?? [];
           const isToday = year === today.year && month === today.month && day === today.day;
           const label = `${monthHeading.format(new Date(Date.UTC(year, month - 1, 1))).split(" ")[0]} ${day}: ${dayActivities.length ? dayActivities.map((item) => statusStyle[activityStatus(item, now.getTime())].label).join(", ") : "No activity"}`;
-          return <div key={key} aria-label={label} className={`min-h-16 rounded-xl border p-1.5 sm:min-h-24 sm:p-2 ${isToday ? "border-[#c72c25] bg-white/85" : "border-white/70 bg-white/50"}`}><span className={`inline-flex size-7 items-center justify-center rounded-full text-sm font-semibold ${isToday ? "bg-[#c72c25] text-white" : ""}`}>{day}</span><span className="mt-1 flex flex-wrap gap-1" aria-hidden="true">{dayActivities.slice(0, 4).map((item) => <span key={item.reservation_id} className={`size-2 rounded-full ${statusStyle[activityStatus(item, now.getTime())].dot}`} />)}</span></div>;
+          const selected = selectedDay === key;
+          const dayContent = <><span className={`inline-flex size-7 items-center justify-center rounded-full text-sm font-semibold ${isToday || selected ? "bg-[#c72c25] text-white" : ""}`}>{day}</span><span className="mt-1 flex flex-wrap gap-1" aria-hidden="true">{dayActivities.slice(0, 4).map((item) => <span key={item.reservation_id} className={`size-2 rounded-full ${statusStyle[activityStatus(item, now.getTime())].dot}`} />)}</span></>;
+          const dayClassName = `min-h-16 rounded-xl border p-1.5 text-left sm:min-h-24 sm:p-2 ${selected ? "border-[#c72c25] bg-white shadow-[0_0.5rem_1.5rem_rgba(199,44,37,0.14)]" : isToday ? "border-[#c72c25] bg-white/85" : "border-white/70 bg-white/50"}`;
+          return dayActivities.length ? <Link key={key} href={`/member/reservations?month=${year}-${String(month).padStart(2, "0")}&day=${key}#month-details`} aria-label={`${label}. View details.`} aria-current={selected ? "date" : undefined} className={`${dayClassName} transition hover:border-[#c72c25]/70 hover:bg-white/85 focus-visible:outline-2 focus-visible:outline-[#c72c25] focus-visible:outline-offset-2`}>{dayContent}</Link> : <div key={key} aria-label={label} className={dayClassName}>{dayContent}</div>;
         })}</div><div className="mt-4 flex flex-wrap gap-x-4 gap-y-2 border-t border-black/10 pt-4 text-xs text-black/65">{(["attended", "no_show", "confirmed", "waitlisted", "cancelled"] as const).map((status) => <span key={status} className="inline-flex items-center gap-1.5"><span className={`size-2 rounded-full ${statusStyle[status].dot}`} aria-hidden="true" />{statusStyle[status].label}</span>)}</div></>}
       </section>
 
@@ -113,7 +120,7 @@ export default async function ActivityPage({ searchParams }: { searchParams: Pro
       </section>
       </div>
 
-      {!error && <section className="mt-4" aria-labelledby="month-details"><div className="mb-3 flex items-end justify-between gap-3"><div><p className="font-mono text-xs uppercase tracking-[0.15em] text-black/60">Monthly detail</p><h2 id="month-details" className="mt-1 text-2xl font-semibold">Classes and outcomes</h2></div><span className="text-sm text-black/60">{activities.length} {activities.length === 1 ? "entry" : "entries"}</span></div>{activities.length === 0 ? <div className="rounded-3xl border border-white/60 bg-white/55 p-6 text-center backdrop-blur-xl"><h3 className="text-xl font-semibold">No activity this month</h3><p className="mt-2 text-sm text-black/65">Past attendance and future reservations will appear here.</p></div> : <div className="space-y-5">{Array.from(activityByDay.entries()).map(([key, dayActivities]) => <section key={key} aria-labelledby={`detail-${key}`}><h3 id={`detail-${key}`} className="mb-2 text-base font-semibold">{dayHeading.format(new Date(dayActivities[0].starts_at))}</h3><div className="grid gap-3 xl:grid-cols-2">{dayActivities.map((activity) => {
+      {!error && <section id="month-details" className="mt-4 scroll-mt-6" aria-labelledby="month-details-heading"><div className="mb-3 flex flex-wrap items-end justify-between gap-3"><div><p className="font-mono text-xs uppercase tracking-[0.15em] text-black/60">{selectedDay ? "Selected date" : "Monthly detail"}</p><h2 id="month-details-heading" className="mt-1 text-2xl font-semibold">Classes and outcomes</h2></div><div className="flex items-center gap-3"><span className="text-sm text-black/60">{selectedDay ? visibleActivityDays[0][1].length : activities.length} {(selectedDay ? visibleActivityDays[0][1].length : activities.length) === 1 ? "entry" : "entries"}</span>{selectedDay ? <Link href={`/member/reservations?month=${year}-${String(month).padStart(2, "0")}#month-details`} className="inline-flex min-h-11 items-center rounded-full border border-black/15 bg-white/65 px-4 text-sm font-semibold focus-visible:outline-2 focus-visible:outline-[#c72c25] focus-visible:outline-offset-2">Show full month</Link> : null}</div></div>{activities.length === 0 ? <div className="rounded-3xl border border-white/60 bg-white/55 p-6 text-center backdrop-blur-xl"><h3 className="text-xl font-semibold">No activity this month</h3><p className="mt-2 text-sm text-black/65">Past attendance and future reservations will appear here.</p></div> : <div className="space-y-5">{visibleActivityDays.map(([key, dayActivities]) => <section key={key} aria-labelledby={`detail-${key}`}><h3 id={`detail-${key}`} className="mb-2 text-base font-semibold">{dayHeading.format(new Date(dayActivities[0].starts_at))}</h3><div className="grid gap-3 xl:grid-cols-2">{dayActivities.map((activity) => {
           const status = activityStatus(activity, now.getTime());
           const style = statusStyle[status];
           const cancellable = new Date(activity.starts_at) >= now && (activity.reservation_status === "confirmed" || activity.reservation_status === "waitlisted");
