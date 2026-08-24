@@ -137,7 +137,8 @@ export function MemberDashboard({ calendarDays, dataFetchedAt, eligibilityError,
     ? instructors
     : instructors.filter((instructor) => sessions.some((session) => session.class_type === validInitialClassType && session.instructor_name === instructor));
   const validInitialInstructor = initialInstructors.includes(initialInstructor) ? initialInstructor : "all";
-  const [selectedDay, setSelectedDay] = useState(validInitialDay ?? firstAvailableDay?.key ?? calendarDays[0]?.key ?? "");
+  const todayCalendarDay = calendarDays.find((date) => date.key === todayKey);
+  const [selectedDay, setSelectedDay] = useState(validInitialDay ?? todayCalendarDay?.key ?? firstAvailableDay?.key ?? calendarDays[0]?.key ?? "");
   const [selectedInstructor, setSelectedInstructor] = useState(validInitialInstructor);
   const [selectedClassType, setSelectedClassType] = useState(validInitialClassType);
   const classSelectRef = useRef<HTMLSelectElement>(null);
