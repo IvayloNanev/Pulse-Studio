@@ -1,6 +1,6 @@
 # Pulse Assistant Coverage Specification v1
 
-**Status:** implementation gate  
+**Status:** release candidate — automated grounding gate passing
 **Product:** Product C — bounded member concierge  
 **Business timezone:** `America/New_York`
 
@@ -154,6 +154,16 @@ Before release approval:
 8. API tests cover 400, 401, 403, missing-context, database failure, provider timeout, provider 503, deterministic fallback, and rate limiting.
 9. Deterministic p95 latency is under 1 second; grounded LLM calls have a 5-second hard timeout.
 10. Production smoke tests simulate Gateway failure and verify that member facts remain truthful and useful.
+
+### Current automated evidence
+
+- 40 supported member domains are evaluated with three paraphrases each: 22 approved-policy domains and 18 authenticated live-fact domains.
+- Six additional adversarial cases verify privacy, credential, prompt-exfiltration, false-action, and guaranteed-outcome refusals.
+- The resulting 126-case semantic evaluation passes in full.
+- API orchestration tests cover authentication, authorization, invalid payloads, missing grounding, request throttling, daily model budget exhaustion, provider timeout/failure, injected output rejection, and numeric-claim validation.
+- The browser release gate includes a real unauthenticated HTTP request to the Assistant endpoint in addition to the isolated orchestration and grounding suites.
+
+These automated checks validate routing and truthfulness against controlled evidence. A production smoke test with an authenticated hosted member remains required after the policy-registry migration is applied and the deployment is promoted.
 
 ## 8. Business decision status
 

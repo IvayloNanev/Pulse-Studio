@@ -107,6 +107,84 @@ function significantWords(value: string) {
   );
 }
 
+const policyIntentAliases: Record<string, string[]> = {
+  "supported-classes": ["class types", "classes offer", "workouts available", "yoga cycling hiit"],
+  "yoga-preparation": ["wear yoga", "prepare yoga", "clothing yoga", "bring yoga"],
+  "cycling-preparation": ["wear cycling", "prepare cycling", "clothing bike", "bring cycling", "bike clothing"],
+  "hiit-preparation": ["wear hiit", "prepare hiit", "bring hiit", "shoes hiit"],
+  "class-levels": ["class level", "fitness level", "beginner", "difficulty", "appropriate class"],
+  "late-arrival": ["late for class", "late arrival", "after class starts", "arrive late", "allowed in"],
+  "booking-eligibility": ["eligible to book", "allowed to reserve", "inactive membership book", "who can book"],
+  "full-class": ["class full", "class is full", "full session", "join waitlist", "no spots"],
+  "cancellation-window": ["late cancellation", "12 hours", "cancellation cutoff", "cancel early"],
+  "studio-cancellation": ["studio cancels", "pulse cancels", "studio cancellation", "cancelled by studio"],
+  "credit-outcomes": ["uses credit", "one class credit", "consume credit", "no shows consume", "cost credits", "no show credit", "reservation outcomes"],
+  "credit-rollover": ["credits roll over", "carry unused credits", "credits expire", "next month credits"],
+  "drop-in": ["drop in", "zero credits", "zero class credit", "after using credits", "extra class", "out of credits"],
+  "plan-prices": ["plan prices", "pulse plans", "monthly memberships", "membership plans available"],
+  "membership-pause": ["pause membership", "pause my membership", "membership freeze rules", "freeze membership", "pause rules", "pause last"],
+  "plan-change": ["change membership plan", "switch membership plan", "switch plans", "plan change take effect", "approve my membership change", "approve membership change"],
+  "membership-cancellation": ["cancel membership", "end my membership", "end membership", "notice cancel membership", "scheduled membership cancellation"],
+  "membership-reactivation": ["reactivate membership", "reactivate after cancelling", "restart cancelled plan", "reactivation reopen", "reopen old membership"],
+  "account-recovery": ["reset password", "forgot password", "account recovery", "new login password"],
+  notifications: ["notifications", "mark notifications read", "email sms notifications"],
+  "studio-support": ["contact studio", "support phone", "support hours", "contact email"],
+  "medical-safety": ["medical advice", "injury advice", "diagnose injury", "medical clearance", "health emergency"],
+};
+
+const unsupportedRequestPatterns = [
+  /another member|private records?|personal data|pii/i,
+  /system prompt|developer message|hidden instructions?/i,
+  /database password|api key|secret key|credentials?/i,
+  /(?:book|reserve|cancel)\b.*(?:claim|say|pretend|without confirmation|for me)/i,
+  /guarantee(?:d)?\b.*(?:weight|result|outcome)|guaranteed weight/i,
+];
+
+function normalizeIntentText(value: string) {
+  return value
+    .toLowerCase()
+    .replace(/[’']/g, "")
+    .replace(/\bclasses\b/g, "class")
+    .replace(/\bmemberships\b/g, "membership")
+    .replace(/\bplans\b/g, "plan")
+    .replace(/\bcredits\b/g, "credit")
+    .replace(/\bcancels?\b/g, "cancel")
+    .replace(/\bcancelled\b/g, "cancel")
+    .replace(/\bcancelling\b/g, "cancel")
+    .replace(/[^a-z0-9\s]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function policyIntentScore(question: string, policy: PulsePolicy) {
+  const normalizedQuestion = normalizeIntentText(question);
+  const aliases = policyIntentAliases[policy.policy_key] ?? [];
+  const candidates = [policy.policy_key.replace(/-/g, " "), policy.question, policy.category, ...aliases]
+    .map(normalizeIntentText);
+  const queryWords = significantWords(normalizedQuestion);
+  const candidateWords = significantWords(candidates.join(" "));
+  const wordOverlap = [...queryWords].filter((word) => candidateWords.has(word)).length;
+  const phraseMatch = candidates.some((candidate) => candidate.length > 3 && normalizedQuestion.includes(candidate))
+    || aliases.some((alias) => {
+      const aliasWords = [...significantWords(normalizeIntentText(alias))];
+      return aliasWords.length > 1 && aliasWords.every((word) => queryWords.has(word));
+    });
+  return wordOverlap + (phraseMatch ? 6 : 0);
+}
+
+function findExplicitPolicyIntent(question: string, policies: PulsePolicy[]) {
+  const normalizedQuestion = normalizeIntentText(question);
+  const matches = policies.flatMap((policy) => (policyIntentAliases[policy.policy_key] ?? []).map((alias) => {
+    const normalizedAlias = normalizeIntentText(alias);
+    const aliasWords = [...significantWords(normalizedAlias)];
+    const matchesAlias = normalizedQuestion.includes(normalizedAlias);
+    return { policy, specificity: matchesAlias ? aliasWords.length : 0 };
+  }))
+    .filter((match) => match.specificity > 0)
+    .sort((a, b) => b.specificity - a.specificity);
+  return matches[0]?.policy;
+}
+
 function unavailable(subject: "membership" | "activity") {
   return `I can’t verify your ${subject} information right now. Please refresh and try again; I won’t guess when your live data is unavailable.`;
 }
@@ -138,21 +216,33 @@ export function resolvePulseFollowUpQuestion(question: string, conversation: Pul
 
 export function answerGroundedPulseQuestion(question: string, policies: PulsePolicy[], context: PulseMemberContext | null) {
   const normalized = question.toLowerCase();
+  if (unsupportedRequestPatterns.some((pattern) => pattern.test(question))) {
+    return "I don’t have an approved answer for that request. I can explain Pulse Studio policies and your own member information, but I can’t expose private data, reveal credentials, promise outcomes, or claim an action was completed.";
+  }
+  const explicitPolicy = findExplicitPolicyIntent(question, policies);
+  const asksForOwnPlan = /\b(my|i|me)\b.*\b(plan|membership)\b|\b(plan|membership)\b.*\b(am i|do i have|mine)\b/.test(normalized);
+  const asksAboutSpecificScheduledClass = /\b(yoga|cycling|hiit)\b/.test(normalized)
+    && /full|space|room|spots?|instructor|teaches|what time|session time|schedule/.test(normalized);
+  if (explicitPolicy
+    && !(explicitPolicy.policy_key === "plan-prices" && asksForOwnPlan)
+    && !(explicitPolicy.policy_key === "full-class" && asksAboutSpecificScheduledClass)) {
+    return explicitPolicy.answer;
+  }
   const summary = context?.member_summary;
   const upcoming = context?.upcoming_reservations ?? [];
   const activity = context?.recent_activity ?? [];
   const stats = context?.activity_stats;
   const answers: string[] = [];
-  const asksAboutAttendance = /check[ -]?ins?|attendance|classes (have i|i have) (done|attended)|classes? this month|workouts? this month/.test(normalized);
+  const asksAboutAttendance = /check[ -]?ins?|attendance|classes (have i|i have) (done|attended)|classes? this month|workouts?.*(this month|did i do)/.test(normalized);
   const asksAboutRecentActivity = /last (class|workout)|most recent (class|workout)|when did i last/.test(normalized);
-  const asksAboutCredits = /credit|classes left|classes available|classes .*available|remaining/.test(normalized)
+  const asksAboutCredits = /credit|classes left|classes available|available classes|classes .*available|remaining|what is left/.test(normalized)
     || (/how many classes/.test(normalized) && !asksAboutAttendance);
-  const asksAboutReservations = /reservation|upcoming|next class|reserved class|booked/.test(normalized);
-  const asksAboutMembership = /membership|my plan|plan status|account status/.test(normalized);
+  const asksAboutReservations = /reservation|upcoming|next class|reserved class|booked|booking|reserved next|waitlisted|confirmed/.test(normalized);
+  const asksAboutMembership = /membership|my plan|plan status|account status|plan am i|plan do i have|billing cycle|current cycle/.test(normalized);
   const asksAboutPrice = /what do i pay|how much.*pay|monthly price|membership price|plan price|membership cost/.test(normalized);
-  const asksAboutUsedCredits = /credits?.*(used|spent)|(?:used|spent).*credits?|classes used/.test(normalized);
-  const asksAboutSchedule = /schedule|today|tomorrow|available spots?|class.*full|who teaches|instructor|what time/.test(normalized)
-    && /class|schedule|yoga|cycling|hiit|spot|instructor/.test(normalized);
+  const asksAboutUsedCredits = /credits?.*(used|spent)|(?:used|spent).*credits?|classes used|credits? did i spend/.test(normalized);
+  const asksAboutSchedule = /schedule|today|tomorrow|available spots?|spots?.*open|class.*full|who teaches|instructor|what time|space|room|session time/.test(normalized)
+    && /class|schedule|yoga|cycling|hiit|spot|instructor|session/.test(normalized);
 
   if (asksAboutAttendance) {
     if (context?.availability?.activity === false) return unavailable("activity");
@@ -225,11 +315,11 @@ export function answerGroundedPulseQuestion(question: string, policies: PulsePol
 
   if (answers.length > 0) return answers.join(" ");
 
-  const queryWords = significantWords(question);
   const ranked = policies
-    .map((policy) => ({ policy, score: [...queryWords].filter((word) => `${policy.question} ${policy.category}`.toLowerCase().includes(word)).length }))
+    .map((policy) => ({ policy, score: policyIntentScore(question, policy) }))
     .sort((a, b) => b.score - a.score);
-  return ranked[0]?.score > 0
+  const hasConfidentMatch = ranked[0]?.score >= 6 || (ranked[0]?.score >= 2 && ranked[0].score > (ranked[1]?.score ?? 0));
+  return hasConfidentMatch
     ? ranked[0].policy.answer
     : "I don’t have an approved answer for that yet. Try asking about your activity, classes, preparation, booking, cancellations, or membership policies.";
 }
