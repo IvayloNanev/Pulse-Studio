@@ -4,25 +4,16 @@ import { MessageCircle, Send, X } from "lucide-react";
 import { type FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 
-type Policy = { policy_key: string; category: string; question: string; answer: string };
+import { answerGroundedPulseQuestion, type PulseMemberContext, type PulsePolicy } from "@/lib/pulse-assistant-grounding";
+
 type ChatMessage = { id: number; role: "member" | "assistant"; text: string };
-type MemberContext = {
-  member_summary?: { member_name?: string; membership_status?: string; plan_name?: string; classes_remaining?: number; classes_reserved?: number; billing_cycle_end_at?: string };
-  upcoming_reservations?: Array<{ class_type_label?: string; instructor_name?: string; starts_at?: string; reservation_status?: string }>;
-};
-
-const reservationFormatter = new Intl.DateTimeFormat("en-US", { timeZone: "America/New_York", weekday: "long", month: "long", day: "numeric", hour: "numeric", minute: "2-digit" });
-
-function words(value: string) {
-  return new Set(value.toLowerCase().replace(/[^a-z0-9\s]/g, " ").split(/\s+/).filter((word) => word.length > 2));
-}
 
 export function PulseAssistantChat() {
   const searchParams = useSearchParams();
   const initiallyOpen = searchParams.get("assistant") === "open";
   const [open, setOpen] = useState(initiallyOpen);
-  const [policies, setPolicies] = useState<Policy[]>([]);
-  const [context, setContext] = useState<MemberContext | null>(null);
+  const [policies, setPolicies] = useState<PulsePolicy[]>([]);
+  const [context, setContext] = useState<PulseMemberContext | null>(null);
   const [loading, setLoading] = useState(initiallyOpen);
   const [error, setError] = useState<string | null>(null);
   const [input, setInput] = useState("");
@@ -77,7 +68,7 @@ export function PulseAssistantChat() {
   }, [messages]);
   const suggestions = useMemo(() => policies.slice(0, 4), [policies]);
 
-  function answerPolicy(policy: Policy) {
+  function answerPolicy(policy: PulsePolicy) {
     setMessages((current) => [...current, { id: nextId.current++, role: "member", text: policy.question }, { id: nextId.current++, role: "assistant", text: policy.answer }]);
   }
 
@@ -85,20 +76,7 @@ export function PulseAssistantChat() {
     event.preventDefault();
     const question = input.trim();
     if (!question) return;
-    const normalized = question.toLowerCase();
-    const summary = context?.member_summary;
-    const upcoming = context?.upcoming_reservations ?? [];
-    let personalized: string | null = null;
-    if (/credit|classes left|remaining/.test(normalized) && summary) personalized = `You have ${summary.classes_remaining ?? 0} classes available and ${summary.classes_reserved ?? 0} currently reserved in your present billing cycle.`;
-    else if (/reservation|upcoming|next class|booked/.test(normalized)) {
-      const next = upcoming[0];
-      personalized = next?.starts_at
-        ? `Your next ${next.reservation_status === "waitlisted" ? "waitlisted" : "reserved"} class is ${next.class_type_label ?? "class"}${next.instructor_name ? ` with ${next.instructor_name}` : ""} on ${reservationFormatter.format(new Date(next.starts_at))}.`
-        : "You do not currently have an upcoming reservation or waitlist entry.";
-    } else if (/membership|my plan|plan status|account status/.test(normalized) && summary) personalized = `Your ${summary.plan_name ?? "Pulse Studio"} membership is ${summary.membership_status ?? "available"}.${summary.billing_cycle_end_at ? ` Your current billing cycle ends ${reservationFormatter.format(new Date(summary.billing_cycle_end_at))}.` : ""}`;
-    const queryWords = words(question);
-    const ranked = policies.map((policy) => ({ policy, score: [...queryWords].filter((word) => `${policy.question} ${policy.category}`.toLowerCase().includes(word)).length })).sort((a, b) => b.score - a.score);
-    const response = personalized ?? (ranked[0]?.score > 0 ? ranked[0].policy.answer : "I don’t have an approved answer for that yet. Try asking about classes, preparation, booking, cancellations, or membership policies.");
+    const response = answerGroundedPulseQuestion(question, policies, context);
     setMessages((current) => [...current, { id: nextId.current++, role: "member", text: question }, { id: nextId.current++, role: "assistant", text: response }]);
     setInput("");
   }
