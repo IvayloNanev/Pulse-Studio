@@ -66,6 +66,11 @@ type MemberDashboardProps = {
 
 const timeZone = "America/New_York";
 const classNames = { yoga: "Studio Flow", cycling: "Pulse Ride", hiit: "Power Interval" };
+const classCalendarStyle = {
+  yoga: { label: "Yoga", dot: "bg-[#c72c25]" },
+  cycling: { label: "Cycling", dot: "bg-[#39717a]" },
+  hiit: { label: "HIIT", dot: "bg-[#d18b2c]" },
+} as const;
 const dayKeyFormatter = new Intl.DateTimeFormat("en-CA", { timeZone, year: "numeric", month: "2-digit", day: "2-digit" });
 const weekdayFormatter = new Intl.DateTimeFormat("en-US", { timeZone, weekday: "short" });
 const dayFormatter = new Intl.DateTimeFormat("en-US", { timeZone, day: "numeric" });
@@ -182,13 +187,20 @@ export function MemberDashboard({ calendarDays, dataFetchedAt, eligibilityError,
         </div>
 
         <div className="relative -mx-1 mt-6">
+        <div className="mb-3 flex flex-wrap items-center gap-x-4 gap-y-2 px-1 text-xs font-semibold text-black/65" aria-label="Class calendar legend">{Object.entries(classCalendarStyle).map(([type, style]) => <span key={type} className="inline-flex items-center gap-1.5"><span className={`size-2.5 rounded-full ${style.dot}`} aria-hidden="true" />{style.label}</span>)}<span className="inline-flex items-center gap-1.5"><span className="inline-flex size-3 items-center justify-center rounded-full bg-emerald-700 text-[0.5rem] text-white" aria-hidden="true">✓</span>Reserved</span></div>
         <div className="flex snap-x scroll-px-1 gap-2 overflow-x-auto px-1 pb-2 pr-8 xl:grid xl:grid-cols-7 xl:overflow-visible xl:pr-1 xl:[&>button]:min-w-0" aria-label="Select a day">
           {calendarDays.map((date) => {
             const selected = date.key === selectedDay;
-            const sessionCount = sessionsByDay.get(date.key)?.length ?? 0;
+            const daySessions = sessionsByDay.get(date.key) ?? [];
+            const sessionCount = daySessions.length;
+            const reservedCount = daySessions.filter((session) => reservationsBySession.has(session.class_session_id)).length;
+            const classSummary = (["yoga", "cycling", "hiit"] as const).map((type) => {
+              const count = daySessions.filter((session) => session.class_type === type).length;
+              return count ? `${count} ${classCalendarStyle[type].label}` : null;
+            }).filter(Boolean).join(", ");
             const parsedDate = new Date(date.starts_at);
             const isToday = date.key === todayKey;
-            return <button key={date.key} type="button" aria-pressed={selected} aria-label={`${isToday ? "Today, " : ""}${fullDayFormatter.format(parsedDate)}, ${sessionCount} ${sessionCount === 1 ? "class" : "classes"}`} onClick={() => setSelectedDay(date.key)} className={`min-h-24 min-w-[5.25rem] snap-start rounded-2xl border px-3 py-3 text-center transition focus-visible:outline-2 focus-visible:outline-[#c72c25] focus-visible:outline-offset-2 ${selected ? "border-black bg-black text-white" : "border-black/15 bg-[#f7f4ee] text-black hover:border-black/45"}`}><span className="block text-xs font-semibold uppercase tracking-[0.1em] opacity-75">{isToday ? "Today" : weekdayFormatter.format(parsedDate)}</span><span className="mt-1 block text-xl font-semibold">{dayFormatter.format(parsedDate)}</span><span className="block text-xs uppercase tracking-[0.08em] opacity-70">{monthFormatter.format(parsedDate)}</span><span className="mt-1 block text-xs opacity-75">{sessionCount} {sessionCount === 1 ? "class" : "classes"}</span></button>;
+            return <button key={date.key} type="button" aria-pressed={selected} aria-label={`${isToday ? "Today, " : ""}${fullDayFormatter.format(parsedDate)}, ${sessionCount} ${sessionCount === 1 ? "class" : "classes"}${classSummary ? `: ${classSummary}` : ""}${reservedCount ? `, ${reservedCount} reserved` : ""}`} onClick={() => setSelectedDay(date.key)} className={`min-h-32 min-w-[7rem] snap-start rounded-2xl border px-3 py-3 text-left transition focus-visible:outline-2 focus-visible:outline-[#c72c25] focus-visible:outline-offset-2 ${selected ? "border-black bg-black text-white shadow-[0_0.75rem_2rem_rgba(17,17,17,0.18)]" : isToday ? "border-[#c72c25]/45 bg-[#f7f4ee] text-black ring-1 ring-[#c72c25]/20" : "border-black/15 bg-[#f7f4ee] text-black hover:border-black/45"}`}><span className="flex items-center justify-between gap-2"><span className="text-xs font-semibold uppercase tracking-[0.1em] opacity-75">{isToday ? "Today" : weekdayFormatter.format(parsedDate)}</span>{reservedCount ? <span className="inline-flex size-5 items-center justify-center rounded-full bg-emerald-700 text-[0.65rem] text-white" title={`${reservedCount} reserved`} aria-hidden="true">✓</span> : null}</span><span className="mt-1 block text-2xl font-semibold leading-none">{dayFormatter.format(parsedDate)} <span className="text-xs font-medium uppercase tracking-[0.08em] opacity-65">{monthFormatter.format(parsedDate)}</span></span><span className="mt-3 block text-xs font-semibold opacity-75">{sessionCount} {sessionCount === 1 ? "class" : "classes"}</span><span className="mt-2 flex min-h-3 flex-wrap gap-1" aria-hidden="true">{daySessions.slice(0, 6).map((session) => <span key={session.class_session_id} className={`h-2.5 flex-1 rounded-full ${classCalendarStyle[session.class_type].dot} ${session.is_full ? "opacity-35" : ""}`} title={`${classCalendarStyle[session.class_type].label}${session.is_full ? ", full" : ""}`} />)}{daySessions.length > 6 ? <span className="text-[0.65rem] font-semibold opacity-70">+{daySessions.length - 6}</span> : null}</span>{reservedCount ? <span className={`mt-2 block text-xs font-semibold ${selected ? "text-emerald-300" : "text-emerald-800"}`}>{reservedCount} booked</span> : <span className="mt-2 block text-xs opacity-55">{sessionCount ? "View schedule" : "No classes"}</span>}</button>;
           })}
         </div>
         <div className="pointer-events-none absolute inset-y-0 right-0 w-8 bg-gradient-to-l from-white/90 to-transparent xl:hidden" aria-hidden="true" />
