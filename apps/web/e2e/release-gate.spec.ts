@@ -76,3 +76,11 @@ test("protected portals redirect to their matching login pages", async ({ page }
   await page.goto("/staff");
   await expect(page).toHaveURL(/\/staff\/login$/);
 });
+
+test("Pulse Assistant API rejects unauthenticated requests", async ({ request }) => {
+  const response = await request.post("/api/member/assistant", {
+    data: { question: "How many credits do I have?" },
+  });
+  expect(response.status()).toBe(401);
+  expect(await response.json()).toEqual({ error: "Authentication required." });
+});
