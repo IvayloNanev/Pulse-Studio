@@ -27,6 +27,9 @@ const context: PulseMemberContext = {
     member_name: "Lena Ortiz",
     membership_status: "active",
     plan_name: "Studio Eight",
+    classes_per_month: 8,
+    agreed_monthly_price: 159,
+    classes_used: 3,
     classes_remaining: 3,
     classes_reserved: 2,
     billing_cycle_end_at: "2026-09-01T04:00:00.000Z",
@@ -48,7 +51,19 @@ const context: PulseMemberContext = {
       starts_at: "2026-08-22T13:00:00.000Z",
     },
   ],
-  availability: { membership: true, activity: true },
+  schedule: [
+    {
+      class_session_id: "SESSION-TEST-YOGA",
+      class_type: "yoga",
+      class_type_label: "Yoga",
+      instructor_name: "Maya Chen",
+      starts_at: "2026-08-26T22:00:00.000Z",
+      ends_at: "2026-08-26T22:50:00.000Z",
+      available_spots: 4,
+      is_full: false,
+    },
+  ],
+  availability: { membership: true, activity: true, schedule: true },
 };
 
 test("answers credit questions from member context", () => {
@@ -90,6 +105,23 @@ test("answers membership questions from member context", () => {
   const answer = answerGroundedPulseQuestion("What is my membership status?", policies, context);
   expect(answer).toContain("Studio Eight membership is active");
   expect(answer).toContain("September 1");
+});
+
+test("answers agreed-price questions from private deterministic context", () => {
+  expect(answerGroundedPulseQuestion("What is my membership price?", policies, context))
+    .toBe("Your agreed monthly price for Studio Eight is $159.00.");
+});
+
+test("answers used-credit questions without confusing them with attendance", () => {
+  expect(answerGroundedPulseQuestion("How many credits have I used?", policies, context))
+    .toBe("You have used 3 credits in your current billing cycle.");
+});
+
+test("answers schedule questions with live class and capacity facts", () => {
+  const answer = answerGroundedPulseQuestion("Is there a yoga class with available spots?", policies, context);
+  expect(answer).toContain("Yoga with Maya Chen");
+  expect(answer).toContain("4 spots available");
+  expect(answer).not.toContain("classes available and");
 });
 
 test("uses approved policy answers for policy questions", () => {
