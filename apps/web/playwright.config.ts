@@ -13,7 +13,7 @@ export default defineConfig({
     screenshot: "only-on-failure",
     ...devices["Desktop Chrome"],
   },
-  webServer: [
+  webServer: process.env.PULSE_SKIP_WEBSERVER ? undefined : [
     {
       command: "node e2e/mock-supabase.mjs",
       url: "http://127.0.0.1:54329/health",
