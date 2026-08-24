@@ -67,14 +67,12 @@ type MemberDashboardProps = {
 const timeZone = "America/New_York";
 const classNames = { yoga: "Studio Flow", cycling: "Pulse Ride", hiit: "Power Interval" };
 const classCalendarStyle = {
-  yoga: { label: "Yoga", dot: "bg-[#c72c25]" },
-  cycling: { label: "Cycling", dot: "bg-[#39717a]" },
+  yoga: { label: "Yoga", dot: "bg-emerald-600" },
+  cycling: { label: "Cycling", dot: "bg-[#c72c25]" },
   hiit: { label: "HIIT", dot: "bg-[#d18b2c]" },
 } as const;
 const dayKeyFormatter = new Intl.DateTimeFormat("en-CA", { timeZone, year: "numeric", month: "2-digit", day: "2-digit" });
-const weekdayFormatter = new Intl.DateTimeFormat("en-US", { timeZone, weekday: "short" });
 const dayFormatter = new Intl.DateTimeFormat("en-US", { timeZone, day: "numeric" });
-const monthFormatter = new Intl.DateTimeFormat("en-US", { timeZone, month: "short" });
 const fullDayFormatter = new Intl.DateTimeFormat("en-US", { timeZone, weekday: "long", month: "long", day: "numeric" });
 const timeFormatter = new Intl.DateTimeFormat("en-US", { timeZone, hour: "numeric", minute: "2-digit" });
 
@@ -163,6 +161,9 @@ export function MemberDashboard({ calendarDays, dataFetchedAt, eligibilityError,
   const canBook = summary?.membership_status === "active";
   const filtersActive = selectedInstructor !== "all" || selectedClassType !== "all";
   const returnTo = contextPath(selectedDay, selectedClassType, selectedInstructor);
+  const firstWeekday = calendarDays[0] ? new Date(calendarDays[0].starts_at).getUTCDay() : 0;
+  const calendarSlots = [...Array.from({ length: firstWeekday }, () => null), ...calendarDays];
+  const calendarWeeks = Array.from({ length: Math.ceil(calendarSlots.length / 7) }, (_, index) => calendarSlots.slice(index * 7, index * 7 + 7));
 
   return (
     <div className="space-y-4 sm:space-y-5">
@@ -186,13 +187,13 @@ export function MemberDashboard({ calendarDays, dataFetchedAt, eligibilityError,
           </div>
         </div>
 
-        <div className="relative -mx-1 mt-6">
-        <div className="mb-3 flex flex-wrap items-center gap-x-4 gap-y-2 px-1 text-xs font-semibold text-black/65" aria-label="Class calendar legend">{Object.entries(classCalendarStyle).map(([type, style]) => <span key={type} className="inline-flex items-center gap-1.5"><span className={`size-2.5 rounded-full ${style.dot}`} aria-hidden="true" />{style.label}</span>)}<span className="inline-flex items-center gap-1.5"><span className="inline-flex size-3 items-center justify-center rounded-full bg-emerald-700 text-[0.5rem] text-white" aria-hidden="true">✓</span>Reserved</span></div>
-        <div className="flex snap-x scroll-px-1 gap-2 overflow-x-auto px-1 pb-2 pr-8 xl:grid xl:grid-cols-7 xl:overflow-visible xl:pr-1 xl:[&>button]:min-w-0" aria-label="Select a day">
-          {calendarDays.map((date) => {
+        <div className="mt-6">
+          <div className="mb-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs font-semibold text-black/65" aria-label="Class calendar legend">{Object.entries(classCalendarStyle).map(([type, style]) => <span key={type} className="inline-flex items-center gap-1.5"><span className={`size-2.5 rounded-full ${style.dot}`} aria-hidden="true" />{style.label}</span>)}<span className="inline-flex items-center gap-1.5"><span className="inline-flex size-3 items-center justify-center rounded-full bg-black text-[0.5rem] text-white" aria-hidden="true">✓</span>Reserved</span><span className="inline-flex items-center gap-1.5"><span className="size-2.5 rounded-full bg-black/20" aria-hidden="true" />Full</span></div>
+          <p id="class-calendar-instructions" className="mb-2 text-xs text-black/60">Choose a date to see its classes. Each colored dot represents one scheduled class.</p>
+          <div className="-mx-1 overflow-x-auto px-1"><table className="w-full min-w-[20rem] table-fixed border-separate border-spacing-1" aria-describedby="class-calendar-instructions"><caption className="sr-only">Class calendar for {monthLabel}</caption><thead><tr className="text-center text-xs font-semibold uppercase tracking-[0.06em] text-black/60">{["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"].map((day) => <th key={day} scope="col" abbr={day} className="py-2"><span aria-hidden="true">{day.slice(0, 2)}</span><span className="sr-only">{day}</span></th>)}</tr></thead><tbody>{calendarWeeks.map((week, weekIndex) => <tr key={`class-week-${weekIndex}`}>{week.map((date, dayIndex) => {
+            if (!date) return <td key={`class-empty-${weekIndex}-${dayIndex}`} aria-hidden="true" />;
             const selected = date.key === selectedDay;
             const daySessions = sessionsByDay.get(date.key) ?? [];
-            const sessionCount = daySessions.length;
             const reservedCount = daySessions.filter((session) => reservationsBySession.has(session.class_session_id)).length;
             const classSummary = (["yoga", "cycling", "hiit"] as const).map((type) => {
               const count = daySessions.filter((session) => session.class_type === type).length;
@@ -200,10 +201,8 @@ export function MemberDashboard({ calendarDays, dataFetchedAt, eligibilityError,
             }).filter(Boolean).join(", ");
             const parsedDate = new Date(date.starts_at);
             const isToday = date.key === todayKey;
-            return <button key={date.key} type="button" aria-pressed={selected} aria-label={`${isToday ? "Today, " : ""}${fullDayFormatter.format(parsedDate)}, ${sessionCount} ${sessionCount === 1 ? "class" : "classes"}${classSummary ? `: ${classSummary}` : ""}${reservedCount ? `, ${reservedCount} reserved` : ""}`} onClick={() => setSelectedDay(date.key)} className={`min-h-32 min-w-[7rem] snap-start rounded-2xl border px-3 py-3 text-left transition focus-visible:outline-2 focus-visible:outline-[#c72c25] focus-visible:outline-offset-2 ${selected ? "border-black bg-black text-white shadow-[0_0.75rem_2rem_rgba(17,17,17,0.18)]" : isToday ? "border-[#c72c25]/45 bg-[#f7f4ee] text-black ring-1 ring-[#c72c25]/20" : "border-black/15 bg-[#f7f4ee] text-black hover:border-black/45"}`}><span className="flex items-center justify-between gap-2"><span className="text-xs font-semibold uppercase tracking-[0.1em] opacity-75">{isToday ? "Today" : weekdayFormatter.format(parsedDate)}</span>{reservedCount ? <span className="inline-flex size-5 items-center justify-center rounded-full bg-emerald-700 text-[0.65rem] text-white" title={`${reservedCount} reserved`} aria-hidden="true">✓</span> : null}</span><span className="mt-1 block text-2xl font-semibold leading-none">{dayFormatter.format(parsedDate)} <span className="text-xs font-medium uppercase tracking-[0.08em] opacity-65">{monthFormatter.format(parsedDate)}</span></span><span className="mt-3 block text-xs font-semibold opacity-75">{sessionCount} {sessionCount === 1 ? "class" : "classes"}</span><span className="mt-2 flex min-h-3 flex-wrap gap-1" aria-hidden="true">{daySessions.slice(0, 6).map((session) => <span key={session.class_session_id} className={`h-2.5 flex-1 rounded-full ${classCalendarStyle[session.class_type].dot} ${session.is_full ? "opacity-35" : ""}`} title={`${classCalendarStyle[session.class_type].label}${session.is_full ? ", full" : ""}`} />)}{daySessions.length > 6 ? <span className="text-[0.65rem] font-semibold opacity-70">+{daySessions.length - 6}</span> : null}</span>{reservedCount ? <span className={`mt-2 block text-xs font-semibold ${selected ? "text-emerald-300" : "text-emerald-800"}`}>{reservedCount} booked</span> : <span className="mt-2 block text-xs opacity-55">{sessionCount ? "View schedule" : "No classes"}</span>}</button>;
-          })}
-        </div>
-        <div className="pointer-events-none absolute inset-y-0 right-0 w-8 bg-gradient-to-l from-white/90 to-transparent xl:hidden" aria-hidden="true" />
+            return <td key={date.key} className="p-0 align-top"><button type="button" aria-pressed={selected} aria-label={`${isToday ? "Today, " : ""}${fullDayFormatter.format(parsedDate)}, ${daySessions.length} ${daySessions.length === 1 ? "class" : "classes"}${classSummary ? `: ${classSummary}` : ""}${reservedCount ? `, ${reservedCount} reserved` : ""}`} onClick={() => setSelectedDay(date.key)} className={`flex min-h-20 w-full min-w-11 flex-col rounded-xl border p-1.5 text-left transition focus-visible:outline-2 focus-visible:outline-[#c72c25] focus-visible:outline-offset-2 sm:min-h-24 sm:p-2 ${selected ? "border-[#c72c25] bg-[#c72c25] text-white shadow-[0_0.5rem_1.5rem_rgba(199,44,37,0.18)]" : isToday ? "border-black/25 bg-white ring-2 ring-black/25 ring-inset" : daySessions.length ? "border-black/10 bg-[#f7f4ee] hover:border-[#c72c25]/55 hover:bg-white" : "border-transparent bg-black/[0.025] text-black/55"}`}><span className="flex w-full items-center justify-between gap-1"><span className="inline-flex size-8 items-center justify-center rounded-full text-sm font-semibold">{dayFormatter.format(parsedDate)}</span>{reservedCount ? <span className={`inline-flex size-5 items-center justify-center rounded-full text-[0.6rem] ${selected ? "bg-white text-[#8e211c]" : "bg-black text-white"}`} aria-hidden="true">✓</span> : null}</span><span className="mt-auto flex min-h-5 flex-wrap items-end gap-1" aria-hidden="true">{daySessions.slice(0, 5).map((session) => <span key={session.class_session_id} className={`size-2.5 rounded-full ${session.is_full ? "bg-black/20" : classCalendarStyle[session.class_type].dot} ${selected ? "ring-1 ring-white/60" : ""}`} />)}{daySessions.length > 5 ? <span className="text-[0.6rem] font-semibold">+{daySessions.length - 5}</span> : null}</span></button></td>;
+          })}</tr>)}</tbody></table></div>
         </div>
 
         <div className="mt-6">
