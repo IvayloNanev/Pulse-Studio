@@ -14,6 +14,12 @@ const policies: PulsePolicy[] = [
     question: "What is the cancellation policy?",
     answer: "Cancel at least 12 hours before class to have an eligible credit returned.",
   },
+  {
+    policy_key: "yoga-preparation",
+    category: "classes",
+    question: "What should I wear and how should I prepare for yoga?",
+    answer: "Wear comfortable, flexible athletic clothing that lets you move freely. Arrive a few minutes early so you can settle in before yoga begins.",
+  },
 ];
 
 const context: PulseMemberContext = {
@@ -88,6 +94,11 @@ test("answers membership questions from member context", () => {
 
 test("uses approved policy answers for policy questions", () => {
   expect(answerGroundedPulseQuestion("Can you explain cancellations?", policies, context)).toBe(policies[0].answer);
+});
+
+test("answers yoga attire questions from approved preparation guidance", () => {
+  expect(answerGroundedPulseQuestion("What should I wear for yoga class?", policies, context))
+    .toBe(policies[1].answer);
 });
 
 test("does not invent unavailable membership data", () => {
