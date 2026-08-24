@@ -80,11 +80,17 @@ Pulse Studio offers these monthly plans:
 | 8 Classes Monthly | $179 | 8 |
 | 12 Classes Monthly | $249 | 12 |
 
-- Existing members keep their agreed price until staff explicitly changes or renews the membership.
+- Existing members keep their agreed price until they confirm a plan change or staff explicitly changes or renews the membership.
 - A price change does not silently rewrite historical membership pricing.
 - Unused included credits expire at the end of the applicable billing cycle and do not roll over.
 - A cancelled member who returns receives a new active membership at the current plan price.
 - The previous membership remains historical and expired credits are not restored.
+- An active member may request a plan change from the member Account experience without owner/admin approval.
+- Before confirmation, the interface shows the requested plan's included classes, current price, and effective date.
+- A confirmed plan change is scheduled automatically for the next billing-cycle boundary.
+- The current plan, price, credits, and reservations remain unchanged through the current billing cycle.
+- At the next cycle boundary, the requested plan and its then-confirmed price become the new agreed membership terms.
+- Pulse Assistant may explain plan options and link to Account but cannot submit or confirm the change in chat.
 
 ## 4. Authentication, accounts, and permissions
 
@@ -167,10 +173,15 @@ Included membership credits are derived for the applicable pause-adjusted billin
 ## 10. Membership cancellation and reactivation
 
 - Membership cancellation requires 30 days' notice.
+- A member submits and confirms a cancellation from the member Account experience without staff approval.
+- Before confirmation, the interface shows the exact cancellation effective date.
 - The membership remains active through the paid period covered by the notice.
 - Existing credits may be used while the membership remains active.
 - No additional membership-cancellation fee applies.
+- A member may withdraw a scheduled cancellation before its effective date, keeping the existing membership active.
 - Reactivation after cancellation creates a new membership at the current plan price rather than reopening the previous membership.
+- Reactivation after cancellation uses the membership enrollment flow and a new confirmed membership agreement.
+- Pulse Assistant may explain cancellation/reactivation rules and link to Account or enrollment, but cannot submit, withdraw, confirm, or complete either action in chat.
 
 ## 11. Class demand and schedule changes
 
@@ -188,8 +199,20 @@ Staff may change a class after reservations exist, subject to these rules:
 
 Supported class types in v1 are `yoga`, `cycling`, and `hiit` only.
 
+Class level and modification rules are:
+
+- yoga is open to all levels and instructors provide movement modifications;
+- cycling is open to all levels, members control their resistance, and instructors may assist with bike setup;
+- HIIT is intermediate intensity by default, and beginners may participate using instructor-provided modifications;
+- instructors may offer general exercise modifications but do not diagnose injuries or provide medical clearance;
+- members with an injury, medical concern, or uncertainty about exercise safety must consult a qualified healthcare professional.
+
 ## 12. Check-in, attendance, and no-show
 
+- Members should arrive before the scheduled class start.
+- A member may enter up to five minutes after the scheduled start, at the instructor's discretion.
+- More than five minutes after the scheduled start, entry is not permitted for safety and to avoid disrupting the class.
+- The late-entry rule is separate from the staff attendance-recording window and does not extend a member's right to enter class.
 - Attendance is permitted only for a confirmed reservation on a non-cancelled session.
 - Valid check-in begins 15 minutes before the session and ends 20 minutes after it starts.
 - A confirmed member who has not checked in when the window closes is marked `no_show` automatically.
@@ -328,6 +351,12 @@ Members receive notifications for:
 
 Notifications use the in-app notification center plus the member's valid preferred channel. Notification timing and policy boundaries use `America/New_York`.
 
+- Each in-app notification records its creation time and unread/read status.
+- Opening a notification marks it read, and the member may mark all notifications as read.
+- In-app delivery is the authoritative notification experience for this school-project MVP.
+- Email and SMS delivery remain simulated and are labeled as simulated wherever shown.
+- Pulse Assistant may summarize existing authenticated notification facts and link to the notification center, but may not mark notifications read or claim that a real email or SMS was delivered.
+
 ## 22. Confirmations and auditability
 
 The interface requires confirmation before:
@@ -393,3 +422,15 @@ The current technical package must not be treated as fully aligned until a separ
 13. re-engagement outcome definitions.
 
 After that schema revision is approved, the generator, valid/invalid fixtures, manifests, validators, reports, workbook, and backend API contracts must be regenerated and tested together. No schema or dataset update is authorized merely by this consolidated document review.
+
+## 27. Member support channels and hours
+
+For the school-project experience, Pulse Studio publishes these simulated support channels:
+
+- email: `support@pulsestudio.com`;
+- phone: `(212) 555-0198`;
+- staffed hours Monday through Friday: 6:00 AM–9:00 PM America/New_York;
+- staffed hours Saturday and Sunday: 8:00 AM–6:00 PM America/New_York;
+- email response target: within one business day.
+
+Pulse Assistant may provide these contact details and expectations but may not claim that a message was received, reviewed, or resolved. Immediate health or safety concerns are directed to on-site staff or local emergency services rather than email or Pulse Assistant.
