@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 
 import {
-  answerGroundedPulseQuestion,
-  isDeterministicMemberFactQuestion,
+  cleanAssistantText,
+  groundPulseQuestion,
   resolvePulseFollowUpQuestion,
   type PulseConversationTurn,
   type PulseMemberContext,
@@ -17,16 +17,16 @@ type AssistantPostDependencies<TSupabase> = {
   consumeQuota: (supabase: TSupabase, bucket: "request" | "model") => Promise<AssistantQuota>;
   loadGrounding: (supabase: TSupabase) => Promise<AssistantGrounding>;
   gatewayEnabled: () => boolean;
-  generateAnswer: (question: string, grounding: AssistantGrounding, fallback: string) => Promise<string | null>;
+  generatePolicyOrder: (question: string, grounding: AssistantGrounding) => Promise<string[] | null>;
 };
 
-export function numericClaimsAreGrounded(answer: string, evidence: unknown) {
-  const numbers = answer.match(/\$?\d+(?:\.\d+)?/g) ?? [];
-  const evidenceNumbers = new Set(
-    (JSON.stringify(evidence).match(/\d+(?:\.\d+)?/g) ?? [])
-      .map((number) => Number(number).toString()),
-  );
-  return numbers.every((number) => evidenceNumbers.has(Number(number.replace("$", "")).toString()));
+/* Model prose is never accepted. The model can only order allowlisted policy keys,
+   and the server renders the corresponding approved answers. */
+export function renderApprovedPolicyOrder(policies: PulsePolicy[], proposedOrder: string[] | null) {
+  if (!proposedOrder || proposedOrder.length !== policies.length) return null;
+  const policyByKey = new Map(policies.map((policy) => [policy.policy_key, policy.answer]));
+  if (new Set(proposedOrder).size !== policies.length || proposedOrder.some((key) => !policyByKey.has(key))) return null;
+  return cleanAssistantText(proposedOrder.map((key) => policyByKey.get(key)).join(" "));
 }
 
 export function createAssistantPostHandler<TSupabase>(dependencies: AssistantPostDependencies<TSupabase>) {
@@ -74,29 +74,34 @@ export function createAssistantPostHandler<TSupabase>(dependencies: AssistantPos
       return NextResponse.json({ error: "Approved studio answers are temporarily unavailable." }, { status: 503 });
     }
 
-    const fallback = answerGroundedPulseQuestion(resolvedQuestion, grounding.policies, grounding.context);
-    if (resolvedQuestion !== question || isDeterministicMemberFactQuestion(resolvedQuestion)) {
-      return NextResponse.json({ answer: fallback, mode: "deterministic" });
+    const grounded = groundPulseQuestion(resolvedQuestion, grounding.policies, grounding.context);
+    if (resolvedQuestion !== question || grounded.route !== "composition") {
+      return NextResponse.json({ answer: grounded.answer, mode: "deterministic" });
     }
+    const selectedGrounding = {
+      ...grounding,
+      policies: grounding.policies.filter((policy) => grounded.policyKeys?.includes(policy.policy_key)),
+    };
     if (!dependencies.gatewayEnabled()) {
-      return NextResponse.json({ answer: fallback, mode: "deterministic" });
+      return NextResponse.json({ answer: grounded.answer, mode: "deterministic" });
     }
 
     try {
       const modelQuota = await dependencies.consumeQuota(authentication.supabase, "model");
       if (!modelQuota.allowed) {
-        return NextResponse.json({ answer: fallback, mode: "deterministic", limit: "daily-model-budget" });
+        return NextResponse.json({ answer: grounded.answer, mode: "deterministic", limit: "daily-model-budget" });
       }
     } catch {
-      return NextResponse.json({ answer: fallback, mode: "deterministic", limit: "quota-unavailable" });
+      return NextResponse.json({ answer: grounded.answer, mode: "deterministic", limit: "quota-unavailable" });
     }
 
     try {
-      const answer = await dependencies.generateAnswer(question, grounding, fallback);
-      return NextResponse.json({ answer: answer ?? fallback, mode: answer ? "llm" : "deterministic" });
+      const proposedOrder = await dependencies.generatePolicyOrder(question, selectedGrounding);
+      const answer = renderApprovedPolicyOrder(selectedGrounding.policies, proposedOrder);
+      return NextResponse.json({ answer: answer ?? grounded.answer, mode: answer ? "llm" : "deterministic" });
     } catch (error) {
       console.error("Pulse Assistant model generation failed", error);
-      return NextResponse.json({ answer: fallback, mode: "deterministic" });
+      return NextResponse.json({ answer: grounded.answer, mode: "deterministic" });
     }
   };
 }
