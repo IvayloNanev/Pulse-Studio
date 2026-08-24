@@ -1,0 +1,3 @@
+export default function StaffLoading() {
+  return <main aria-busy="true" aria-label="Loading staff operations" className="min-h-screen bg-[#f7f6f2] p-4 sm:p-7"><p role="status" className="sr-only">Loading staff operations…</p><div className="h-48 animate-pulse rounded-3xl bg-black/90 motion-reduce:animate-none" /><div className="mt-4 grid grid-cols-2 gap-3 lg:grid-cols-4">{Array.from({ length: 4 }, (_, index) => <div key={index} className="h-24 animate-pulse rounded-2xl bg-black/10 motion-reduce:animate-none" />)}</div><div className="mt-4 h-80 animate-pulse rounded-3xl bg-black/10 motion-reduce:animate-none" /></main>;
+}
