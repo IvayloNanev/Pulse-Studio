@@ -43586,4 +43586,8 @@ insert into public.risk_case_notes (note_id, member_id, risk_assessment_id, body
 ('NOTE-00029', 'MEM-0004', 'RISK-0004', 'Staff context note 29 for the member re-engagement review.', 'STF-0004', '2026-01-03T11:00:00-05:00', null, null, null, null),
 ('NOTE-00030', 'MEM-0005', 'RISK-0005', 'Staff context note 30 for the member re-engagement review.', 'STF-0002', '2026-01-04T11:00:00-05:00', null, null, 'STF-0001', '2026-01-04T13:00:00-05:00');
 
+-- Provision the named operational demo account after the canonical plan catalog
+-- is present. This record is intentionally outside the frozen 250-member CSVs.
+select public.provision_ethan_demo_member();
+
 commit;
