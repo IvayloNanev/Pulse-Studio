@@ -42,4 +42,4 @@ const server = http.createServer((request, response) => {
   response.end(JSON.stringify({ message: "Unknown test endpoint" }));
 });
 
-server.listen(54329, "127.0.0.1");
+server.listen(Number(process.env.PULSE_MOCK_SUPABASE_PORT ?? 54329), "127.0.0.1");

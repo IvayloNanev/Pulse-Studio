@@ -8,6 +8,8 @@
     "start": "next start",
     "lint": "eslint",
     "test:grounding": "PULSE_SKIP_WEBSERVER=1 playwright test e2e/pulse-assistant-grounding.spec.ts",
+    "test:assistant-api": "PULSE_SKIP_WEBSERVER=1 playwright test e2e/pulse-assistant-api.spec.ts",
+    "test:assistant-eval": "PULSE_SKIP_WEBSERVER=1 playwright test e2e/pulse-assistant-policy-evaluation.spec.ts",
     "test:e2e": "playwright test",
     "validate": "pnpm run lint && pnpm run build && pnpm run test:e2e"
   },
