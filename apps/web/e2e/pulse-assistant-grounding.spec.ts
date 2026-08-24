@@ -2,6 +2,7 @@ import { expect, test } from "@playwright/test";
 
 import {
   answerGroundedPulseQuestion,
+  cleanAssistantText,
   type PulseMemberContext,
   type PulsePolicy,
 } from "../src/lib/pulse-assistant-grounding";
@@ -103,4 +104,9 @@ test("uses a bounded fallback for unsupported questions", () => {
   expect(answerGroundedPulseQuestion("What is the weather in Paris?", policies, context)).toContain(
     "I don’t have an approved answer",
   );
+});
+
+test("removes model formatting markers from member-facing answers", () => {
+  expect(cleanAssistantText("You have **5 classes available** and `2 reserved`."))
+    .toBe("You have 5 classes available and 2 reserved.");
 });

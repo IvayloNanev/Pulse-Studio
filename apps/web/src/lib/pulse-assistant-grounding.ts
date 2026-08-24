@@ -81,6 +81,16 @@ function unavailable(subject: "membership" | "activity") {
   return `I can’t verify your ${subject} information right now. Please refresh and try again; I won’t guess when your live data is unavailable.`;
 }
 
+export function cleanAssistantText(value: string) {
+  return value
+    .replace(/\*\*([^*]+)\*\*/g, "$1")
+    .replace(/__([^_]+)__/g, "$1")
+    .replace(/`([^`]+)`/g, "$1")
+    .replace(/^#{1,6}\s+/gm, "")
+    .replace(/^\s*[-*+]\s+/gm, "")
+    .trim();
+}
+
 export function answerGroundedPulseQuestion(question: string, policies: PulsePolicy[], context: PulseMemberContext | null) {
   const normalized = question.toLowerCase();
   const summary = context?.member_summary;
