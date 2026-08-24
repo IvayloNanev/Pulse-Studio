@@ -85,7 +85,10 @@ export function PulseAssistantChat() {
       const request = await fetch("/api/member/assistant", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ question }),
+        body: JSON.stringify({
+          question,
+          conversation: messages.slice(-6).map((message) => ({ role: message.role, text: message.text })),
+        }),
       });
       const payload = await request.json();
       if (request.ok && typeof payload.answer === "string" && payload.answer.trim()) response = payload.answer.trim();
