@@ -36,7 +36,7 @@ function safeBookingError(message: string) {
   if (normalized.includes("already has an open reservation")) return "You already have a reservation or waitlist place for this class.";
   if (normalized.includes("already started")) return "This class has already started and can no longer be reserved.";
   if (normalized.includes("active now and at class time")) return "Your membership must be active now and on the class date.";
-  if (normalized.includes("no membership credits remaining")) return "No membership credits remain. Choose the simulated $35 drop-in option.";
+  if (normalized.includes("no membership credits remaining")) return "No membership credits remain. Choose the $35 drop-in option.";
   if (normalized.includes("class session not found")) return "This class is no longer available.";
   return "We could not complete this reservation. Refresh the schedule and try again.";
 }
@@ -71,7 +71,7 @@ export async function bookClass(formData: FormData) {
   const message = status === "waitlisted"
     ? "You joined the waitlist. We will notify you if a spot opens."
     : useDropIn
-      ? "Class confirmed with the simulated $35 drop-in."
+      ? "Class confirmed with the $35 drop-in."
       : "Class confirmed. One membership credit is reserved.";
 
   revalidatePath("/member");
@@ -97,8 +97,8 @@ export async function cancelReservation(formData: FormData) {
 
   const result = data?.[0];
   const message = result?.is_late_cancellation
-    ? "Reservation cancelled. Because it was within 12 hours, any applicable credit or simulated drop-in payment was not returned."
-    : "Reservation cancelled. Any applicable credit or simulated drop-in payment was returned; waitlist entries use neither.";
+    ? "Reservation cancelled. Because it was within 12 hours, any applicable credit or drop-in payment was not returned."
+    : "Reservation cancelled. Any applicable credit or drop-in payment was returned; waitlist entries use neither.";
 
   revalidatePath("/member");
   revalidatePath("/member/classes");

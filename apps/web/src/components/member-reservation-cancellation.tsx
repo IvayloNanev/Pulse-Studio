@@ -34,12 +34,12 @@ export function MemberReservationCancellation({ reservation, returnTo, now }: { 
     return () => window.clearInterval(timer);
   }, []);
   const waitlisted = reservation.reservation_status === "waitlisted";
-  const late = currentTime >= new Date(reservation.cancellation_deadline).getTime();
+  const late = currentTime > new Date(reservation.cancellation_deadline).getTime();
   const consequence = waitlisted
     ? "No credit or drop-in authorization is held. Leaving removes you from the waitlist."
     : late
-      ? "Late cancellation: your credit or simulated drop-in authorization will not be returned."
-      : `Cancel by ${formatDeadline(reservation.cancellation_deadline)} to return your credit or simulated drop-in authorization.`;
+      ? "Late cancellation: your credit or drop-in authorization will not be returned."
+      : `Cancel by ${formatDeadline(reservation.cancellation_deadline)} to return your credit or drop-in authorization.`;
 
   if (!confirming) return <div className="mt-4 border-t border-black/10 pt-4"><p className={`text-sm leading-6 ${late && !waitlisted ? "font-semibold text-[#8e211c]" : "text-black/65"}`}>{consequence}</p><button ref={triggerRef} type="button" onClick={() => { setCurrentTime(Date.now()); setConfirming(true); }} className="mt-2 min-h-11 text-sm font-semibold text-[#8e211c] underline decoration-2 underline-offset-4 focus-visible:outline-2 focus-visible:outline-[#c72c25] focus-visible:outline-offset-2">{waitlisted ? "Leave waitlist" : "Cancel reservation"}</button></div>;
 
