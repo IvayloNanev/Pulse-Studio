@@ -6,6 +6,8 @@ import {
   answerGroundedPulseQuestion,
   cleanAssistantText,
   isDeterministicMemberFactQuestion,
+  resolvePulseFollowUpQuestion,
+  type PulseConversationTurn,
   type PulseMemberContext,
   type PulsePolicy,
 } from "@/lib/pulse-assistant-grounding";
@@ -166,9 +168,20 @@ export async function POST(request: Request) {
 
   const payload = await request.json().catch(() => null);
   const question = typeof payload?.question === "string" ? payload.question.trim() : "";
+  const conversation: PulseConversationTurn[] = Array.isArray(payload?.conversation)
+    ? payload.conversation
+      .slice(-6)
+      .filter((turn: unknown): turn is Record<string, unknown> => Boolean(turn) && typeof turn === "object")
+      .map((turn: Record<string, unknown>) => ({
+        role: turn.role === "assistant" ? "assistant" as const : "member" as const,
+        text: typeof turn.text === "string" ? turn.text.trim().slice(0, 500) : "",
+      }))
+      .filter((turn: PulseConversationTurn) => Boolean(turn.text))
+    : [];
   if (!question || question.length > 500) {
     return NextResponse.json({ error: "Ask one question using 500 characters or fewer." }, { status: 400 });
   }
+  const resolvedQuestion = resolvePulseFollowUpQuestion(question, conversation);
 
   let grounding: Awaited<ReturnType<typeof loadAssistantGrounding>>;
   try {
@@ -177,8 +190,8 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Approved studio answers are temporarily unavailable." }, { status: 503 });
   }
 
-  const fallback = answerGroundedPulseQuestion(question, grounding.policies, grounding.context);
-  if (isDeterministicMemberFactQuestion(question)) {
+  const fallback = answerGroundedPulseQuestion(resolvedQuestion, grounding.policies, grounding.context);
+  if (resolvedQuestion !== question || isDeterministicMemberFactQuestion(resolvedQuestion)) {
     return NextResponse.json({ answer: fallback, mode: "deterministic" });
   }
   if (!process.env.AI_GATEWAY_API_KEY) {

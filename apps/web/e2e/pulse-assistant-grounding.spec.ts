@@ -3,6 +3,7 @@ import { expect, test } from "@playwright/test";
 import {
   answerGroundedPulseQuestion,
   cleanAssistantText,
+  resolvePulseFollowUpQuestion,
   type PulseMemberContext,
   type PulsePolicy,
 } from "../src/lib/pulse-assistant-grounding";
@@ -122,6 +123,21 @@ test("answers schedule questions with live class and capacity facts", () => {
   expect(answer).toContain("Yoga with Maya Chen");
   expect(answer).toContain("4 spots available");
   expect(answer).not.toContain("classes available and");
+});
+
+test("resolves a schedule follow-up from the prior member question", () => {
+  const resolved = resolvePulseFollowUpQuestion("What about tomorrow?", [
+    { role: "member", text: "Are there any yoga classes today?" },
+    { role: "assistant", text: "I found one yoga class today." },
+  ]);
+  expect(resolved).toBe("What about tomorrow? Follow-up topic: Are there any yoga classes today?");
+  expect(answerGroundedPulseQuestion(resolved, policies, context)).toContain("YOGA");
+});
+
+test("does not attach stale context to a standalone question", () => {
+  expect(resolvePulseFollowUpQuestion("Can I be late for class?", [
+    { role: "member", text: "What should I wear for yoga?" },
+  ])).toBe("Can I be late for class?");
 });
 
 test("uses approved policy answers for policy questions", () => {

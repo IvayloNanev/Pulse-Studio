@@ -5,6 +5,11 @@ export type PulsePolicy = {
   answer: string;
 };
 
+export type PulseConversationTurn = {
+  role: "member" | "assistant";
+  text: string;
+};
+
 export type PulseMemberContext = {
   member_summary?: {
     member_name?: string;
@@ -118,6 +123,17 @@ export function cleanAssistantText(value: string) {
 
 export function isDeterministicMemberFactQuestion(question: string) {
   return /check[ -]?in|attendance|attended|last (class|workout)|most recent (class|workout)|credit|classes (left|available|used)|remaining|reservation|upcoming|next class|reserved class|booked|membership|my plan|plan status|account status|what do i pay|monthly price|membership price|schedule|today|tomorrow|available spots?|class.*full|who teaches|instructor/.test(question.toLowerCase());
+}
+
+export function resolvePulseFollowUpQuestion(question: string, conversation: PulseConversationTurn[]) {
+  const normalized = question.trim();
+  const needsPriorTopic = /^(what|how) about\b|^(and|then)\b|\b(it|that|those|them)\b/i.test(normalized);
+  if (!needsPriorTopic) return normalized;
+  const previousMemberQuestion = [...conversation]
+    .reverse()
+    .find((turn) => turn.role === "member" && turn.text.trim() && turn.text.trim() !== normalized)
+    ?.text.trim();
+  return previousMemberQuestion ? `${normalized} Follow-up topic: ${previousMemberQuestion}` : normalized;
 }
 
 export function answerGroundedPulseQuestion(question: string, policies: PulsePolicy[], context: PulseMemberContext | null) {
