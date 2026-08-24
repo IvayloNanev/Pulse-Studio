@@ -64,17 +64,17 @@ export default async function StaffRosterPage({
         <div className="glass-panel rounded-3xl p-8"><h2 className="text-2xl font-semibold">No reservations yet</h2><p className="mt-2 text-sm text-black/60">This session currently has no confirmed or waitlisted members.</p></div>
       ) : (
         <div className="overflow-hidden rounded-3xl border border-white/70 bg-white/45 shadow-xl backdrop-blur-2xl">
-          <div className="hidden grid-cols-[1fr_9rem_12rem] gap-4 border-b border-black/10 px-6 py-4 font-mono text-[0.65rem] uppercase tracking-[0.15em] text-black/50 md:grid">
+          <div className="hidden grid-cols-[1fr_9rem_12rem] gap-4 border-b border-black/10 px-6 py-4 font-mono text-[0.65rem] uppercase tracking-[0.15em] text-black/60 md:grid">
             <span>Member</span><span>Status</span><span>Attendance</span>
           </div>
           {roster.map((member) => (
             <article key={member.reservation_id} className="grid gap-4 border-b border-black/10 px-6 py-5 last:border-b-0 md:grid-cols-[1fr_9rem_12rem] md:items-center">
-              <div><h2 className="font-semibold">{member.member_name}</h2><p className="mt-1 font-mono text-[0.65rem] text-black/45">{member.member_id}</p></div>
+              <div><h2 className="font-semibold">{member.member_name}</h2><p className="mt-1 font-mono text-[0.65rem] text-black/60">{member.member_id}</p></div>
               <span className="w-fit border border-black/20 px-2.5 py-1 text-xs font-semibold capitalize">{member.reservation_status}</span>
               {member.attendance_status ? (
                 <span className="font-semibold capitalize">{member.attendance_status.replace("_", "-")}</span>
               ) : member.reservation_status === "waitlisted" ? (
-                <span className="text-sm text-black/50">Awaiting promotion</span>
+                <span className="text-sm text-black/60">Awaiting promotion</span>
               ) : (
                 <form action={recordAttendance} className="flex gap-2">
                   <input type="hidden" name="class_session_id" value={sessionId} />

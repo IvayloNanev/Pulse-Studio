@@ -28,7 +28,7 @@ export default async function RecoveryPage({ searchParams }: RecoveryPageProps) 
     <main className="atmospheric-motion flex min-h-screen items-center justify-center bg-[linear-gradient(125deg,#171717_0%,#756f69_45%,#eeeae3_100%)] px-6 py-16">
       <section className="glass-panel w-full max-w-lg rounded-[2rem] p-8 sm:p-10">
         <Brand prominent />
-        <p className="mt-10 font-mono text-xs uppercase tracking-[0.2em] text-black/45">Secure account recovery</p>
+        <p className="mt-10 font-mono text-xs uppercase tracking-[0.2em] text-black/60">Secure account recovery</p>
         <h1 className="display-pulse mt-4 text-5xl">Continue securely.</h1>
         {query.token_hash ? (
           <>
