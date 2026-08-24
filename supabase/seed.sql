@@ -262,6 +262,9 @@ insert into public.members (member_id, first_name, last_name, email, phone, pref
 ('MEM-0249', 'Naomi', 'Lewis', 'naomi.lewis.249@pulse.example', '+1-212-555-1249', 'email', 'false'),
 ('MEM-0250', 'Ravi', 'Lewis', 'ravi.lewis.250@pulse.example', null, 'email', 'false');
 
+insert into public.simulated_payment_methods (payment_method_id, member_id, cardholder_name, card_brand, last_four, expiration_month, expiration_year, billing_zip, is_default, status, created_at, updated_at)
+select 'SPM-' || member_id, member_id, concat_ws(' ', first_name, last_name), case mod(length(member_id), 3) when 0 then 'visa' when 1 then 'mastercard' else 'amex' end, right('0000' || coalesce(nullif(regexp_replace(member_id, '[^0-9]', '', 'g'), ''), '4242'), 4), mod(length(member_id), 12) + 1, 2029 + mod(length(member_id), 3), '10001', true, 'active', now(), now() from public.members;
+
 insert into public.membership_plans (plan_id, plan_name, classes_per_month, monthly_price) values
 ('PLAN-004', '4 Classes Monthly', '4', '99'),
 ('PLAN-008', '8 Classes Monthly', '8', '179'),
