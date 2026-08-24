@@ -33,6 +33,16 @@ export function MemberReservationCancellation({ reservation, returnTo, now }: { 
     const timer = window.setInterval(() => setCurrentTime(Date.now()), 30_000);
     return () => window.clearInterval(timer);
   }, []);
+  useEffect(() => {
+    if (!confirming) return;
+    function closeOnEscape(event: KeyboardEvent) {
+      if (event.key !== "Escape") return;
+      setConfirming(false);
+      window.setTimeout(() => triggerRef.current?.focus(), 0);
+    }
+    window.addEventListener("keydown", closeOnEscape);
+    return () => window.removeEventListener("keydown", closeOnEscape);
+  }, [confirming]);
   const waitlisted = reservation.reservation_status === "waitlisted";
   const late = currentTime > new Date(reservation.cancellation_deadline).getTime();
   const consequence = waitlisted
@@ -43,5 +53,5 @@ export function MemberReservationCancellation({ reservation, returnTo, now }: { 
 
   if (!confirming) return <div className="mt-4 border-t border-black/10 pt-4"><p className={`text-sm leading-6 ${late && !waitlisted ? "font-semibold text-[#8e211c]" : "text-black/65"}`}>{consequence}</p><button ref={triggerRef} type="button" onClick={() => { setCurrentTime(Date.now()); setConfirming(true); }} className="mt-2 min-h-11 text-sm font-semibold text-[#8e211c] underline decoration-2 underline-offset-4 focus-visible:outline-2 focus-visible:outline-[#c72c25] focus-visible:outline-offset-2">{waitlisted ? "Leave waitlist" : "Cancel reservation"}</button></div>;
 
-  return <div className="mt-4 rounded-2xl border border-[#c72c25]/25 bg-white/60 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.75)]" role="group" aria-label="Confirm cancellation"><p className="text-sm font-semibold">Confirm {waitlisted ? "leaving the waitlist" : "cancellation"}?</p><p className="mt-1 text-sm leading-6 text-black/70">{consequence}</p><div className="mt-3 flex flex-wrap gap-3"><form action={cancelReservation}><input type="hidden" name="reservation_id" value={reservation.reservation_id} /><input type="hidden" name="return_to" value={returnTo} /><CancellationSubmitButton /></form><button type="button" onClick={() => { setConfirming(false); window.setTimeout(() => triggerRef.current?.focus(), 0); }} className="min-h-11 rounded-full border border-black/20 bg-white/55 px-5 text-sm font-semibold focus-visible:outline-2 focus-visible:outline-[#c72c25] focus-visible:outline-offset-2">Keep it</button></div></div>;
+  return <div className="mt-4 rounded-2xl border border-[#c72c25]/25 bg-white/60 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.75)]" role="region" aria-live="polite" aria-label="Confirm cancellation"><p className="text-sm font-semibold">Confirm {waitlisted ? "leaving the waitlist" : "cancellation"}?</p><p className="mt-1 text-sm leading-6 text-black/70">{consequence}</p><div className="mt-3 flex flex-wrap gap-3"><form action={cancelReservation}><input type="hidden" name="reservation_id" value={reservation.reservation_id} /><input type="hidden" name="return_to" value={returnTo} /><CancellationSubmitButton /></form><button type="button" onClick={() => { setConfirming(false); window.setTimeout(() => triggerRef.current?.focus(), 0); }} className="min-h-11 rounded-full border border-black/20 bg-white/55 px-5 text-sm font-semibold focus-visible:outline-2 focus-visible:outline-[#c72c25] focus-visible:outline-offset-2">Keep it</button></div><p className="sr-only">Press Escape to keep this reservation.</p></div>;
 }

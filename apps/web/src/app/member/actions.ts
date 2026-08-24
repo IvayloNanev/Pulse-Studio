@@ -6,10 +6,9 @@ import { redirect } from "next/navigation";
 import { requireMember } from "@/lib/auth";
 
 function destination(path: string, type: "success" | "error", message: string) {
-  const [pathname, query = ""] = path.split("?", 2);
-  const params = new URLSearchParams(query);
-  params.set(type, message);
-  return `${pathname}?${params.toString()}`;
+  const url = new URL(path, "https://pulse.local");
+  url.searchParams.set(type, message);
+  return `${url.pathname}?${url.searchParams.toString()}${url.hash}`;
 }
 
 function returnPath(formData: FormData, fallback: string) {
@@ -18,14 +17,17 @@ function returnPath(formData: FormData, fallback: string) {
     const url = new URL(requested, "https://pulse.local");
     if (!["/member", "/member/classes", "/member/reservations"].includes(url.pathname)) return fallback;
     const safe = new URLSearchParams();
+    const month = url.searchParams.get("month");
     const day = url.searchParams.get("day");
     const classType = url.searchParams.get("class");
     const instructor = url.searchParams.get("instructor");
+    if (month && /^\d{4}-(0[1-9]|1[0-2])$/.test(month)) safe.set("month", month);
     if (day && /^\d{4}-\d{2}-\d{2}$/.test(day)) safe.set("day", day);
     if (classType && ["yoga", "cycling", "hiit"].includes(classType)) safe.set("class", classType);
     if (instructor && instructor.length <= 80) safe.set("instructor", instructor);
     const query = safe.toString();
-    return `${url.pathname}${query ? `?${query}` : ""}`;
+    const hash = url.hash === "#month-details" ? url.hash : "";
+    return `${url.pathname}${query ? `?${query}` : ""}${hash}`;
   } catch {
     return fallback;
   }
