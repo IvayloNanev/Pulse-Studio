@@ -5,6 +5,7 @@ import { newYorkDateParts, newYorkMonthWindow } from "@/lib/member-calendar";
 import {
   answerGroundedPulseQuestion,
   cleanAssistantText,
+  isDeterministicMemberFactQuestion,
   type PulseMemberContext,
   type PulsePolicy,
 } from "@/lib/pulse-assistant-grounding";
@@ -15,6 +16,16 @@ type MemberActivity = NonNullable<PulseMemberContext["recent_activity"]>[number]
 type RawMemberContext = {
   member_summary?: Record<string, unknown>;
   upcoming_reservations?: Array<Record<string, unknown>>;
+};
+type RawScheduleSession = {
+  class_session_id?: unknown;
+  class_type?: unknown;
+  class_type_label?: unknown;
+  instructor_name?: unknown;
+  starts_at?: unknown;
+  ends_at?: unknown;
+  available_spots?: unknown;
+  is_full?: unknown;
 };
 
 const assistantModel = "poolside/laguna-s-2.1-free";
@@ -42,17 +53,30 @@ function safeNumber(value: unknown) {
   return typeof value === "number" && Number.isFinite(value) ? value : undefined;
 }
 
+function safeBoolean(value: unknown) {
+  return typeof value === "boolean" ? value : undefined;
+}
+
+function numericClaimsAreGrounded(answer: string, evidence: unknown) {
+  const numbers = answer.match(/\$?\d+(?:\.\d+)?/g) ?? [];
+  const serializedEvidence = JSON.stringify(evidence);
+  return numbers.every((number) => serializedEvidence.includes(number.replace("$", "")));
+}
+
 function sanitizeMemberContext(raw: RawMemberContext | undefined): PulseMemberContext {
-  const summary = raw?.member_summary ?? {};
+  const summary = raw?.member_summary;
   return {
-    member_summary: {
+    member_summary: summary ? {
       member_name: safeText(summary.member_name),
       membership_status: safeText(summary.membership_status),
       plan_name: safeText(summary.plan_name),
+      classes_per_month: safeNumber(summary.classes_per_month),
+      agreed_monthly_price: safeNumber(summary.agreed_monthly_price),
+      classes_used: safeNumber(summary.classes_used),
       classes_remaining: safeNumber(summary.classes_remaining),
       classes_reserved: safeNumber(summary.classes_reserved),
       billing_cycle_end_at: safeText(summary.billing_cycle_end_at),
-    },
+    } : undefined,
     upcoming_reservations: (raw?.upcoming_reservations ?? []).slice(0, 5).map((reservation) => ({
       class_type_label: safeText(reservation.class_type_label),
       instructor_name: safeText(reservation.instructor_name),
@@ -67,16 +91,25 @@ async function loadAssistantGrounding(supabase: AssistantSupabase) {
   const current = newYorkDateParts(now);
   const { startsAt, endsAt } = newYorkMonthWindow(current.year, current.month);
   const nowIso = now.toISOString();
+  const scheduleEndsAt = new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000).toISOString();
   const [
     { data: policies, error: policyError },
     { data: contextRows, error: contextError },
     { data: activityRows, error: activityError },
     { data: activityStatsRows, error: activityStatsError },
+    { data: scheduleRows, error: scheduleError },
   ] = await Promise.all([
     supabase.from("product_c_policy_answers").select("policy_key,category,question,answer").order("sort_order", { ascending: true }),
     supabase.rpc("product_c_member_context", { p_from: nowIso, p_as_of: nowIso }),
     supabase.rpc("member_activity", { p_from: startsAt.toISOString(), p_to: endsAt.toISOString() }),
     supabase.rpc("member_activity_stats", { p_month_from: startsAt.toISOString(), p_month_to: endsAt.toISOString() }),
+    supabase
+      .from("public_class_schedule")
+      .select("class_session_id,class_type,class_type_label,instructor_name,starts_at,ends_at,available_spots,is_full")
+      .gte("starts_at", nowIso)
+      .lt("starts_at", scheduleEndsAt)
+      .order("starts_at", { ascending: true })
+      .limit(60),
   ]);
   if (policyError) throw new Error("POLICIES_UNAVAILABLE");
 
@@ -84,12 +117,26 @@ async function loadAssistantGrounding(supabase: AssistantSupabase) {
     .filter((activity) => activity.attendance_status === "attended" || activity.attendance_status === "no_show")
     .slice(-5)
     .reverse();
-  const context = sanitizeMemberContext((contextRows?.[0] ?? undefined) as RawMemberContext | undefined);
+  const rawContext = (contextRows?.[0] ?? undefined) as RawMemberContext | undefined;
+  const context = sanitizeMemberContext(rawContext);
   context.activity_stats = activityStatsRows?.[0] ?? null;
   context.recent_activity = recentActivity;
+  context.schedule = ((scheduleRows ?? []) as RawScheduleSession[]).map((session) => ({
+    class_session_id: safeText(session.class_session_id),
+    class_type: ["yoga", "cycling", "hiit"].includes(String(session.class_type))
+      ? session.class_type as "yoga" | "cycling" | "hiit"
+      : undefined,
+    class_type_label: safeText(session.class_type_label),
+    instructor_name: safeText(session.instructor_name),
+    starts_at: safeText(session.starts_at),
+    ends_at: safeText(session.ends_at),
+    available_spots: safeNumber(session.available_spots),
+    is_full: safeBoolean(session.is_full),
+  }));
   context.availability = {
-    membership: !contextError,
+    membership: !contextError && Boolean(rawContext?.member_summary),
     activity: !activityError && !activityStatsError,
+    schedule: !scheduleError,
   };
   return { policies: (policies ?? []) as PulsePolicy[], context };
 }
@@ -131,13 +178,20 @@ export async function POST(request: Request) {
   }
 
   const fallback = answerGroundedPulseQuestion(question, grounding.policies, grounding.context);
+  if (isDeterministicMemberFactQuestion(question)) {
+    return NextResponse.json({ answer: fallback, mode: "deterministic" });
+  }
   if (!process.env.AI_GATEWAY_API_KEY) {
     return NextResponse.json({ answer: fallback, mode: "deterministic" });
   }
 
   try {
     const modelFacts = {
-      membership: grounding.context.member_summary,
+      membership: grounding.context.member_summary ? {
+        membership_status: grounding.context.member_summary.membership_status,
+        plan_name: grounding.context.member_summary.plan_name,
+        billing_cycle_end_at: studioDateTime(grounding.context.member_summary.billing_cycle_end_at),
+      } : undefined,
       upcoming_reservations: grounding.context.upcoming_reservations?.map((reservation) => ({
         class_name: reservation.class_type_label,
         instructor: reservation.instructor_name,
@@ -152,9 +206,19 @@ export async function POST(request: Request) {
         attendance_status: activity.attendance_status,
       })),
       availability: grounding.context.availability,
+      schedule: grounding.context.schedule?.map((session) => ({
+        class_name: session.class_type_label,
+        instructor: session.instructor_name,
+        studio_starts_at: studioDateTime(session.starts_at),
+        studio_ends_at: studioDateTime(session.ends_at),
+        available_spots: session.available_spots,
+        is_full: session.is_full,
+      })),
     };
     const { text } = await generateText({
       model: assistantModel,
+      abortSignal: AbortSignal.timeout(5000),
+      maxRetries: 0,
       maxOutputTokens: 180,
       instructions: [
         "You are Pulse Assistant for a boutique fitness studio.",
@@ -174,7 +238,11 @@ export async function POST(request: Request) {
       }),
     });
     const answer = cleanAssistantText(text);
-    return NextResponse.json({ answer: answer || fallback, mode: answer ? "llm" : "deterministic" });
+    const validatedAnswer = answer && numericClaimsAreGrounded(answer, {
+      member_facts: modelFacts,
+      policies: grounding.policies,
+    }) ? answer : fallback;
+    return NextResponse.json({ answer: validatedAnswer, mode: validatedAnswer === answer ? "llm" : "deterministic" });
   } catch (error) {
     console.error("Pulse Assistant model generation failed", error);
     return NextResponse.json({ answer: fallback, mode: "deterministic" });

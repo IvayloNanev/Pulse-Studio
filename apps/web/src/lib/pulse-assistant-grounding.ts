@@ -10,6 +10,9 @@ export type PulseMemberContext = {
     member_name?: string;
     membership_status?: string;
     plan_name?: string;
+    classes_per_month?: number;
+    agreed_monthly_price?: number;
+    classes_used?: number;
     classes_remaining?: number;
     classes_reserved?: number;
     billing_cycle_end_at?: string;
@@ -30,9 +33,20 @@ export type PulseMemberContext = {
     instructor_name?: string;
     starts_at?: string;
   }>;
+  schedule?: Array<{
+    class_session_id?: string;
+    class_type?: "yoga" | "cycling" | "hiit";
+    class_type_label?: string;
+    instructor_name?: string;
+    starts_at?: string;
+    ends_at?: string;
+    available_spots?: number;
+    is_full?: boolean;
+  }>;
   availability?: {
     membership?: boolean;
     activity?: boolean;
+    schedule?: boolean;
   };
 };
 
@@ -44,6 +58,17 @@ const studioDateFormatter = new Intl.DateTimeFormat("en-US", {
   hour: "numeric",
   minute: "2-digit",
 });
+const studioDayFormatter = new Intl.DateTimeFormat("en-CA", {
+  timeZone: "America/New_York",
+  year: "numeric",
+  month: "2-digit",
+  day: "2-digit",
+});
+
+function studioDayKey(value: Date) {
+  const parts = Object.fromEntries(studioDayFormatter.formatToParts(value).map((part) => [part.type, part.value]));
+  return `${parts.year}-${parts.month}-${parts.day}`;
+}
 
 const policyStopWords = new Set([
   "about",
@@ -91,6 +116,10 @@ export function cleanAssistantText(value: string) {
     .trim();
 }
 
+export function isDeterministicMemberFactQuestion(question: string) {
+  return /check[ -]?in|attendance|attended|last (class|workout)|most recent (class|workout)|credit|classes (left|available|used)|remaining|reservation|upcoming|next class|reserved class|booked|membership|my plan|plan status|account status|what do i pay|monthly price|membership price|schedule|today|tomorrow|available spots?|class.*full|who teaches|instructor/.test(question.toLowerCase());
+}
+
 export function answerGroundedPulseQuestion(question: string, policies: PulsePolicy[], context: PulseMemberContext | null) {
   const normalized = question.toLowerCase();
   const summary = context?.member_summary;
@@ -104,6 +133,10 @@ export function answerGroundedPulseQuestion(question: string, policies: PulsePol
     || (/how many classes/.test(normalized) && !asksAboutAttendance);
   const asksAboutReservations = /reservation|upcoming|next class|reserved class|booked/.test(normalized);
   const asksAboutMembership = /membership|my plan|plan status|account status/.test(normalized);
+  const asksAboutPrice = /what do i pay|how much.*pay|monthly price|membership price|plan price|membership cost/.test(normalized);
+  const asksAboutUsedCredits = /credits?.*(used|spent)|(?:used|spent).*credits?|classes used/.test(normalized);
+  const asksAboutSchedule = /schedule|today|tomorrow|available spots?|class.*full|who teaches|instructor|what time/.test(normalized)
+    && /class|schedule|yoga|cycling|hiit|spot|instructor/.test(normalized);
 
   if (asksAboutAttendance) {
     if (context?.availability?.activity === false) return unavailable("activity");
@@ -120,7 +153,17 @@ export function answerGroundedPulseQuestion(question: string, policies: PulsePol
       : "I don’t see an attended class for you in the current month.");
   }
 
-  if (asksAboutCredits) {
+  if (asksAboutPrice) {
+    if (context?.availability?.membership === false || !summary || summary.agreed_monthly_price === undefined) return unavailable("membership");
+    answers.push(`Your agreed monthly price for ${summary.plan_name ?? "your Pulse Studio membership"} is $${summary.agreed_monthly_price.toFixed(2)}.`);
+  }
+
+  if (asksAboutUsedCredits) {
+    if (context?.availability?.membership === false || !summary || summary.classes_used === undefined) return unavailable("membership");
+    answers.push(`You have used ${summary.classes_used} ${summary.classes_used === 1 ? "credit" : "credits"} in your current billing cycle.`);
+  }
+
+  if (asksAboutCredits && !asksAboutUsedCredits && !asksAboutSchedule) {
     if (context?.availability?.membership === false || !summary) return unavailable("membership");
     answers.push(`You have ${summary.classes_remaining ?? 0} classes available and ${summary.classes_reserved ?? 0} currently reserved in your present billing cycle.`);
   }
@@ -133,9 +176,35 @@ export function answerGroundedPulseQuestion(question: string, policies: PulsePol
       : "You do not currently have an upcoming reservation or waitlist entry.");
   }
 
-  if (asksAboutMembership && !asksAboutCredits) {
+  if (asksAboutMembership && !asksAboutCredits && !asksAboutPrice) {
     if (context?.availability?.membership === false || !summary) return unavailable("membership");
     answers.push(`Your ${summary.plan_name ?? "Pulse Studio"} membership is ${summary.membership_status ?? "available"}.${summary.billing_cycle_end_at ? ` Your current billing cycle ends ${studioDateFormatter.format(new Date(summary.billing_cycle_end_at))}.` : ""}`);
+  }
+
+  if (asksAboutSchedule) {
+    if (context?.availability?.schedule === false) return "I can’t verify the current class schedule right now. Please open Classes and refresh; I won’t guess about live availability.";
+    const now = new Date();
+    const requestedDay = normalized.includes("tomorrow")
+      ? studioDayKey(new Date(now.getTime() + 24 * 60 * 60 * 1000))
+      : normalized.includes("today")
+        ? studioDayKey(now)
+        : undefined;
+    const requestedClass = (["yoga", "cycling", "hiit"] as const).find((classType) => normalized.includes(classType));
+    const matches = (context?.schedule ?? []).filter((session) => {
+      if (!session.starts_at) return false;
+      if (requestedDay && studioDayKey(new Date(session.starts_at)) !== requestedDay) return false;
+      if (requestedClass && session.class_type !== requestedClass) return false;
+      return true;
+    });
+    if (!matches.length) {
+      answers.push(`I don’t see a matching ${requestedClass ? `${requestedClass.toUpperCase()} ` : ""}class in the current 14-day schedule${requestedDay ? ` for ${normalized.includes("tomorrow") ? "tomorrow" : "today"}` : ""}.`);
+    } else {
+      const descriptions = matches.slice(0, 3).map((session) => {
+        const availability = session.is_full ? "full" : `${session.available_spots ?? 0} ${session.available_spots === 1 ? "spot" : "spots"} available`;
+        return `${session.class_type_label ?? "Class"}${session.instructor_name ? ` with ${session.instructor_name}` : ""} on ${studioDateFormatter.format(new Date(session.starts_at!))} (${availability})`;
+      });
+      answers.push(`${descriptions.join("; ")}.`);
+    }
   }
 
   if (answers.length > 0) return answers.join(" ");
