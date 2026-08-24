@@ -87,39 +87,48 @@ export function answerGroundedPulseQuestion(question: string, policies: PulsePol
   const upcoming = context?.upcoming_reservations ?? [];
   const activity = context?.recent_activity ?? [];
   const stats = context?.activity_stats;
+  const answers: string[] = [];
+  const asksAboutAttendance = /check[ -]?ins?|attendance|classes (have i|i have) (done|attended)|classes? this month|workouts? this month/.test(normalized);
+  const asksAboutRecentActivity = /last (class|workout)|most recent (class|workout)|when did i last/.test(normalized);
+  const asksAboutCredits = /credit|classes left|classes available|classes .*available|remaining/.test(normalized)
+    || (/how many classes/.test(normalized) && !asksAboutAttendance);
+  const asksAboutReservations = /reservation|upcoming|next class|reserved class|booked/.test(normalized);
+  const asksAboutMembership = /membership|my plan|plan status|account status/.test(normalized);
 
-  if (/check[ -]?ins?|attendance|classes (have i|i have) (done|attended)|classes? this month|workouts? this month/.test(normalized)) {
+  if (asksAboutAttendance) {
     if (context?.availability?.activity === false) return unavailable("activity");
     const total = Number(stats?.total_check_ins ?? 0);
     const monthly = Number(stats?.classes_this_month ?? 0);
-    return `You have ${total} total ${total === 1 ? "check-in" : "check-ins"}, including ${monthly} ${monthly === 1 ? "class" : "classes"} attended this month.`;
+    answers.push(`You have ${total} total ${total === 1 ? "check-in" : "check-ins"}, including ${monthly} ${monthly === 1 ? "class" : "classes"} attended this month.`);
   }
 
-  if (/last (class|workout)|most recent (class|workout)|when did i last/.test(normalized)) {
+  if (asksAboutRecentActivity) {
     if (context?.availability?.activity === false) return unavailable("activity");
     const latest = activity.find((entry) => entry.attendance_status === "attended" && entry.starts_at);
-    return latest?.starts_at
+    answers.push(latest?.starts_at
       ? `Your most recent attended class this month was ${latest.class_type_label ?? "a class"}${latest.instructor_name ? ` with ${latest.instructor_name}` : ""} on ${studioDateFormatter.format(new Date(latest.starts_at))}.`
-      : "I don’t see an attended class for you in the current month.";
+      : "I don’t see an attended class for you in the current month.");
   }
 
-  if (/credit|classes left|remaining/.test(normalized)) {
+  if (asksAboutCredits) {
     if (context?.availability?.membership === false || !summary) return unavailable("membership");
-    return `You have ${summary.classes_remaining ?? 0} classes available and ${summary.classes_reserved ?? 0} currently reserved in your present billing cycle.`;
+    answers.push(`You have ${summary.classes_remaining ?? 0} classes available and ${summary.classes_reserved ?? 0} currently reserved in your present billing cycle.`);
   }
 
-  if (/reservation|upcoming|next class|booked/.test(normalized)) {
+  if (asksAboutReservations) {
     if (context?.availability?.membership === false) return unavailable("membership");
     const next = upcoming[0];
-    return next?.starts_at
+    answers.push(next?.starts_at
       ? `Your next ${next.reservation_status === "waitlisted" ? "waitlisted" : "reserved"} class is ${next.class_type_label ?? "class"}${next.instructor_name ? ` with ${next.instructor_name}` : ""} on ${studioDateFormatter.format(new Date(next.starts_at))}.`
-      : "You do not currently have an upcoming reservation or waitlist entry.";
+      : "You do not currently have an upcoming reservation or waitlist entry.");
   }
 
-  if (/membership|my plan|plan status|account status/.test(normalized)) {
+  if (asksAboutMembership && !asksAboutCredits) {
     if (context?.availability?.membership === false || !summary) return unavailable("membership");
-    return `Your ${summary.plan_name ?? "Pulse Studio"} membership is ${summary.membership_status ?? "available"}.${summary.billing_cycle_end_at ? ` Your current billing cycle ends ${studioDateFormatter.format(new Date(summary.billing_cycle_end_at))}.` : ""}`;
+    answers.push(`Your ${summary.plan_name ?? "Pulse Studio"} membership is ${summary.membership_status ?? "available"}.${summary.billing_cycle_end_at ? ` Your current billing cycle ends ${studioDateFormatter.format(new Date(summary.billing_cycle_end_at))}.` : ""}`);
   }
+
+  if (answers.length > 0) return answers.join(" ");
 
   const queryWords = significantWords(question);
   const ranked = policies

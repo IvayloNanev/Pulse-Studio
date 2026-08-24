@@ -68,6 +68,17 @@ test("answers upcoming reservation questions from member context", () => {
   expect(answer).toContain("Wednesday, August 26");
 });
 
+test("combines credits and the next reservation for compound questions", () => {
+  const answer = answerGroundedPulseQuestion(
+    "How many classes do I have available, and what is my next reserved class?",
+    policies,
+    context,
+  );
+  expect(answer).toContain("3 classes available and 2 currently reserved");
+  expect(answer).toContain("next reserved class is Yoga with Maya Chen");
+  expect(answer).toContain("Wednesday, August 26");
+});
+
 test("answers membership questions from member context", () => {
   const answer = answerGroundedPulseQuestion("What is my membership status?", policies, context);
   expect(answer).toContain("Studio Eight membership is active");
