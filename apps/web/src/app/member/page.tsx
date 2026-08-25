@@ -7,7 +7,7 @@ import { PortalShell } from "@/components/portal-shell";
 import { requireMember } from "@/lib/auth";
 import { memberLinks } from "@/lib/member-navigation";
 
-export default async function MemberPortalPage({ searchParams }: { searchParams: Promise<{ success?: string; error?: string }> }) {
+export default async function MemberPortalPage({ searchParams }: { searchParams: Promise<{ success?: string; error?: string; notifications?: string }> }) {
   const { supabase, memberId } = await requireMember();
   const params = await searchParams;
   const now = new Date().toISOString();
@@ -21,6 +21,6 @@ export default async function MemberPortalPage({ searchParams }: { searchParams:
 
   return <PortalShell audience="member" eyebrow="Member portal" title="Home" description="Your Pulse Studio home." links={memberLinks} showHeader={false}>
     <MemberStatusMessage success={params.success} error={params.error} />
-    {dashboardError ? <div role="alert" className="rounded-3xl border border-black/15 bg-[#c72c25]/5 p-6 text-sm text-[#8e211c]">Your membership details could not be loaded. Refresh and try again.</div> : dashboard ? <MemberHome summary={dashboard} memberId={memberId} memberSince={membershipHistory?.[0]?.start_date} account={memberError || !memberData ? undefined : memberData} notifications={notificationData ?? []} notificationError={notificationError ? "Your notifications are temporarily unavailable." : undefined} /> : <div className="rounded-3xl border border-black/10 bg-white/60 p-8"><h1 className="text-2xl font-semibold">Membership details are not available</h1><p className="mt-2 max-w-xl text-sm leading-6 text-black/65">Your account is connected, but there is no active or paused membership to display.</p><Link href="/member?assistant=open" className="mt-5 inline-flex min-h-11 items-center rounded-full bg-black px-5 text-sm font-semibold text-white">Ask Pulse for guidance</Link></div>}
+    {dashboardError ? <div role="alert" className="rounded-3xl border border-black/15 bg-[#c72c25]/5 p-6 text-sm text-[#8e211c]">Your membership details could not be loaded. Refresh and try again.</div> : dashboard ? <MemberHome summary={dashboard} memberId={memberId} memberSince={membershipHistory?.[0]?.start_date} account={memberError || !memberData ? undefined : memberData} notifications={notificationData ?? []} notificationError={notificationError ? "Your notifications are temporarily unavailable." : undefined} initialNotificationsOpen={params.notifications === "open"} /> : <div className="rounded-3xl border border-black/10 bg-white/60 p-8"><h1 className="text-2xl font-semibold">Membership details are not available</h1><p className="mt-2 max-w-xl text-sm leading-6 text-black/65">Your account is connected, but there is no active or paused membership to display.</p><Link href="/member?assistant=open" className="mt-5 inline-flex min-h-11 items-center rounded-full bg-black px-5 text-sm font-semibold text-white">Ask Pulse for guidance</Link></div>}
   </PortalShell>;
 }
