@@ -1,6 +1,7 @@
 "use client";
 
-import { CalendarDays, Check, Clock3 } from "lucide-react";
+import Link from "next/link";
+import { ArrowLeft, ArrowRight, CalendarDays, Check, Clock3 } from "lucide-react";
 import { useActionState, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
@@ -51,17 +52,21 @@ export type MemberCalendarDay = {
 
 type MemberDashboardProps = {
   calendarDays: MemberCalendarDay[];
+  currentMonth: string;
   dataFetchedAt: string;
   eligibilityError?: string;
   initialClassType?: string;
   initialDay?: string;
   initialInstructor?: string;
   monthLabel: string;
+  nextMonth: string;
+  previousMonth: string;
   reservationError?: string;
   reservations: MemberDashboardReservation[];
   scheduleError?: string;
   sessions: MemberDashboardSession[];
   summary?: MemberDashboardSummary;
+  viewedMonth: string;
 };
 
 const timeZone = "America/New_York";
@@ -82,9 +87,17 @@ function dayKey(value: string) {
   return `${part("year")}-${part("month")}-${part("day")}`;
 }
 
-function contextPath(day: string, classType: string, instructor: string) {
+function contextPath(month: string, day: string, classType: string, instructor: string) {
   const query = new URLSearchParams();
+  query.set("month", month);
   query.set("day", day);
+  if (classType !== "all") query.set("class", classType);
+  if (instructor !== "all") query.set("instructor", instructor);
+  return `/member/classes?${query.toString()}`;
+}
+
+function monthPath(month: string, classType: string, instructor: string) {
+  const query = new URLSearchParams({ month });
   if (classType !== "all") query.set("class", classType);
   if (instructor !== "all") query.set("instructor", instructor);
   return `/member/classes?${query.toString()}`;
@@ -135,7 +148,7 @@ function RefreshSchedule({ fetchedAt }: { fetchedAt: string }) {
   );
 }
 
-export function MemberDashboard({ calendarDays, dataFetchedAt, eligibilityError, initialClassType = "all", initialDay, initialInstructor = "all", monthLabel, reservationError, reservations, scheduleError, sessions, summary }: MemberDashboardProps) {
+export function MemberDashboard({ calendarDays, currentMonth, dataFetchedAt, eligibilityError, initialClassType = "all", initialDay, initialInstructor = "all", monthLabel, nextMonth, previousMonth, reservationError, reservations, scheduleError, sessions, summary, viewedMonth }: MemberDashboardProps) {
   const todayKey = dayKey(dataFetchedAt);
   const firstAvailableDay = calendarDays.find((date) => sessions.some((session) => dayKey(session.starts_at) === date.key && new Date(session.ends_at).getTime() > new Date(dataFetchedAt).getTime()));
   const validInitialDay = calendarDays.some((date) => date.key === initialDay) ? initialDay : undefined;
@@ -169,7 +182,7 @@ export function MemberDashboard({ calendarDays, dataFetchedAt, eligibilityError,
   const reservationsBySession = useMemo(() => new Map(reservations.map((reservation) => [reservation.class_session_id, reservation])), [reservations]);
   const canBook = summary?.membership_status === "active";
   const filtersActive = selectedInstructor !== "all" || selectedClassType !== "all";
-  const returnTo = contextPath(selectedDay, selectedClassType, selectedInstructor);
+  const returnTo = contextPath(viewedMonth, selectedDay, selectedClassType, selectedInstructor);
   const firstWeekday = calendarDays[0] ? new Date(calendarDays[0].starts_at).getUTCDay() : 0;
   const calendarSlots = [...Array.from({ length: firstWeekday }, () => null), ...calendarDays];
   const calendarWeeks = Array.from({ length: Math.ceil(calendarSlots.length / 7) }, (_, index) => calendarSlots.slice(index * 7, index * 7 + 7));
@@ -197,6 +210,11 @@ export function MemberDashboard({ calendarDays, dataFetchedAt, eligibilityError,
         </div>
 
         <div className="mt-6">
+          <div className="mb-4 grid grid-cols-[2.75rem_minmax(0,1fr)_2.75rem] items-center gap-2">
+            <Link href={monthPath(previousMonth, selectedClassType, selectedInstructor)} aria-label="Previous month" className="inline-flex size-11 items-center justify-center rounded-full border border-black/15 bg-[#f7f4ee] transition hover:border-black/30 hover:bg-white focus-visible:outline-2 focus-visible:outline-[#c72c25] focus-visible:outline-offset-2"><ArrowLeft className="size-5" aria-hidden="true" /></Link>
+            <div className="text-center"><p className="text-xl font-semibold sm:text-2xl">{monthLabel}</p>{viewedMonth !== currentMonth ? <Link href={monthPath(currentMonth, selectedClassType, selectedInstructor)} className="mt-1 inline-flex min-h-11 items-center rounded-full px-4 text-sm font-semibold underline decoration-[#c72c25] decoration-2 underline-offset-4 focus-visible:outline-2 focus-visible:outline-[#c72c25] focus-visible:outline-offset-2">Back to this month</Link> : null}</div>
+            <Link href={monthPath(nextMonth, selectedClassType, selectedInstructor)} aria-label="Next month" className="inline-flex size-11 items-center justify-center rounded-full border border-black/15 bg-[#f7f4ee] transition hover:border-black/30 hover:bg-white focus-visible:outline-2 focus-visible:outline-[#c72c25] focus-visible:outline-offset-2"><ArrowRight className="size-5" aria-hidden="true" /></Link>
+          </div>
           <div className="mb-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs font-semibold text-black/65" aria-label="Class calendar legend">{Object.entries(classCalendarStyle).map(([type, style]) => <span key={type} className="inline-flex items-center gap-1.5"><span className={`size-2.5 rounded-full ${style.dot}`} aria-hidden="true" />{style.label}</span>)}<span className="inline-flex items-center gap-1.5"><span className="inline-flex size-3 items-center justify-center rounded-full bg-black text-[0.5rem] text-white" aria-hidden="true">✓</span>Reserved</span><span className="inline-flex items-center gap-1.5"><span className="size-2.5 rounded-full bg-black/20" aria-hidden="true" />Full</span></div>
           <p id="class-calendar-instructions" className="mb-2 text-xs text-black/60">Choose a date to see its classes. Each colored dot represents one scheduled class.</p>
           <div className="-mx-1 overflow-x-auto px-1"><table className="w-full min-w-[20rem] table-fixed border-separate border-spacing-1" aria-describedby="class-calendar-instructions"><caption className="sr-only">Class calendar for {monthLabel}</caption><thead><tr className="text-center text-xs font-semibold uppercase tracking-[0.06em] text-black/60">{["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"].map((day) => <th key={day} scope="col" abbr={day} className="py-2"><span aria-hidden="true">{day.slice(0, 2)}</span><span className="sr-only">{day}</span></th>)}</tr></thead><tbody>{calendarWeeks.map((week, weekIndex) => <tr key={`class-week-${weekIndex}`}>{week.map((date, dayIndex) => {
