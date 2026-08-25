@@ -6,14 +6,16 @@ import { Button } from "@/components/ui/button";
 import { confirmRecovery } from "./actions";
 
 type RecoveryPageProps = {
-  searchParams: Promise<{ token_hash?: string; redirect_to?: string }>;
+  searchParams: Promise<{ token_hash?: string; redirect_to?: string; audience?: string }>;
 };
 
-function recoveryAudience(redirectTo?: string) {
+function recoveryAudience(redirectTo?: string, explicitAudience?: string) {
+  if (explicitAudience === "staff") return "staff";
   if (!redirectTo) return "member";
 
   try {
-    return new URL(redirectTo).searchParams.get("audience") === "staff" ? "staff" : "member";
+    const destination = new URL(redirectTo, "https://pulse.local");
+    return destination.searchParams.get("audience") === "staff" || destination.pathname.endsWith("/staff") ? "staff" : "member";
   } catch {
     return "member";
   }
@@ -21,7 +23,7 @@ function recoveryAudience(redirectTo?: string) {
 
 export default async function RecoveryPage({ searchParams }: RecoveryPageProps) {
   const query = await searchParams;
-  const audience = recoveryAudience(query.redirect_to);
+  const audience = recoveryAudience(query.redirect_to, query.audience);
   const loginPath = audience === "staff" ? "/staff/login" : "/login";
 
   return (
