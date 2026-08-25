@@ -47,7 +47,7 @@ export default async function MemberServicesPage({ searchParams }: { searchParam
   ];
 
   return <PortalShell audience="member" eyebrow="Member portal" title="Services" description="Studio support and membership guidance." links={memberLinks} showHeader={false}>
-    <header className="rounded-3xl bg-[#171717] p-6 text-white"><p className="font-mono text-xs uppercase tracking-[0.16em] text-white/65">Member services</p><h1 className="mt-2 text-3xl font-semibold tracking-[-0.05em] sm:text-4xl">How can we help?</h1><p className="mt-2 text-sm text-white/70">Use approved studio guidance or submit a membership service request.</p></header>
+    <header className="rounded-3xl bg-[#171717] p-6 text-white"><p className="route-eyebrow text-white/65">Member services</p><h1 className="route-title mt-2 text-3xl sm:text-4xl">How can we help?</h1><p className="mt-2 text-sm text-white/70">Use approved studio guidance or submit a membership service request.</p></header>
     <MemberStatusMessage error={statusError} success={success} />
 
     <section className="mt-4 rounded-3xl border border-black/10 bg-[#eee6dc] p-5 text-black sm:p-6" aria-labelledby="member-programs-title">
