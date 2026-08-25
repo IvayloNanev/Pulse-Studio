@@ -111,7 +111,7 @@ export function LoginPanel({ audience, initialNotice = null, initialError = null
       <div className="flex min-h-[18rem] min-w-0 flex-col justify-between overflow-hidden bg-[#171717] p-6 text-white sm:p-12 lg:p-16">
         <Brand inverse prominent />
         <div>
-          <p className="font-mono text-xs uppercase tracking-[0.2em] text-white/45">
+          <p className="font-mono text-xs uppercase tracking-[0.2em] text-white/70">
             {isStaff ? "Private staff access" : "Member access"}
           </p>
           <h1 className="mt-5 max-w-xl font-heading text-5xl leading-[0.9] tracking-[-0.055em] sm:text-7xl">
@@ -122,7 +122,7 @@ export function LoginPanel({ audience, initialNotice = null, initialError = null
       <div className="atmospheric-motion relative flex items-center overflow-hidden bg-[linear-gradient(125deg,#8d8781_0%,#eeeae3_32%,#b7ada3_55%,#f7f3ea_72%,#77716d_100%)] px-6 py-14 sm:px-12 lg:px-20">
         <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(115deg,transparent_10%,rgba(255,255,255,0.48)_42%,transparent_68%)]" />
         <div className="glass-panel editorial-rise relative w-full max-w-lg rounded-[2rem] p-7 sm:p-10">
-          <p className="font-mono text-xs uppercase tracking-[0.2em] text-black/45">Secure sign in</p>
+          <p className="font-mono text-xs uppercase tracking-[0.2em] text-black/60">Secure sign in</p>
           <h2 className="mt-4 text-3xl font-semibold tracking-[-0.04em]">Welcome back</h2>
           <form className="mt-10 space-y-6" onSubmit={handleSubmit}>
             <label className="block text-sm font-medium">
@@ -150,7 +150,7 @@ export function LoginPanel({ audience, initialNotice = null, initialError = null
                   : "Forgot or need to create your password?"}
             </button>
           </form>
-          <p className="mt-6 text-xs leading-5 text-black/50">
+          <p className="mt-6 text-xs leading-5 text-black/60">
             Access is limited to active Pulse Studio {isStaff ? "staff" : "member"} accounts.
           </p>
         </div>

@@ -54,7 +54,7 @@ export default async function StaffRostersPage() {
           {sessions.map((session) => (
             <article key={session.class_session_id} className="glass-panel grid gap-5 rounded-3xl p-6 md:grid-cols-[1fr_auto] md:items-center">
               <div>
-                <p className="font-mono text-xs uppercase tracking-[0.16em] text-black/50">{formatter.format(new Date(session.starts_at))}</p>
+                <p className="font-mono text-xs uppercase tracking-[0.16em] text-black/60">{formatter.format(new Date(session.starts_at))}</p>
                 <h2 className="mt-2 text-3xl font-semibold tracking-[-0.04em]">{names[session.class_type]}</h2>
                 <p className="mt-2 text-sm text-black/60">{session.class_type_label} with {session.instructor_name}</p>
                 <p className="mt-1 text-sm text-black/55">{session.confirmed_reservations}/{session.capacity} confirmed · {session.waitlisted_reservations} waitlisted · {session.available_spots} open</p>

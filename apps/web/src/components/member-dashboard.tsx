@@ -1,11 +1,12 @@
 "use client";
 
 import { CalendarDays, Check, Clock3 } from "lucide-react";
-import { type ButtonHTMLAttributes, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useFormStatus } from "react-dom";
 
 import { bookClass } from "@/app/member/actions";
 import { MemberRefreshButton } from "@/components/member-refresh-button";
+import { MemberReservationCancellation } from "@/components/member-reservation-cancellation";
 
 export type MemberDashboardSummary = {
   member_name: string;
@@ -65,10 +66,13 @@ type MemberDashboardProps = {
 
 const timeZone = "America/New_York";
 const classNames = { yoga: "Studio Flow", cycling: "Pulse Ride", hiit: "Power Interval" };
+const classCalendarStyle = {
+  yoga: { label: "Yoga", dot: "bg-emerald-600" },
+  cycling: { label: "Cycling", dot: "bg-[#c72c25]" },
+  hiit: { label: "HIIT", dot: "bg-[#d18b2c]" },
+} as const;
 const dayKeyFormatter = new Intl.DateTimeFormat("en-CA", { timeZone, year: "numeric", month: "2-digit", day: "2-digit" });
-const weekdayFormatter = new Intl.DateTimeFormat("en-US", { timeZone, weekday: "short" });
 const dayFormatter = new Intl.DateTimeFormat("en-US", { timeZone, day: "numeric" });
-const monthFormatter = new Intl.DateTimeFormat("en-US", { timeZone, month: "short" });
 const fullDayFormatter = new Intl.DateTimeFormat("en-US", { timeZone, weekday: "long", month: "long", day: "numeric" });
 const timeFormatter = new Intl.DateTimeFormat("en-US", { timeZone, hour: "numeric", minute: "2-digit" });
 
@@ -86,13 +90,32 @@ function contextPath(day: string, classType: string, instructor: string) {
   return `/member/classes?${query.toString()}`;
 }
 
-function DashboardActionButton({ children, className, pendingLabel = "Working…", ...props }: ButtonHTMLAttributes<HTMLButtonElement> & { pendingLabel?: string }) {
+function BookingConfirmationActions({ close, pendingLabel }: { close: () => void; pendingLabel: string }) {
   const { pending } = useFormStatus();
-  return (
-    <button {...props} disabled={pending || props.disabled} className={className} aria-busy={pending}>
-      {pending ? pendingLabel : children}
-    </button>
-  );
+  return <div className="mt-5 grid gap-2 sm:grid-cols-2"><button autoFocus type="submit" disabled={pending} aria-busy={pending} className="min-h-11 rounded-full bg-[#c72c25] px-5 text-sm font-semibold text-white transition hover:bg-[#a9231e] focus-visible:outline-2 focus-visible:outline-white focus-visible:outline-offset-2 disabled:opacity-55">{pending ? pendingLabel : "Confirm booking"}</button><button type="button" disabled={pending} onClick={close} className="min-h-11 rounded-full border border-black/20 bg-white/60 px-5 text-sm font-semibold text-black focus-visible:outline-2 focus-visible:outline-[#c72c25] focus-visible:outline-offset-2 disabled:opacity-55">Go back</button></div>;
+}
+
+function BookingConfirmation({ canBook, hasCredits, returnTo, session, summaryAvailable }: { canBook: boolean; hasCredits: boolean; returnTo: string; session: MemberDashboardSession; summaryAvailable: boolean }) {
+  const [open, setOpen] = useState(false);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const close = () => {
+    setOpen(false);
+    window.setTimeout(() => triggerRef.current?.focus(), 0);
+  };
+  useEffect(() => {
+    if (!open) return;
+    function closeOnEscape(event: KeyboardEvent) {
+      if (event.key === "Escape") close();
+    }
+    window.addEventListener("keydown", closeOnEscape);
+    return () => window.removeEventListener("keydown", closeOnEscape);
+  }, [open]);
+  const useDropIn = !hasCredits;
+  const disabled = !canBook || (useDropIn && !summaryAvailable);
+  const triggerLabel = !summaryAvailable && useDropIn ? "Eligibility unavailable" : !canBook ? "Membership paused" : session.is_full ? (useDropIn ? "$35 only if promoted" : "Join waitlist") : useDropIn ? "Reserve · $35" : "Reserve";
+  const pendingLabel = session.is_full ? "Joining…" : "Reserving…";
+
+  return <><button ref={triggerRef} type="button" disabled={disabled} onClick={() => setOpen(true)} className={`min-h-11 rounded-full px-4 text-xs font-semibold transition focus-visible:outline-2 focus-visible:outline-[#c72c25] focus-visible:outline-offset-2 disabled:cursor-not-allowed sm:text-sm ${hasCredits ? "bg-black text-white hover:bg-[#c72c25] disabled:bg-black/25" : "border border-black/25 hover:border-black disabled:opacity-45"}`}>{triggerLabel}</button>{open ? <div className="fixed inset-0 z-[80] grid place-items-center bg-black/20 p-4" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) close(); }}><section role="dialog" aria-modal="true" aria-labelledby={`confirm-booking-${session.class_session_id}`} className="w-full max-w-md rounded-[2rem] border border-white/80 bg-[linear-gradient(135deg,rgba(255,255,255,0.94),rgba(238,230,220,0.88))] p-5 shadow-[0_2rem_5rem_rgba(0,0,0,0.28),inset_0_1px_0_rgba(255,255,255,0.95)] backdrop-blur-2xl sm:p-6"><p className="font-mono text-xs uppercase tracking-[0.16em] text-[#8e211c]">Review your selection</p><h2 id={`confirm-booking-${session.class_session_id}`} className="mt-2 text-3xl font-semibold tracking-[-0.045em]">Confirm Booking</h2><dl className="mt-5 space-y-3 rounded-2xl border border-white/75 bg-white/55 p-4 text-sm"><div className="flex justify-between gap-4"><dt className="text-black/65">Class</dt><dd className="text-right font-semibold">{classNames[session.class_type]}</dd></div><div className="flex justify-between gap-4"><dt className="text-black/65">Instructor</dt><dd className="text-right font-semibold">{session.instructor_name}</dd></div><div className="flex justify-between gap-4"><dt className="text-black/65">Time</dt><dd className="text-right font-semibold">{fullDayFormatter.format(new Date(session.starts_at))} · {timeFormatter.format(new Date(session.starts_at))}</dd></div><div className="flex justify-between gap-4"><dt className="text-black/65">Booking</dt><dd className="text-right font-semibold">{session.is_full ? useDropIn ? "Waitlist · $35 only if promoted" : "Membership waitlist" : useDropIn ? "$35 drop-in" : "Membership credit"}</dd></div></dl><p className="mt-4 text-sm leading-6 text-black/70">{session.is_full ? "You will join the waitlist. A reservation is created only if a place becomes available." : "Your place will be reserved after you confirm."}</p><form action={bookClass}><input type="hidden" name="class_session_id" value={session.class_session_id} /><input type="hidden" name="return_to" value={returnTo} /><input type="hidden" name="use_drop_in" value={String(useDropIn)} /><BookingConfirmationActions close={close} pendingLabel={pendingLabel} /></form><p className="sr-only">Press Escape to close without booking.</p></section></div> : null}</>;
 }
 
 function RefreshSchedule({ fetchedAt }: { fetchedAt: string }) {
@@ -114,7 +137,8 @@ export function MemberDashboard({ calendarDays, dataFetchedAt, eligibilityError,
     ? instructors
     : instructors.filter((instructor) => sessions.some((session) => session.class_type === validInitialClassType && session.instructor_name === instructor));
   const validInitialInstructor = initialInstructors.includes(initialInstructor) ? initialInstructor : "all";
-  const [selectedDay, setSelectedDay] = useState(validInitialDay ?? firstAvailableDay?.key ?? calendarDays[0]?.key ?? "");
+  const todayCalendarDay = calendarDays.find((date) => date.key === todayKey);
+  const [selectedDay, setSelectedDay] = useState(validInitialDay ?? todayCalendarDay?.key ?? firstAvailableDay?.key ?? calendarDays[0]?.key ?? "");
   const [selectedInstructor, setSelectedInstructor] = useState(validInitialInstructor);
   const [selectedClassType, setSelectedClassType] = useState(validInitialClassType);
   const classSelectRef = useRef<HTMLSelectElement>(null);
@@ -138,12 +162,15 @@ export function MemberDashboard({ calendarDays, dataFetchedAt, eligibilityError,
   const canBook = summary?.membership_status === "active";
   const filtersActive = selectedInstructor !== "all" || selectedClassType !== "all";
   const returnTo = contextPath(selectedDay, selectedClassType, selectedInstructor);
+  const firstWeekday = calendarDays[0] ? new Date(calendarDays[0].starts_at).getUTCDay() : 0;
+  const calendarSlots = [...Array.from({ length: firstWeekday }, () => null), ...calendarDays];
+  const calendarWeeks = Array.from({ length: Math.ceil(calendarSlots.length / 7) }, (_, index) => calendarSlots.slice(index * 7, index * 7 + 7));
 
   return (
     <div className="space-y-4 sm:space-y-5">
       <header className="flex flex-col justify-between gap-3 rounded-3xl bg-[#171717] p-4 text-white shadow-[0_1.25rem_3rem_rgba(17,17,17,0.14)] sm:flex-row sm:items-center sm:p-5">
         <div><p className="font-mono text-xs uppercase tracking-[0.16em] text-white/65">Classes</p><h1 className="mt-1 text-2xl font-semibold tracking-[-0.04em] sm:text-3xl">Find your next class</h1></div>
-        <div className="flex flex-wrap items-center gap-2 text-sm">{summary ? <><span className="inline-flex min-h-9 items-center gap-2 rounded-full border border-white/15 bg-white/8 px-3 capitalize"><span className={`size-2 rounded-full ${canBook ? "bg-emerald-400" : "bg-amber-400"}`} aria-hidden="true" />{summary.membership_status}</span><span className="inline-flex min-h-9 items-center rounded-full border border-white/15 bg-white/8 px-3"><strong className="mr-1.5 text-base">{summary.classes_reserved}</strong> current {summary.classes_reserved === 1 ? "reservation" : "reservations"}</span><span className="inline-flex min-h-9 items-center rounded-full border border-white/15 bg-white/8 px-3"><strong className="mr-1.5 text-base">{summary.classes_remaining}</strong> classes left</span></> : <span>Booking eligibility unavailable</span>}</div>
+        <div className="flex flex-wrap items-center gap-2 text-sm">{summary ? <><span className="inline-flex min-h-9 items-center gap-2 rounded-full border border-white/15 bg-white/8 px-3 capitalize"><span className={`size-2 rounded-full ${canBook ? "bg-emerald-400" : "bg-amber-400"}`} aria-hidden="true" />{summary.membership_status}</span><span className="inline-flex min-h-9 items-center rounded-full border border-white/15 bg-white/8 px-3"><strong className="mr-1.5 text-base">{summary.classes_reserved}</strong> reserved {summary.classes_reserved === 1 ? "credit" : "credits"}</span><span className="inline-flex min-h-9 items-center rounded-full border border-white/15 bg-white/8 px-3"><strong className="mr-1.5 text-base">{summary.classes_remaining}</strong> classes left</span></> : <span>Booking eligibility unavailable</span>}</div>
       </header>
       {eligibilityError ? <div role="alert" className="rounded-2xl border border-[#c72c25]/25 bg-[#c72c25]/5 p-4 text-sm text-[#8e211c]">{eligibilityError} You can still browse the schedule.</div> : summary && !canBook ? <div role="status" className="rounded-2xl border border-amber-700/20 bg-amber-50 p-4 text-sm text-amber-950">Your membership is paused. You can browse the schedule, but booking remains unavailable until the membership is active.</div> : null}
 
@@ -161,17 +188,22 @@ export function MemberDashboard({ calendarDays, dataFetchedAt, eligibilityError,
           </div>
         </div>
 
-        <div className="relative -mx-1 mt-6">
-        <div className="flex snap-x scroll-px-1 gap-2 overflow-x-auto px-1 pb-2 pr-8 xl:grid xl:grid-cols-7 xl:overflow-visible xl:pr-1 xl:[&>button]:min-w-0" aria-label="Select a day">
-          {calendarDays.map((date) => {
+        <div className="mt-6">
+          <div className="mb-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs font-semibold text-black/65" aria-label="Class calendar legend">{Object.entries(classCalendarStyle).map(([type, style]) => <span key={type} className="inline-flex items-center gap-1.5"><span className={`size-2.5 rounded-full ${style.dot}`} aria-hidden="true" />{style.label}</span>)}<span className="inline-flex items-center gap-1.5"><span className="inline-flex size-3 items-center justify-center rounded-full bg-black text-[0.5rem] text-white" aria-hidden="true">✓</span>Reserved</span><span className="inline-flex items-center gap-1.5"><span className="size-2.5 rounded-full bg-black/20" aria-hidden="true" />Full</span></div>
+          <p id="class-calendar-instructions" className="mb-2 text-xs text-black/60">Choose a date to see its classes. Each colored dot represents one scheduled class.</p>
+          <div className="-mx-1 overflow-x-auto px-1"><table className="w-full min-w-[20rem] table-fixed border-separate border-spacing-1" aria-describedby="class-calendar-instructions"><caption className="sr-only">Class calendar for {monthLabel}</caption><thead><tr className="text-center text-xs font-semibold uppercase tracking-[0.06em] text-black/60">{["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"].map((day) => <th key={day} scope="col" abbr={day} className="py-2"><span aria-hidden="true">{day.slice(0, 2)}</span><span className="sr-only">{day}</span></th>)}</tr></thead><tbody>{calendarWeeks.map((week, weekIndex) => <tr key={`class-week-${weekIndex}`}>{week.map((date, dayIndex) => {
+            if (!date) return <td key={`class-empty-${weekIndex}-${dayIndex}`} aria-hidden="true" />;
             const selected = date.key === selectedDay;
-            const sessionCount = sessionsByDay.get(date.key)?.length ?? 0;
+            const daySessions = sessionsByDay.get(date.key) ?? [];
+            const reservedCount = daySessions.filter((session) => reservationsBySession.has(session.class_session_id)).length;
+            const classSummary = (["yoga", "cycling", "hiit"] as const).map((type) => {
+              const count = daySessions.filter((session) => session.class_type === type).length;
+              return count ? `${count} ${classCalendarStyle[type].label}` : null;
+            }).filter(Boolean).join(", ");
             const parsedDate = new Date(date.starts_at);
             const isToday = date.key === todayKey;
-            return <button key={date.key} type="button" aria-pressed={selected} aria-label={`${isToday ? "Today, " : ""}${fullDayFormatter.format(parsedDate)}, ${sessionCount} ${sessionCount === 1 ? "class" : "classes"}`} onClick={() => setSelectedDay(date.key)} className={`min-h-24 min-w-[5.25rem] snap-start rounded-2xl border px-3 py-3 text-center transition focus-visible:outline-2 focus-visible:outline-[#c72c25] focus-visible:outline-offset-2 ${selected ? "border-black bg-black text-white" : "border-black/15 bg-[#f7f4ee] text-black hover:border-black/45"}`}><span className="block text-xs font-semibold uppercase tracking-[0.1em] opacity-75">{isToday ? "Today" : weekdayFormatter.format(parsedDate)}</span><span className="mt-1 block text-xl font-semibold">{dayFormatter.format(parsedDate)}</span><span className="block text-xs uppercase tracking-[0.08em] opacity-70">{monthFormatter.format(parsedDate)}</span><span className="mt-1 block text-xs opacity-75">{sessionCount} {sessionCount === 1 ? "class" : "classes"}</span></button>;
-          })}
-        </div>
-        <div className="pointer-events-none absolute inset-y-0 right-0 w-8 bg-gradient-to-l from-white/90 to-transparent xl:hidden" aria-hidden="true" />
+            return <td key={date.key} className="p-0 align-top"><button type="button" aria-pressed={selected} aria-label={`${isToday ? "Today, " : ""}${fullDayFormatter.format(parsedDate)}, ${daySessions.length} ${daySessions.length === 1 ? "class" : "classes"}${classSummary ? `: ${classSummary}` : ""}${reservedCount ? `, ${reservedCount} reserved` : ""}`} onClick={() => setSelectedDay(date.key)} className={`flex min-h-20 w-full min-w-11 flex-col rounded-xl border p-1.5 text-left transition focus-visible:outline-2 focus-visible:outline-[#c72c25] focus-visible:outline-offset-2 sm:min-h-24 sm:p-2 ${selected ? "border-[#c72c25] bg-white text-black shadow-[0_0.5rem_1.5rem_rgba(199,44,37,0.14)] ring-1 ring-[#c72c25]/15" : daySessions.length ? "border-black/10 bg-[#f7f4ee] hover:border-[#c72c25]/55 hover:bg-white" : "border-transparent bg-black/[0.025] text-black/55"}`}><span className="flex w-full items-center justify-between gap-1"><span className={`inline-flex size-8 items-center justify-center rounded-full text-sm font-semibold ${selected ? "bg-[#c72c25] text-white" : ""}`}>{dayFormatter.format(parsedDate)}</span>{reservedCount ? <span className="inline-flex size-5 items-center justify-center rounded-full bg-black text-[0.6rem] text-white" aria-hidden="true">✓</span> : null}</span><span className="mt-auto flex min-h-5 flex-wrap items-end gap-1" aria-hidden="true">{daySessions.slice(0, 5).map((session) => <span key={session.class_session_id} className={`size-2.5 rounded-full ${session.is_full ? "bg-black/20" : classCalendarStyle[session.class_type].dot}`} />)}{daySessions.length > 5 ? <span className="text-[0.6rem] font-semibold">+{daySessions.length - 5}</span> : null}</span></button></td>;
+          })}</tr>)}</tbody></table></div>
         </div>
 
         <div className="mt-6">
@@ -180,10 +212,9 @@ export function MemberDashboard({ calendarDays, dataFetchedAt, eligibilityError,
             <div className="divide-y divide-black/10 border-y border-black/10">
               {selectedSessions.map((session) => {
                 const reservation = reservationsBySession.get(session.class_session_id);
-                const creditChoiceDisabled = !canBook;
                 const hasCredits = (summary?.classes_remaining ?? 0) > 0;
                 const sessionEnded = new Date(session.ends_at).getTime() <= new Date(dataFetchedAt).getTime();
-                return <article key={session.class_session_id} className="grid grid-cols-[4.5rem_1fr] gap-x-3 gap-y-3 py-4 lg:grid-cols-[7rem_1fr_minmax(15rem,auto)] lg:items-center"><div><p className="font-mono text-sm font-semibold">{timeFormatter.format(new Date(session.starts_at))}</p><p className="mt-1 flex items-center gap-1 text-xs text-black/65"><Clock3 className="size-3.5" aria-hidden="true" />{Math.round((new Date(session.ends_at).getTime() - new Date(session.starts_at).getTime()) / 60000)} min</p></div><div><div className="flex flex-wrap items-center gap-1.5"><h4 className="text-lg font-semibold tracking-[-0.03em] sm:text-xl">{classNames[session.class_type]}</h4><span className="rounded-full border border-black/15 px-2 py-0.5 text-xs font-semibold uppercase tracking-[0.08em] text-black/65">{session.class_type_label}</span></div><p className="mt-1 text-sm text-black/65">with {session.instructor_name}</p><p className={`mt-1 text-sm font-semibold ${sessionEnded || session.is_full ? "text-black/65" : "text-[#8e211c]"}`}>{sessionEnded ? "Class ended" : session.is_full ? `${session.waitlisted_reservations} on the waitlist` : `${session.available_spots} ${session.available_spots === 1 ? "spot" : "spots"} available`}</p></div>{sessionEnded ? <div className="col-span-2 inline-flex min-h-11 items-center justify-center rounded-full border border-black/10 bg-black/5 px-5 text-sm font-semibold text-black/55 lg:col-span-1">Past class</div> : reservation ? <div className="col-span-2 inline-flex min-h-11 items-center justify-center gap-2 rounded-full border border-black/15 bg-[#eee6dc] px-5 text-sm font-semibold lg:col-span-1"><Check className="size-4 text-emerald-700" aria-hidden="true" />{reservation.reservation_status === "waitlisted" ? "On waitlist" : "Reserved"}</div> : reservationError ? <p className="col-span-2 max-w-xs text-sm leading-6 text-[#8e211c] lg:col-span-1">Booking is unavailable until your reservations can be verified.</p> : <form action={bookClass} className="col-span-2 grid grid-cols-1 gap-2 lg:col-span-1 lg:max-w-sm lg:justify-self-end"><input type="hidden" name="class_session_id" value={session.class_session_id} /><input type="hidden" name="return_to" value={returnTo} />{hasCredits ? <DashboardActionButton disabled={creditChoiceDisabled} type="submit" name="use_drop_in" value="false" pendingLabel={session.is_full ? "Joining…" : "Reserving…"} className="h-full min-h-11 rounded-full bg-black px-4 text-xs font-semibold text-white transition hover:bg-[#c72c25] focus-visible:outline-2 focus-visible:outline-[#c72c25] focus-visible:outline-offset-2 disabled:cursor-not-allowed disabled:bg-black/25 sm:text-sm">{!canBook ? "Membership paused" : session.is_full ? "Join waitlist" : "Reserve"}</DashboardActionButton> : <DashboardActionButton disabled={!canBook || !summary} type="submit" name="use_drop_in" value="true" pendingLabel={session.is_full ? "Joining…" : "Reserving…"} className="h-full min-h-11 rounded-full border border-black/25 px-4 text-xs font-semibold transition hover:border-black focus-visible:outline-2 focus-visible:outline-[#c72c25] focus-visible:outline-offset-2 disabled:cursor-not-allowed disabled:opacity-45 sm:text-sm">{!summary ? "Eligibility unavailable" : session.is_full ? "$35 only if promoted" : "Reserve · $35"}</DashboardActionButton>}</form>}</article>;
+                return <article key={session.class_session_id} className="grid grid-cols-[4.5rem_1fr] gap-x-3 gap-y-3 py-4 lg:grid-cols-[7rem_1fr_minmax(15rem,auto)] lg:items-center"><div><p className="font-mono text-sm font-semibold">{timeFormatter.format(new Date(session.starts_at))}</p><p className="mt-1 flex items-center gap-1 text-xs text-black/65"><Clock3 className="size-3.5" aria-hidden="true" />{Math.round((new Date(session.ends_at).getTime() - new Date(session.starts_at).getTime()) / 60000)} min</p></div><div><div className="flex flex-wrap items-center gap-1.5"><h4 className="text-lg font-semibold tracking-[-0.03em] sm:text-xl">{classNames[session.class_type]}</h4><span className="rounded-full border border-black/15 px-2 py-0.5 text-xs font-semibold uppercase tracking-[0.08em] text-black/65">{session.class_type_label}</span></div><p className="mt-1 text-sm text-black/65">with {session.instructor_name}</p><p className={`mt-1 text-sm font-semibold ${sessionEnded || session.is_full ? "text-black/65" : "text-[#8e211c]"}`}>{sessionEnded ? "Class ended" : session.is_full ? `${session.waitlisted_reservations} on the waitlist` : `${session.available_spots} ${session.available_spots === 1 ? "spot" : "spots"} available`}</p></div>{sessionEnded ? <div className="col-span-2 inline-flex min-h-11 items-center justify-center rounded-full border border-black/10 bg-black/5 px-5 text-sm font-semibold text-black/55 lg:col-span-1">Past class</div> : reservation ? <div className="col-span-2 rounded-2xl border border-black/15 bg-[#eee6dc] p-4 lg:col-span-1 lg:max-w-sm lg:justify-self-end"><div className="inline-flex min-h-11 items-center gap-2 rounded-full border border-black/15 bg-white/65 px-5 text-sm font-semibold"><Check className="size-4 text-emerald-700" aria-hidden="true" />{reservation.reservation_status === "waitlisted" ? "On waitlist" : "Reserved"}</div><MemberReservationCancellation reservation={reservation} returnTo={returnTo} now={dataFetchedAt} /></div> : reservationError ? <p className="col-span-2 max-w-xs text-sm leading-6 text-[#8e211c] lg:col-span-1">Booking is unavailable until your reservations can be verified.</p> : <div className="col-span-2 lg:col-span-1 lg:max-w-sm lg:justify-self-end"><BookingConfirmation canBook={canBook} hasCredits={hasCredits} returnTo={returnTo} session={session} summaryAvailable={Boolean(summary)} /></div>}</article>;
               })}
             </div>
           )}

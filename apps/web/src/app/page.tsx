@@ -69,7 +69,7 @@ export default async function Home() {
             <div className="glass-panel-dark relative z-10 w-full rounded-[2rem] p-6 sm:p-8">
               <div className="flex items-center justify-between border-b border-white/15 pb-5">
                 <div>
-                  <p className="font-mono text-[0.65rem] uppercase tracking-[0.22em] text-white/45">Coming up at Pulse</p>
+                  <p className="font-mono text-[0.65rem] uppercase tracking-[0.22em] text-white/70">Coming up at Pulse</p>
                   <h2 className="mt-2 text-3xl font-semibold tracking-[-0.045em]">Your next session.</h2>
                 </div>
                 <Clock3 className="size-6 text-[#e23b32]" aria-hidden="true" />
@@ -80,7 +80,7 @@ export default async function Home() {
                     <span className="font-mono text-sm text-white/55">{sessionTime.format(new Date(session.starts_at))}</span>
                     <span>
                       <strong className="block text-base font-semibold">{classNames[session.class_type]}</strong>
-                      <span className="text-xs text-white/45">{session.class_type_label}</span>
+                      <span className="text-xs text-white/70">{session.class_type_label}</span>
                     </span>
                     <span className="text-xs font-semibold uppercase tracking-[0.1em] text-white/55 transition group-hover:text-[#ff5b52]">{session.is_full ? "Waitlist" : `${session.available_spots} spots`}</span>
                   </Link>
@@ -108,7 +108,7 @@ export default async function Home() {
       <section className="border-b border-black/15 px-6 py-20 sm:px-10 lg:px-16 lg:py-28">
         <div className="grid gap-12 lg:grid-cols-[0.7fr_1.3fr]">
           <div>
-            <p className="font-mono text-xs uppercase tracking-[0.22em] text-black/45">One studio · Three disciplines</p>
+            <p className="font-mono text-xs uppercase tracking-[0.22em] text-black/60">One studio · Three disciplines</p>
             <h2 className="display-pulse mt-5 text-5xl uppercase leading-[0.88] sm:text-7xl">Build your training <em>week.</em></h2>
           </div>
           <div className="border-t border-black/20">
@@ -125,7 +125,7 @@ export default async function Home() {
 
       <section className="grid bg-[#171717] text-white lg:grid-cols-2">
         <div className="border-b border-white/15 px-6 py-16 sm:px-10 lg:border-b-0 lg:border-r lg:px-16 lg:py-24">
-          <p className="font-mono text-xs uppercase tracking-[0.22em] text-white/45">Monthly membership</p>
+          <p className="font-mono text-xs uppercase tracking-[0.22em] text-white/70">Monthly membership</p>
           <h2 className="display-pulse mt-6 text-5xl uppercase leading-[0.88] sm:text-7xl">Make movement a <em>habit.</em></h2>
         </div>
         <div className="flex flex-col justify-center px-6 py-16 sm:px-10 lg:px-16">

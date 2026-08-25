@@ -16,7 +16,7 @@ export default async function MembershipPage() {
         <div className="border-t border-black/20">
           {error ? <div role="alert" className="border-b border-black/20 py-8 text-sm text-[#8e211c]">Membership plans are temporarily unavailable.</div> : plans.map((plan, index) => (
             <Link href={`/join?plan=${encodeURIComponent(plan.plan_id)}`} key={plan.plan_id} className="group grid gap-4 border-b border-black/20 py-8 md:grid-cols-[4rem_1fr_1fr_auto] md:items-center">
-              <span className="font-mono text-xs text-black/45">0{index + 1}</span>
+              <span className="font-mono text-xs text-black/60">0{index + 1}</span>
               <span className="text-3xl font-semibold tracking-[-0.04em]">{plan.plan_name}</span>
               <span className="text-sm text-black/55">{plan.classes_per_month} classes / month</span>
               <span className="flex items-center gap-5 text-xl font-semibold">${Number(plan.monthly_price)} / month<ArrowRight className="size-5 transition-transform group-hover:translate-x-1" /></span>

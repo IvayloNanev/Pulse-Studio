@@ -66,7 +66,7 @@ export default async function ClassesPage() {
       <section className="px-6 py-16 sm:px-10 lg:px-16 lg:py-24">
         <div className="mb-12 flex flex-col justify-between gap-4 border-b border-black/20 pb-6 sm:flex-row sm:items-end">
           <div>
-            <p className="font-mono text-xs uppercase tracking-[0.2em] text-black/45">Next 30 days · New York</p>
+            <p className="font-mono text-xs uppercase tracking-[0.2em] text-black/60">Next 30 days · New York</p>
             <h2 className="display-pulse mt-3 text-4xl sm:text-5xl">Live studio schedule.</h2>
           </div>
           <p className="max-w-sm text-sm leading-6 text-black/55">Capacity and waitlist counts are live from the shared Supabase contract.</p>
@@ -82,21 +82,21 @@ export default async function ClassesPage() {
           <div className="space-y-14">
             {[...groupedSessions.entries()].map(([date, daySessions]) => (
               <section key={date} aria-labelledby={`day-${daySessions[0].class_session_id}`}>
-                <h3 id={`day-${daySessions[0].class_session_id}`} className="mb-5 font-mono text-xs uppercase tracking-[0.2em] text-black/45">{date}</h3>
+                <h3 id={`day-${daySessions[0].class_session_id}`} className="mb-5 font-mono text-xs uppercase tracking-[0.2em] text-black/60">{date}</h3>
                 <div className="border-t border-black/20">
                   {daySessions.map((session) => (
                     <article key={session.class_session_id} className="group grid gap-4 border-b border-black/20 py-7 transition-colors hover:bg-white/45 md:grid-cols-[8rem_1.35fr_1fr_1fr] md:items-center md:px-3">
                       <time dateTime={session.starts_at} className="font-mono text-sm">{timeFormatter.format(new Date(session.starts_at))}</time>
                       <div>
                         <h4 className="text-2xl font-semibold tracking-[-0.035em]">{classNames[session.class_type]}</h4>
-                        <p className="mt-1 text-sm text-black/50">with {session.instructor_name}</p>
+                        <p className="mt-1 text-sm text-black/60">with {session.instructor_name}</p>
                       </div>
                       <div className="text-sm text-black/55">
                         <p>{session.class_type_label} · {durationInMinutes(session.starts_at, session.ends_at)} min</p>
                         <p className="mt-1">{session.confirmed_reservations} of {session.capacity} reserved</p>
                       </div>
                       <div className="md:text-right">
-                        <span className={`inline-flex border px-3 py-1.5 font-mono text-xs uppercase tracking-[0.12em] ${session.is_full ? "border-black/20 text-black/45" : "border-[#c72c25]/40 text-[#a9231e]"}`}>
+                        <span className={`inline-flex border px-3 py-1.5 font-mono text-xs uppercase tracking-[0.12em] ${session.is_full ? "border-black/20 text-black/60" : "border-[#c72c25]/40 text-[#a9231e]"}`}>
                           {session.is_full ? `Waitlist · ${session.waitlisted_reservations}` : `${session.available_spots} spots left`}
                         </span>
                       </div>

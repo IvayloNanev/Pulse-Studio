@@ -14,7 +14,7 @@ export function PublicPage({ eyebrow, title, introduction, children }: PublicPag
       <header className="relative overflow-hidden border-b border-black/15 px-6 py-16 sm:px-10 lg:px-16 lg:py-24">
         <div className="pointer-events-none absolute -right-24 -top-40 size-[30rem] rounded-full bg-white/75 blur-3xl" />
         <div className="relative">
-          <p className="font-mono text-xs uppercase tracking-[0.2em] text-black/50">{eyebrow}</p>
+          <p className="font-mono text-xs uppercase tracking-[0.2em] text-black/60">{eyebrow}</p>
           <h1 className="mt-6 max-w-5xl font-heading text-[clamp(3.5rem,9vw,8rem)] leading-[0.86] tracking-[-0.065em]">
             {title}
           </h1>
