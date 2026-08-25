@@ -88,7 +88,7 @@ export default async function ClassesPage({ searchParams }: { searchParams: Prom
       title={selectedClassType ? classNames[selectedClassType] : "Move through the city."}
       introduction={selectedClassType ? classIntroductions[selectedClassType] : "Explore Yoga, Cycling, and HIIT sessions, with current availability from the Pulse Studio schedule."}
     >
-      <section className="mx-4 my-5 rounded-[2.5rem] border border-white/55 bg-[#f3f0e9]/95 px-6 py-8 shadow-[0_32px_90px_rgba(0,0,0,0.24)] backdrop-blur-none sm:mx-8 sm:my-6 sm:bg-[#f3f0e9]/88 sm:px-10 sm:backdrop-blur-xl lg:mx-12 lg:px-12 lg:py-10">
+      <section className="mx-4 my-5 rounded-3xl border border-white/55 bg-[#f3f0e9]/95 px-6 py-8 shadow-[0_32px_90px_rgba(0,0,0,0.24)] backdrop-blur-none sm:mx-6 sm:my-6 sm:bg-[#f3f0e9]/88 sm:px-8 sm:backdrop-blur-xl lg:mx-10 lg:px-10 lg:py-10 xl:mx-12 xl:px-12">
         <p className="mb-2 text-xs font-semibold uppercase tracking-[0.12em] text-black/60 sm:hidden">Swipe to see every discipline →</p>
         <nav aria-label="Filter schedule by discipline" className="mb-6 flex gap-2 overflow-x-auto scroll-smooth pb-3 pr-10 [mask-image:linear-gradient(to_right,black_calc(100%-2.5rem),transparent)] sm:pr-0 sm:[mask-image:none]">
           {[
@@ -124,7 +124,7 @@ export default async function ClassesPage({ searchParams }: { searchParams: Prom
                 <h3 id={`day-${daySessions[0].class_session_id}`} className="mb-5 font-mono text-xs uppercase tracking-[0.2em] text-black/60">{date}</h3>
                 <div className="grid gap-3">
                   {daySessions.map((session) => (
-                    <article key={session.class_session_id} className="group grid gap-4 rounded-2xl border border-black/10 bg-white/45 p-4 transition-colors hover:bg-white/75 md:grid-cols-[7rem_minmax(0,1fr)] md:p-5 lg:grid-cols-[7rem_1.2fr_0.9fr_minmax(13rem,auto)] lg:items-center">
+                    <article key={session.class_session_id} className="session-card group transition-colors hover:bg-white/75 md:grid-cols-[7rem_minmax(0,1fr)] lg:grid-cols-[7rem_1.2fr_0.9fr_minmax(13rem,auto)] lg:items-center">
                       <time dateTime={session.starts_at} className="font-mono text-sm">{timeFormatter.format(new Date(session.starts_at))}</time>
                       <div>
                         <h4 className="text-2xl font-semibold tracking-[-0.035em]">{classNames[session.class_type]}</h4>
