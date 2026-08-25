@@ -38,17 +38,17 @@ export default async function RecoveryPage({ searchParams }: RecoveryPageProps) 
             <form action={confirmRecovery} className="mt-8">
               <input type="hidden" name="token_hash" value={query.token_hash} />
               <input type="hidden" name="audience" value={audience} />
-              <Button type="submit" className="h-12 w-full rounded-none bg-[#c72c25] text-white hover:bg-[#a9231e]">
+              <Button type="submit" className="h-12 w-full rounded-full bg-[#c72c25] text-white hover:bg-[#a9231e] focus-visible:outline-[#c72c25]">
                 Continue to create a new password
               </Button>
             </form>
           </>
         ) : (
-          <p role="alert" className="mt-8 text-sm leading-6 text-[#9f1f1a]">
+          <p role="alert" className="mt-8 rounded-xl border border-black/15 bg-[#c72c25]/5 p-3 text-sm leading-6 text-[#9f1f1a]">
             This recovery request is incomplete. Return to login and request a new email.
           </p>
         )}
-        <Link href={loginPath} className="mt-7 inline-block min-h-11 text-sm underline underline-offset-4">
+        <Link href={loginPath} className="mt-7 inline-flex min-h-11 items-center rounded-full border border-black/15 bg-white/55 px-4 text-sm font-semibold underline decoration-[#c72c25] decoration-2 underline-offset-4 focus-visible:outline-2 focus-visible:outline-[#c72c25] focus-visible:outline-offset-2">
           Return to {audience} login
         </Link>
       </section>

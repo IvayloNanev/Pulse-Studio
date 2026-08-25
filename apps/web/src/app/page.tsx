@@ -95,13 +95,14 @@ export default async function Home() {
               </div>
               <div>
                 {sessions.map((session, index) => (
-                  <Link key={session.class_session_id} href={`/classes?class_type=${session.class_type}`} className={`group grid grid-cols-[4.5rem_1fr_auto] items-center gap-3 border-b border-white/15 py-4 sm:py-5 ${index === 2 ? "hidden sm:grid" : "grid"}`}>
+                  <Link key={session.class_session_id} href={`/classes?class_type=${session.class_type}`} className={`group grid grid-cols-[4rem_minmax(0,1fr)] items-center gap-3 border-b border-white/15 py-4 sm:grid-cols-[4.5rem_minmax(0,1fr)_auto] sm:py-5 ${index === 2 ? "hidden sm:grid" : "grid"}`}>
                     <span className="font-mono text-sm text-white/55">{sessionTime.format(new Date(session.starts_at))}</span>
                     <span>
                       <strong className="block text-base font-semibold">{classNames[session.class_type]}</strong>
                       <span className="text-xs text-white/70">{session.class_type_label}</span>
+                      <span className="mt-1 block text-xs font-semibold uppercase tracking-[0.1em] text-white/70 transition group-hover:text-[#ff5b52] sm:hidden">{session.is_full ? "Waitlist" : `${session.available_spots} spots`}</span>
                     </span>
-                    <span className="text-xs font-semibold uppercase tracking-[0.1em] text-white/55 transition group-hover:text-[#ff5b52]">{session.is_full ? "Waitlist" : `${session.available_spots} spots`}</span>
+                    <span className="hidden text-xs font-semibold uppercase tracking-[0.1em] text-white/70 transition group-hover:text-[#ff5b52] sm:block">{session.is_full ? "Waitlist" : `${session.available_spots} spots`}</span>
                   </Link>
                 ))}
                 {sessions.length === 0 && <p className="py-8 text-sm text-white/55">The next schedule is being prepared.</p>}
@@ -130,7 +131,7 @@ export default async function Home() {
             <p className="font-mono text-xs uppercase tracking-[0.22em] text-black/60">One studio · Three disciplines</p>
             <h2 className="display-pulse mt-5 text-5xl uppercase leading-[0.88] sm:text-7xl">Build your training <em>week.</em></h2>
           </div>
-          <div className="mt-12 grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+          <div className="mt-12 grid gap-5 lg:grid-cols-3">
             {programs.map(({ number, name, detail, image }) => (
               <Link key={name} href={`/classes?class_type=${name.toLowerCase()}`} className="group flex min-w-0 flex-col overflow-hidden rounded-[1.75rem] border border-black/15 bg-white/55 transition duration-500 hover:-translate-y-1 hover:bg-white focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#c72c25] motion-reduce:transform-none">
                 <span className="relative block aspect-[3/2] overflow-hidden bg-black">
