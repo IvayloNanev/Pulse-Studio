@@ -21,5 +21,5 @@ export async function submitMembershipApplication(formData: FormData) {
     p_billing_zip: String(formData.get("billing_zip") ?? ""),
   });
   if (error) redirect(`/join?plan=${encodeURIComponent(planId)}&error=${encodeURIComponent(error.message)}`);
-  redirect("/join?success=Application%20and%20simulated%20payment%20method%20received.%20Pulse%20Studio%20staff%20will%20review%20your%20account%20activation.");
+  redirect("/join?success=Application%20accepted%20automatically.%20Your%20simulated%20payment%20method%20is%20ready%2C%20no%20real%20charge%20was%20processed%2C%20and%20secure%20account%20setup%20is%20still%20required%20before%20sign-in.");
 }

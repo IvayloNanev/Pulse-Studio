@@ -1,3 +1,5 @@
+import Image from "next/image";
+
 import { SiteHeader } from "@/components/site-header";
 
 type PublicPageProps = {
@@ -5,20 +7,25 @@ type PublicPageProps = {
   title: string;
   introduction: string;
   children: React.ReactNode;
+  compact?: boolean;
+  heroImage?: string;
+  heroImageAlt?: string;
 };
 
-export function PublicPage({ eyebrow, title, introduction, children }: PublicPageProps) {
+export function PublicPage({ eyebrow, title, introduction, children, compact = false, heroImage, heroImageAlt = "" }: PublicPageProps) {
   return (
-    <main className="min-h-screen bg-[#f3f0e9] text-[#111111]">
+    <main className={`relative isolate min-h-screen text-[#111111] ${heroImage ? "bg-transparent" : "bg-[#f3f0e9]"}`}>
+      {heroImage ? <div className="fixed inset-0 -z-20"><Image src={heroImage} alt={heroImageAlt} fill priority sizes="100vw" className="object-cover object-center" /></div> : null}
+      {heroImage ? <div className="fixed inset-0 -z-10 bg-black/58" aria-hidden="true" /> : null}
       <SiteHeader />
-      <header className="relative overflow-hidden border-b border-black/15 px-6 py-16 sm:px-10 lg:px-16 lg:py-24">
-        <div className="pointer-events-none absolute -right-24 -top-40 size-[30rem] rounded-full bg-white/75 blur-3xl" />
-        <div className="relative">
-          <p className="font-mono text-xs uppercase tracking-[0.2em] text-black/60">{eyebrow}</p>
-          <h1 className="mt-6 max-w-5xl font-heading text-[clamp(3.5rem,9vw,8rem)] leading-[0.86] tracking-[-0.065em]">
+      <header className={`relative overflow-hidden px-6 sm:px-10 lg:px-16 ${heroImage ? "flex min-h-[calc(100svh-5rem)] items-center text-white" : "border-b border-black/15"} ${compact && !heroImage ? "py-10 lg:py-14" : "py-16 lg:py-24"}`}>
+        {!heroImage ? <div className="pointer-events-none absolute -right-24 -top-40 size-[30rem] rounded-full bg-white/75 blur-3xl" /> : null}
+        <div className="relative w-full">
+          <p className={`font-mono text-xs uppercase tracking-[0.2em] ${heroImage ? "text-white/75" : "text-black/60"}`}>{eyebrow}</p>
+          <h1 className={`mt-6 max-w-5xl font-heading leading-[0.86] tracking-[-0.065em] ${compact ? "text-[clamp(3.25rem,7vw,6.5rem)]" : "text-[clamp(3.5rem,9vw,8rem)]"}`}>
             {title}
           </h1>
-          <p className="glass-panel mt-8 max-w-2xl rounded-2xl p-5 text-base leading-7 text-black/60">{introduction}</p>
+          <p className={`max-w-2xl rounded-2xl border p-5 text-base leading-7 backdrop-blur-xl ${heroImage ? "border-white/20 bg-black/30 text-white/80" : "glass-panel border-transparent text-black/60"} ${compact ? "mt-5" : "mt-8"}`}>{introduction}</p>
         </div>
       </header>
       {children}

@@ -17,7 +17,6 @@ const publicLinks = [
   ["Start membership", "/join"],
   ["View class schedule", "/classes"],
   ["Full schedule", "/classes"],
-  ["Explore memberships", "/membership"],
 ] as const;
 
 for (const [name, destination] of publicLinks) {

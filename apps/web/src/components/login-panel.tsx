@@ -1,9 +1,11 @@
 "use client";
 
 import { FormEvent, useEffect, useState } from "react";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 
 import { Brand } from "@/components/brand";
+import { SiteHeader } from "@/components/site-header";
 import { Button } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase/client";
 
@@ -11,6 +13,7 @@ type LoginPanelProps = {
   audience: "member" | "staff";
   initialNotice?: string | null;
   initialError?: string | null;
+  memberReturnTo?: string;
 };
 
 function signInErrorMessage(error: unknown) {
@@ -26,7 +29,7 @@ function recoveryCooldownSeconds(message: string) {
   return match ? Number(match[1]) : 0;
 }
 
-export function LoginPanel({ audience, initialNotice = null, initialError = null }: LoginPanelProps) {
+export function LoginPanel({ audience, initialNotice = null, initialError = null, memberReturnTo = "/member" }: LoginPanelProps) {
   const isStaff = audience === "staff";
   const router = useRouter();
   const [email, setEmail] = useState("");
@@ -97,7 +100,7 @@ export function LoginPanel({ audience, initialNotice = null, initialError = null
         throw new Error(`This account is not linked to an active ${audience} profile.`);
       }
 
-      router.replace(isStaff ? "/staff" : "/member");
+      router.replace(isStaff ? "/staff" : memberReturnTo);
       router.refresh();
     } catch (caughtError) {
       setError(signInErrorMessage(caughtError));
@@ -107,10 +110,14 @@ export function LoginPanel({ audience, initialNotice = null, initialError = null
   }
 
   return (
-    <main className="grid min-h-screen min-w-0 overflow-x-hidden bg-[#f3f0e9] text-[#111] lg:grid-cols-2">
-      <div className="flex min-h-[18rem] min-w-0 flex-col justify-between overflow-hidden bg-[#171717] p-6 text-white sm:p-12 lg:p-16">
-        <Brand inverse prominent />
-        <div>
+    <>
+      {!isStaff ? <SiteHeader /> : null}
+      <main className={`relative isolate grid min-w-0 overflow-x-hidden text-[#111] lg:grid-cols-2 ${isStaff ? "min-h-screen bg-[#f3f0e9]" : "min-h-[calc(100vh-5rem)] bg-transparent"}`}>
+      {!isStaff ? <div className="absolute inset-0 -z-20"><Image src="/media/classes/yoga.jpg" alt="Pulse Studio member practicing yoga" fill priority sizes="100vw" className="object-cover object-center" /></div> : null}
+      {!isStaff ? <div className="absolute inset-0 -z-10 bg-black/38" aria-hidden="true" /> : null}
+      <div className={`relative flex min-h-[18rem] min-w-0 flex-col overflow-hidden p-6 text-white sm:p-12 lg:p-16 ${isStaff ? "justify-between bg-[#171717]" : "justify-end bg-transparent"}`}>
+        {isStaff ? <div className="relative z-10"><Brand inverse prominent /></div> : null}
+        <div className="relative z-10">
           <p className="font-mono text-xs uppercase tracking-[0.2em] text-white/70">
             {isStaff ? "Private staff access" : "Member access"}
           </p>
@@ -119,9 +126,9 @@ export function LoginPanel({ audience, initialNotice = null, initialError = null
           </h1>
         </div>
       </div>
-      <div className="atmospheric-motion relative flex items-center overflow-hidden bg-[linear-gradient(125deg,#8d8781_0%,#eeeae3_32%,#b7ada3_55%,#f7f3ea_72%,#77716d_100%)] px-6 py-14 sm:px-12 lg:px-20">
-        <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(115deg,transparent_10%,rgba(255,255,255,0.48)_42%,transparent_68%)]" />
-        <div className="glass-panel editorial-rise relative w-full max-w-lg rounded-[2rem] p-7 sm:p-10">
+      <div className={`relative flex items-center overflow-hidden px-6 py-14 sm:px-12 lg:px-20 ${isStaff ? "atmospheric-motion bg-[linear-gradient(125deg,#8d8781_0%,#eeeae3_32%,#b7ada3_55%,#f7f3ea_72%,#77716d_100%)]" : "bg-transparent"}`}>
+        {isStaff ? <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(115deg,transparent_10%,rgba(255,255,255,0.48)_42%,transparent_68%)]" /> : null}
+        <div className={`editorial-rise relative w-full max-w-lg p-7 backdrop-blur-2xl sm:p-10 ${isStaff ? "glass-panel rounded-[2rem]" : "rounded-[2.5rem] border border-white/45 bg-white/68 shadow-[0_32px_90px_rgba(15,10,8,0.28),inset_0_1px_0_rgba(255,255,255,0.65)]"}`}>
           <p className="font-mono text-xs uppercase tracking-[0.2em] text-black/60">Secure sign in</p>
           <h2 className="mt-4 text-3xl font-semibold tracking-[-0.04em]">Welcome back</h2>
           <form className="mt-10 space-y-6" onSubmit={handleSubmit}>
@@ -138,7 +145,7 @@ export function LoginPanel({ audience, initialNotice = null, initialError = null
             <Button disabled={isSubmitting} type="submit" className="h-12 w-full rounded-none bg-[#c72c25] text-white hover:bg-[#a9231e] disabled:cursor-not-allowed disabled:opacity-60">
               {isSubmitting ? "Signing in…" : `Sign in as ${isStaff ? "staff" : "member"}`}
             </Button>
-            <div className="space-y-2 border-t border-black/15 pt-4">
+            <div className="space-y-2 pt-2">
               {recoveryError ? <p role="alert" className="text-sm leading-6 text-[#9f1f1a]">{recoveryError}</p> : null}
               {recoveryNotice ? <p role="status" className="text-sm leading-6 text-black/65">{recoveryNotice}</p> : null}
             </div>
@@ -155,6 +162,7 @@ export function LoginPanel({ audience, initialNotice = null, initialError = null
           </p>
         </div>
       </div>
-    </main>
+      </main>
+    </>
   );
 }

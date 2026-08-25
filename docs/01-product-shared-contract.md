@@ -117,7 +117,7 @@ Classes used and classes remaining are derived for the relevant membership billi
 Pulse Studio uses simulated payments only; no real charge is processed. Membership registration requires one test payment method. The system validates a test card number and security code during submission but never stores either value. It retains only cardholder name, brand, last four digits, expiration month/year, billing ZIP, default status, and ownership.
 
 - Every active synthetic member has one active default simulated payment method.
-- A pending membership application owns its submitted method until a future activation workflow transfers it to the created member.
+- An automatically accepted enrollment record owns its submitted method until secure account setup transfers it to the created member.
 - Confirmed simulated drop-in payments reference the member's active default method.
 - Members may read only their own methods; active staff may read display-only facts for support.
 - Full card numbers, security codes, processor tokens, and real billing credentials are prohibited from the schema and dataset.
