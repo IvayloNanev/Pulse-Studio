@@ -79,6 +79,7 @@ const classCalendarStyle = {
 const dayKeyFormatter = new Intl.DateTimeFormat("en-CA", { timeZone, year: "numeric", month: "2-digit", day: "2-digit" });
 const dayFormatter = new Intl.DateTimeFormat("en-US", { timeZone, day: "numeric" });
 const fullDayFormatter = new Intl.DateTimeFormat("en-US", { timeZone, weekday: "long", month: "long", day: "numeric" });
+const compactDayFormatter = new Intl.DateTimeFormat("en-US", { timeZone, weekday: "short", month: "short", day: "numeric" });
 const timeFormatter = new Intl.DateTimeFormat("en-US", { timeZone, hour: "numeric", minute: "2-digit" });
 
 function dayKey(value: string) {
@@ -101,6 +102,11 @@ function monthPath(month: string, classType: string, instructor: string) {
   if (classType !== "all") query.set("class", classType);
   if (instructor !== "all") query.set("instructor", instructor);
   return `/member/classes?${query.toString()}`;
+}
+
+function reservationPath(startsAt: string) {
+  const day = dayKey(startsAt);
+  return `/member/classes?month=${day.slice(0, 7)}&day=${day}`;
 }
 
 function BookingConfirmation({ canBook, hasCredits, returnTo, session, summaryAvailable }: { canBook: boolean; hasCredits: boolean; returnTo: string; session: MemberDashboardSession; summaryAvailable: boolean }) {
@@ -180,6 +186,7 @@ export function MemberDashboard({ calendarDays, currentMonth, dataFetchedAt, eli
   const selectedDate = calendarDays.find((date) => date.key === selectedDay) ?? calendarDays[0];
   const selectedSessions = sessionsByDay.get(selectedDay) ?? [];
   const reservationsBySession = useMemo(() => new Map(reservations.map((reservation) => [reservation.class_session_id, reservation])), [reservations]);
+  const upcomingReservations = useMemo(() => [...reservations].sort((left, right) => new Date(left.starts_at).getTime() - new Date(right.starts_at).getTime()), [reservations]);
   const canBook = summary?.membership_status === "active";
   const filtersActive = selectedInstructor !== "all" || selectedClassType !== "all";
   const returnTo = contextPath(viewedMonth, selectedDay, selectedClassType, selectedInstructor);
@@ -189,9 +196,20 @@ export function MemberDashboard({ calendarDays, currentMonth, dataFetchedAt, eli
 
   return (
     <div className="space-y-4 sm:space-y-5">
-      <header className="flex flex-col justify-between gap-3 rounded-3xl bg-[#171717] p-4 text-white shadow-[0_1.25rem_3rem_rgba(17,17,17,0.14)] sm:flex-row sm:items-center sm:p-5">
-        <div><p className="route-eyebrow text-white/65">Classes</p><h1 className="route-title mt-1 text-3xl sm:text-4xl">Find your next class</h1></div>
-        <div className="flex flex-wrap items-center gap-2 text-sm">{summary ? <><span className="inline-flex min-h-9 items-center gap-2 rounded-full border border-white/15 bg-white/8 px-3 capitalize"><span className={`size-2 rounded-full ${canBook ? "bg-emerald-400" : "bg-amber-400"}`} aria-hidden="true" />{summary.membership_status}</span><span className="inline-flex min-h-9 items-center rounded-full border border-white/15 bg-white/8 px-3"><strong className="mr-1.5 text-base">{summary.classes_reserved}</strong> reserved {summary.classes_reserved === 1 ? "credit" : "credits"}</span><span className="inline-flex min-h-9 items-center rounded-full border border-white/15 bg-white/8 px-3"><strong className="mr-1.5 text-base">{summary.classes_remaining}</strong> classes left</span></> : <span>Booking eligibility unavailable</span>}</div>
+      <header className="rounded-3xl bg-[#171717] p-4 text-white shadow-[0_1.25rem_3rem_rgba(17,17,17,0.14)] sm:p-5">
+        <div className="grid gap-4 lg:grid-cols-[minmax(24rem,1.2fr)_minmax(0,0.8fr)] lg:gap-5">
+          <section className="min-w-0 border-b border-white/15 pb-4 lg:border-b-0 lg:border-r lg:pb-0 lg:pr-5" aria-labelledby="upcoming-classes-title">
+          <div>
+            <h2 id="upcoming-classes-title" className="text-sm font-semibold">Your upcoming classes</h2>
+            <span className="mt-1 block text-xs text-white/65">{upcomingReservations.length} {upcomingReservations.length === 1 ? "booking" : "bookings"}</span>
+          </div>
+          {reservationError ? <p className="mt-2 text-sm text-amber-200">Your reservation overview is temporarily unavailable.</p> : upcomingReservations.length === 0 ? <p className="mt-2 text-sm text-white/65">You have no upcoming reservations or waitlist entries.</p> : <div className="mt-3 flex snap-x gap-2 overflow-x-auto pb-1" aria-label="Upcoming reservation overview">{upcomingReservations.map((reservation) => <Link key={reservation.reservation_id} href={reservationPath(reservation.starts_at)} className="min-w-[15rem] snap-start rounded-2xl border border-white/15 bg-white/8 p-3 transition hover:bg-white/14 focus-visible:outline-2 focus-visible:outline-white focus-visible:outline-offset-2 sm:min-w-[17rem]"><span className="flex items-start justify-between gap-3"><span className="font-semibold">{reservation.class_type_label}</span><span className={`rounded-full px-2 py-0.5 text-[0.65rem] font-semibold uppercase tracking-[0.08em] ${reservation.reservation_status === "waitlisted" ? "bg-amber-300 text-amber-950" : "bg-emerald-300 text-emerald-950"}`}>{reservation.reservation_status === "waitlisted" ? "Waitlisted" : "Reserved"}</span></span><span className="mt-2 block text-sm text-white/80">{compactDayFormatter.format(new Date(reservation.starts_at))} · {timeFormatter.format(new Date(reservation.starts_at))}</span><span className="mt-1 block text-xs text-white/65">with {reservation.instructor_name} · Open class</span></Link>)}</div>}
+          </section>
+          <div className="flex min-w-0 flex-col justify-between gap-4">
+            <div><p className="route-eyebrow text-white/65">Classes</p><h1 className="route-title mt-1 text-3xl sm:text-4xl">Find your next class</h1></div>
+            <div className="flex flex-wrap items-center gap-2 text-sm">{summary ? <><span className="inline-flex min-h-9 items-center gap-2 rounded-full border border-white/15 bg-white/8 px-3 capitalize"><span className={`size-2 rounded-full ${canBook ? "bg-emerald-400" : "bg-amber-400"}`} aria-hidden="true" />{summary.membership_status}</span><span className="inline-flex min-h-9 items-center rounded-full border border-white/15 bg-white/8 px-3"><strong className="mr-1.5 text-base">{summary.classes_reserved}</strong> reserved {summary.classes_reserved === 1 ? "credit" : "credits"}</span><span className="inline-flex min-h-9 items-center rounded-full border border-white/15 bg-white/8 px-3"><strong className="mr-1.5 text-base">{summary.classes_remaining}</strong> classes left</span></> : <span>Booking eligibility unavailable</span>}</div>
+          </div>
+        </div>
       </header>
       {eligibilityError ? <div role="alert" className="rounded-2xl border border-black/15 bg-[#c72c25]/5 p-4 text-sm text-[#8e211c]">{eligibilityError} You can still browse the schedule.</div> : summary && !canBook ? <div role="status" className="rounded-2xl border border-amber-700/20 bg-amber-50 p-4 text-sm text-amber-950">Your membership is paused. You can browse the schedule, but booking remains unavailable until the membership is active.</div> : null}
 

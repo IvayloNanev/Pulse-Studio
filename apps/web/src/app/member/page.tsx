@@ -13,7 +13,7 @@ export default async function MemberPortalPage({ searchParams }: { searchParams:
   const now = new Date().toISOString();
   const [{ data: dashboardData, error: dashboardError }, { data: notificationData, error: notificationError }, { data: membershipHistory }] = await Promise.all([
     supabase.rpc("member_dashboard", { p_as_of: now }),
-    supabase.from("notifications").select("notification_id,event_type,channel,status,created_at,related_record_type").eq("member_id", memberId).order("created_at", { ascending: false }).limit(5),
+    supabase.from("notifications").select("notification_id,event_type,channel,status,created_at,related_record_type").eq("member_id", memberId).is("read_at", null).order("created_at", { ascending: false }).limit(5),
     supabase.from("memberships").select("start_date").eq("member_id", memberId).order("start_date", { ascending: true }).limit(1),
   ]);
   const dashboard = dashboardData?.[0] as MemberDashboardSummary | undefined;
