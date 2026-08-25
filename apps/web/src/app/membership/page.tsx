@@ -12,12 +12,12 @@ export default async function MembershipPage() {
   const orderedPlans = [...plans].sort((a, b) => Number(b.plan_id === FEATURED_MEMBERSHIP_PLAN_ID) - Number(a.plan_id === FEATURED_MEMBERSHIP_PLAN_ID) || a.classes_per_month - b.classes_per_month);
   return (
     <PublicPage compact heroImage="/media/classes/yoga.jpg" heroImageAlt="Pulse Studio yoga class" eyebrow="Membership" title="Make movement a habit." introduction="Choose a monthly rhythm across yoga, cycling, and HIIT. Every plan uses the same schedule, reservation, and credit system.">
-      <section className="px-6 py-8 sm:px-10 sm:py-10 lg:px-16 lg:py-12">
+      <section className="platform-gutter py-8 sm:py-10 lg:py-12">
         <div className="mx-auto max-w-[90rem]">
           {error ? <p role="status" className="mb-6 inline-flex rounded-full border border-white/60 bg-white/85 px-4 py-2 text-sm text-[#8e211c] shadow-lg backdrop-blur-xl">Showing the approved membership options while live pricing reconnects.</p> : null}
           <div className="grid items-stretch gap-4 md:grid-cols-2 lg:grid-cols-3 lg:gap-5">
             {orderedPlans.map((plan, index) => (
-              <Link href={`/join?plan=${encodeURIComponent(plan.plan_id)}`} key={plan.plan_id} className={`group flex h-full min-h-[21rem] flex-col rounded-[1.75rem] border p-5 transition duration-500 hover:-translate-y-1 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#c72c25] motion-reduce:transform-none lg:col-span-1 lg:p-7 ${plan.plan_id === FEATURED_MEMBERSHIP_PLAN_ID ? "border-black/20 bg-[#c72c25] text-white md:col-span-2" : "border-black/15 bg-white/60 hover:bg-white"}`}>
+              <Link href={`/join?plan=${encodeURIComponent(plan.plan_id)}`} key={plan.plan_id} className={`group flex h-full min-h-[21rem] flex-col rounded-3xl border p-5 transition duration-500 hover:-translate-y-1 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#c72c25] motion-reduce:transform-none lg:col-span-1 lg:p-7 ${plan.plan_id === FEATURED_MEMBERSHIP_PLAN_ID ? "border-black/20 bg-[#c72c25] text-white md:col-span-2" : "border-black/15 bg-white/60 hover:bg-white"}`}>
                 <div className="flex items-start justify-between gap-4">
                   <span className={`font-mono text-xs tracking-[0.18em] ${plan.plan_id === FEATURED_MEMBERSHIP_PLAN_ID ? "text-white/75" : "text-black/60"}`}>0{index + 1}</span>
                   {plan.plan_id === FEATURED_MEMBERSHIP_PLAN_ID ? <span className="rounded-full border border-white/40 px-3 py-1 font-mono text-[0.65rem] uppercase tracking-[0.14em]">Most popular</span> : null}

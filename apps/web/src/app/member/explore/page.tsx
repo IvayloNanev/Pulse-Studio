@@ -27,9 +27,9 @@ export default async function MemberExplorePage() {
   return (
     <PortalShell audience="member" eyebrow="Member portal" title="Explore" description="Discover classes and instructors." links={memberLinks} showHeader={false}>
       <header className="rounded-3xl bg-[#c72c25] p-6 text-white shadow-[0_1.25rem_3rem_rgba(111,20,17,0.18)] sm:p-8">
-        <p className="font-mono text-xs uppercase tracking-[0.16em] text-white/75">Explore Pulse</p>
+        <p className="route-eyebrow text-white/75">Explore Pulse</p>
         <div className="mt-2 grid gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(18rem,0.42fr)] xl:items-end">
-          <h1 className="max-w-3xl text-3xl font-semibold tracking-[-0.05em] sm:text-4xl xl:text-5xl">Find your next favorite class.</h1>
+          <h1 className="route-title max-w-3xl text-3xl sm:text-4xl xl:text-5xl">Find your next favorite class.</h1>
           <p className="max-w-xl text-sm leading-6 text-white/80 xl:justify-self-end">Choose a class style, then select an instructor to open a focused schedule.</p>
         </div>
       </header>

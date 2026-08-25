@@ -49,6 +49,13 @@
 }
 
 :root {
+  --pulse-red: #c72c25;
+  --pulse-red-hover: #a9231e;
+  --pulse-red-bright: #ff5b52;
+  --pulse-radius-control: 0.75rem;
+  --pulse-radius-nested: 1rem;
+  --pulse-radius-surface: 1.5rem;
+  --pulse-radius-immersive: 2rem;
   --background: oklch(0.965 0.012 88);
   --foreground: oklch(0.145 0 0);
   --card: oklch(0.99 0.006 88);
@@ -135,6 +142,41 @@
 }
 
 @layer components {
+  .platform-header {
+    @apply sticky top-0 z-50 flex h-20 items-center justify-between border-b border-black/15 bg-[#f3f0e9]/90 px-4 text-black shadow-[0_1px_0_rgba(0,0,0,0.04)] backdrop-blur-xl sm:px-6 lg:px-10 xl:px-12;
+  }
+
+  .platform-header-cta {
+    @apply inline-flex min-h-11 items-center rounded-full border border-black bg-black px-5 text-xs font-semibold uppercase tracking-[0.13em] text-white transition-colors hover:bg-transparent hover:text-black focus-visible:outline-2 focus-visible:outline-offset-2;
+  }
+
+  .platform-menu-trigger {
+    @apply flex min-h-11 cursor-pointer list-none items-center rounded-full border border-black/40 px-4 text-xs font-semibold uppercase tracking-[0.13em] focus-visible:outline-2 focus-visible:outline-offset-2;
+  }
+
+  .platform-mobile-menu {
+    @apply absolute right-0 top-12 z-50 grid min-w-64 rounded-2xl border border-black/15 bg-[#f7f6f2] p-2 text-black shadow-2xl;
+  }
+
+  .platform-gutter {
+    @apply px-4 sm:px-6 lg:px-10 xl:px-12;
+  }
+
+  .route-eyebrow {
+    @apply font-mono text-xs uppercase tracking-[0.16em];
+  }
+
+  .route-title {
+    font-family: var(--font-bodoni-moda), Georgia, serif;
+    font-weight: 700;
+    letter-spacing: -0.055em;
+    line-height: 0.94;
+  }
+
+  .session-card {
+    @apply grid gap-4 rounded-2xl border border-black/10 bg-white/55 p-4 sm:p-5;
+  }
+
   .glass-panel {
     background: linear-gradient(145deg, rgb(255 255 255 / 52%), rgb(255 255 255 / 25%));
     border: 1px solid rgb(255 255 255 / 72%);

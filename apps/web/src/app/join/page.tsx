@@ -20,11 +20,11 @@ export default async function JoinPage({ searchParams }: { searchParams: Promise
 
   return (
     <PublicPage compact heroImage="/media/classes/hiit.jpg" heroImageAlt="Pulse Studio HIIT class" eyebrow="Join Pulse" title="Begin with intention." introduction="Choose your rhythm and submit your membership application. Applications are accepted automatically; secure member-account setup is a separate step.">
-      <section className="relative overflow-hidden px-6 py-8 sm:px-10 sm:py-10 lg:px-16 lg:py-12">
+      <section className="platform-gutter relative overflow-hidden py-8 sm:py-10 lg:py-12">
         <div className="pointer-events-none absolute -left-32 top-20 size-96 rounded-full bg-[#c72c25]/10 blur-3xl" />
         <div className="relative mx-auto grid max-w-[90rem] gap-6 lg:grid-cols-[minmax(18rem,0.72fr)_minmax(0,1.28fr)] lg:items-start">
-          <aside className="overflow-hidden rounded-[2rem] bg-[#171717] text-white shadow-2xl lg:sticky lg:top-28">
-            <div className="border-b border-white/15 bg-[radial-gradient(circle_at_top_right,rgba(199,44,37,0.55),transparent_48%)] p-7 sm:p-9 md:p-6 lg:p-9">
+          <aside className="overflow-hidden rounded-3xl border border-black/15 bg-[#c72c25] text-white shadow-[0_30px_80px_rgba(40,30,20,0.2)]">
+            <div className="border-b border-white/20 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.24),transparent_52%)] p-7 sm:p-9 md:p-6 lg:p-9">
               <p className="font-mono text-xs uppercase tracking-[0.2em] text-white/70">Your membership</p>
               <h2 className="mt-5 text-3xl font-semibold tracking-[-0.045em]">{selectedPlanDetails.plan_name}</h2>
               <p className="mt-3 text-sm leading-6 text-white/70">{selectedPlanDetails.classes_per_month} coached Yoga, Cycling, or HIIT classes each month.</p>
@@ -49,7 +49,7 @@ export default async function JoinPage({ searchParams }: { searchParams: Promise
             </details>
           </aside>
 
-          <div className="glass-panel rounded-[2rem] border border-white/70 bg-white/55 p-6 shadow-[0_30px_80px_rgba(40,30,20,0.13)] backdrop-blur-xl sm:p-9 lg:p-11">
+          <div className="glass-panel rounded-3xl border border-white/70 bg-white/55 p-6 shadow-[0_30px_80px_rgba(40,30,20,0.13)] backdrop-blur-xl sm:p-9 lg:p-11">
             <div className="mb-8 flex items-start justify-between gap-5 border-b border-black/10 pb-7">
               <div><p className="font-mono text-xs uppercase tracking-[0.2em] text-[#a9231e]">Secure enrollment</p><h2 className="mt-3 text-3xl font-semibold tracking-[-0.045em]">Create your Pulse profile.</h2></div>
               <span className="hidden size-12 items-center justify-center rounded-full bg-[#c72c25] text-white sm:flex"><Check className="size-5" aria-hidden="true" /></span>
