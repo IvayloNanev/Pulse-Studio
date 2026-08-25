@@ -134,19 +134,19 @@ export function LoginPanel({ audience, initialNotice = null, initialError = null
           <form className="mt-10 space-y-6" onSubmit={handleSubmit}>
             <label className="block text-sm font-medium">
               Email address
-              <input required type="email" autoComplete="email" value={email} onChange={(event) => setEmail(event.target.value)} className="mt-2 h-12 w-full border border-black/25 bg-transparent px-3 focus-visible:border-black focus-visible:outline-2 focus-visible:outline-offset-2" />
+              <input required type="email" autoComplete="email" value={email} onChange={(event) => setEmail(event.target.value)} className="mt-2 h-12 w-full rounded-xl border border-black/20 bg-white/60 px-4 focus-visible:border-black/20 focus-visible:outline-2 focus-visible:outline-[#c72c25] focus-visible:outline-offset-2" />
             </label>
             <label className="block text-sm font-medium">
               Password
-              <input required type="password" autoComplete="current-password" value={password} onChange={(event) => setPassword(event.target.value)} className="mt-2 h-12 w-full border border-black/25 bg-transparent px-3 focus-visible:border-black focus-visible:outline-2 focus-visible:outline-offset-2" />
+              <input required type="password" autoComplete="current-password" value={password} onChange={(event) => setPassword(event.target.value)} className="mt-2 h-12 w-full rounded-xl border border-black/20 bg-white/60 px-4 focus-visible:border-black/20 focus-visible:outline-2 focus-visible:outline-[#c72c25] focus-visible:outline-offset-2" />
             </label>
-            {error ? <p role="alert" className="text-sm leading-6 text-[#9f1f1a]">{error}</p> : null}
+            {error ? <p role="alert" className="rounded-xl border border-black/15 bg-[#c72c25]/5 p-3 text-sm leading-6 text-[#9f1f1a]">{error}</p> : null}
             {notice ? <p role="status" className="text-sm leading-6 text-black/65">{notice}</p> : null}
-            <Button disabled={isSubmitting} type="submit" className="h-12 w-full rounded-none bg-[#c72c25] text-white hover:bg-[#a9231e] disabled:cursor-not-allowed disabled:opacity-60">
+            <Button disabled={isSubmitting} type="submit" className="h-12 w-full rounded-full bg-[#c72c25] text-white hover:bg-[#a9231e] focus-visible:outline-[#c72c25] disabled:cursor-not-allowed disabled:opacity-60">
               {isSubmitting ? "Signing in…" : `Sign in as ${isStaff ? "staff" : "member"}`}
             </Button>
             <div className="space-y-2 pt-2">
-              {recoveryError ? <p role="alert" className="text-sm leading-6 text-[#9f1f1a]">{recoveryError}</p> : null}
+              {recoveryError ? <p role="alert" className="rounded-xl border border-black/15 bg-[#c72c25]/5 p-3 text-sm leading-6 text-[#9f1f1a]">{recoveryError}</p> : null}
               {recoveryNotice ? <p role="status" className="text-sm leading-6 text-black/65">{recoveryNotice}</p> : null}
             </div>
             <button disabled={isSendingRecovery || recoveryCooldown > 0} type="button" onClick={sendPasswordRecovery} className="min-h-11 w-full text-sm underline underline-offset-4 focus-visible:outline-2 focus-visible:outline-offset-2 disabled:cursor-not-allowed disabled:no-underline disabled:opacity-60">

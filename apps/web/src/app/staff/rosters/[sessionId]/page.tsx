@@ -57,9 +57,9 @@ export default async function StaffRosterPage({
   return (
     <PortalShell audience="staff" eyebrow="Staff portal · Product B" title={session ? `${session.class_type_label} roster` : "Session roster"} description={session ? formatter.format(new Date(session.starts_at)) : "Review reservations and attendance eligibility for this session."} links={links}>
       <MemberStatusMessage success={messages.success} error={messages.error} />
-      <Link href="/staff/rosters" className="mb-6 inline-flex text-sm font-semibold underline underline-offset-4">← All sessions</Link>
+      <Link href="/staff/rosters" className="mb-6 inline-flex min-h-11 items-center rounded-full px-2 text-sm font-semibold underline decoration-[#c72c25] decoration-2 underline-offset-4 focus-visible:outline-2 focus-visible:outline-[#c72c25] focus-visible:outline-offset-2">← All sessions</Link>
       {error ? (
-        <div role="alert" className="border border-[#c72c25]/35 bg-[#c72c25]/5 p-6 text-sm text-[#8e211c]">This roster could not be loaded.</div>
+        <div role="alert" className="rounded-2xl border border-black/15 bg-white/65 p-6 text-sm text-[#8e211c] backdrop-blur-xl">This roster could not be loaded.</div>
       ) : roster.length === 0 ? (
         <div className="glass-panel rounded-3xl p-8"><h2 className="text-2xl font-semibold">No reservations yet</h2><p className="mt-2 text-sm text-black/60">This session currently has no confirmed or waitlisted members.</p></div>
       ) : (
@@ -70,7 +70,7 @@ export default async function StaffRosterPage({
           {roster.map((member) => (
             <article key={member.reservation_id} className="grid gap-4 border-b border-black/10 px-6 py-5 last:border-b-0 md:grid-cols-[1fr_9rem_12rem] md:items-center">
               <div><h2 className="font-semibold">{member.member_name}</h2><p className="mt-1 font-mono text-[0.65rem] text-black/60">{member.member_id}</p></div>
-              <span className="w-fit border border-black/20 px-2.5 py-1 text-xs font-semibold capitalize">{member.reservation_status}</span>
+              <span className="w-fit rounded-full border border-black/20 bg-white/55 px-2.5 py-1 text-xs font-semibold capitalize">{member.reservation_status}</span>
               {member.attendance_status ? (
                 <span className="font-semibold capitalize">{member.attendance_status.replace("_", "-")}</span>
               ) : member.reservation_status === "waitlisted" ? (
@@ -79,8 +79,8 @@ export default async function StaffRosterPage({
                 <form action={recordAttendance} className="flex gap-2">
                   <input type="hidden" name="class_session_id" value={sessionId} />
                   <input type="hidden" name="reservation_id" value={member.reservation_id} />
-                  <button type="submit" name="attendance_status" value="attended" disabled={!member.can_record_attended} title={member.can_record_attended ? "Record check-in" : `Check-in opens ${formatter.format(new Date(member.check_in_opens_at))}`} className="min-h-11 border border-black px-3 text-xs font-semibold disabled:cursor-not-allowed disabled:opacity-35">Attended</button>
-                  <button type="submit" name="attendance_status" value="no_show" disabled={!member.can_record_no_show} title={member.can_record_no_show ? "Record no-show" : `Available after ${formatter.format(new Date(member.check_in_closes_at))}`} className="min-h-11 border border-[#c72c25] px-3 text-xs font-semibold text-[#a9231e] disabled:cursor-not-allowed disabled:opacity-35">No-show</button>
+                  <button type="submit" name="attendance_status" value="attended" disabled={!member.can_record_attended} title={member.can_record_attended ? "Record check-in" : `Check-in opens ${formatter.format(new Date(member.check_in_opens_at))}`} className="min-h-11 rounded-full border border-black bg-black px-4 text-xs font-semibold text-white focus-visible:outline-2 focus-visible:outline-[#c72c25] focus-visible:outline-offset-2 disabled:cursor-not-allowed disabled:opacity-35">Attended</button>
+                  <button type="submit" name="attendance_status" value="no_show" disabled={!member.can_record_no_show} title={member.can_record_no_show ? "Record no-show" : `Available after ${formatter.format(new Date(member.check_in_closes_at))}`} className="min-h-11 rounded-full border border-black/20 bg-white/55 px-4 text-xs font-semibold text-[#a9231e] focus-visible:outline-2 focus-visible:outline-[#c72c25] focus-visible:outline-offset-2 disabled:cursor-not-allowed disabled:opacity-35">No-show</button>
                 </form>
               )}
             </article>

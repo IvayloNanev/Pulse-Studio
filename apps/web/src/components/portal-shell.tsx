@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { ArrowLeft, CircleUserRound, LogOut } from "lucide-react";
 
 import { Brand } from "@/components/brand";
 import { MemberBottomNavigation } from "@/components/member-bottom-navigation";
@@ -20,27 +19,27 @@ type PortalShellProps = {
 export function PortalShell({ audience, eyebrow, title, description, links, showHeader = true, children }: PortalShellProps) {
   const isMember = audience === "member";
   return (
-    <div className={`min-h-screen bg-[#f7f6f2] text-[#151515] lg:grid lg:grid-cols-[15rem_minmax(0,1fr)] xl:grid-cols-[17rem_minmax(0,1fr)] ${isMember ? "pb-20 lg:pb-0" : ""}`}>
-      {isMember ? <header className="sticky top-0 z-40 flex min-h-[calc(4rem+env(safe-area-inset-top))] items-center justify-between border-b border-white/10 bg-[#171717]/95 px-4 pt-[env(safe-area-inset-top)] text-white backdrop-blur-xl lg:hidden"><Brand inverse /><Link href="/member/account" aria-label="Open account information" className="inline-flex size-11 items-center justify-center rounded-full border border-white/15 text-white/75 transition hover:border-white/40 hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"><CircleUserRound className="size-5" aria-hidden="true" /></Link></header> : null}
-      <aside className={`${isMember ? "hidden lg:flex" : "flex"} flex-col justify-between border-b border-black/10 bg-[#171717] p-6 text-white lg:sticky lg:top-0 lg:h-screen lg:min-h-0 lg:self-start lg:overflow-hidden lg:border-b-0 lg:border-r`}>
-        <div className="min-h-0 lg:flex-1 lg:overflow-y-auto lg:pr-1">
-          <Brand inverse />
-          <p className="mt-10 font-mono text-xs uppercase tracking-[0.16em] text-white/70">{eyebrow}</p>
+    <div className={`min-h-screen bg-[#f7f6f2] text-[#151515] ${isMember ? "pb-20 lg:pb-0" : ""}`}>
+      <header className="sticky top-0 z-50 flex h-20 items-center justify-between border-b border-black/15 bg-[#f3f0e9]/90 px-6 text-black shadow-[0_1px_0_rgba(0,0,0,0.04)] backdrop-blur-xl sm:px-10 lg:px-16">
+        <Brand linked={false} />
+        <div className="hidden min-w-0 items-center gap-5 lg:flex lg:gap-8">
           <PortalNavigation label={`${eyebrow} navigation`} links={links} />
-        </div>
-        <div className="mt-8 border-t border-white/15 pt-4 text-sm text-white/70">
-          {isMember ? <Link href="/member/account" className="mb-1 inline-flex min-h-11 w-full items-center gap-2 rounded-xl px-2 transition hover:bg-white/10 hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"><CircleUserRound className="size-4" aria-hidden="true" /> Account</Link> : null}
-          <div className="flex items-center justify-between gap-4">
-          <Link href="/" className="inline-flex min-h-11 items-center gap-2 px-2 transition hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"><ArrowLeft className="size-3.5" /> Public site</Link>
-          <form action={signOut}>
+          <form action={signOut} className="shrink-0">
             <input type="hidden" name="audience" value={audience} />
-            <button type="submit" className="inline-flex min-h-11 items-center gap-2 px-2 font-semibold text-white/70 transition hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white">
-              <LogOut className="size-3.5" aria-hidden="true" /> Sign out
-            </button>
+            <button type="submit" className="inline-flex min-h-11 items-center rounded-full border border-black bg-black px-5 text-xs font-semibold uppercase tracking-[0.13em] text-white transition-colors hover:bg-transparent hover:text-black focus-visible:outline-2 focus-visible:outline-offset-2">Sign out</button>
           </form>
-          </div>
         </div>
-      </aside>
+        <details className="group relative lg:hidden">
+          <summary className="flex min-h-11 cursor-pointer list-none items-center rounded-full border border-black/40 px-4 text-xs font-semibold uppercase tracking-[0.13em] focus-visible:outline-2 focus-visible:outline-offset-2">Menu</summary>
+          <nav aria-label={`${eyebrow} mobile navigation`} className="absolute right-0 top-12 z-50 grid min-w-64 rounded-2xl border border-black/15 bg-[#f7f6f2] p-2 text-black shadow-2xl">
+            {links.map((link) => <Link key={`${link.href}-${link.label}`} href={link.href} className="min-h-11 rounded-xl px-4 py-3 text-sm font-semibold uppercase tracking-[0.1em] hover:bg-black/5 focus-visible:outline-2 focus-visible:outline-offset-[-2px]">{link.label}</Link>)}
+            <form action={signOut}>
+              <input type="hidden" name="audience" value={audience} />
+              <button type="submit" className="mt-2 min-h-11 w-full rounded-xl bg-black px-4 py-3 text-left text-sm font-semibold uppercase tracking-[0.1em] text-white focus-visible:outline-2 focus-visible:outline-offset-[-2px]">Sign out</button>
+            </form>
+          </nav>
+        </details>
+      </header>
       <main className={`relative min-w-0 overflow-hidden ${showHeader ? "px-4 py-8 sm:px-6 lg:px-8 lg:py-10 xl:px-10 2xl:px-12" : "px-4 py-4 sm:px-6 sm:py-6 lg:px-8 lg:py-7 xl:px-10 2xl:px-12"}`}>
         <div className="pointer-events-none absolute -right-32 -top-24 size-96 rounded-full bg-[#c72c25]/25 blur-3xl" />
         <div className="pointer-events-none absolute -left-24 top-72 size-80 rounded-full bg-black/10 blur-3xl" />
