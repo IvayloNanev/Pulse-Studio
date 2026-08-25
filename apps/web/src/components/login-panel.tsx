@@ -128,9 +128,9 @@ export function LoginPanel({ audience, initialNotice = null, initialError = null
       </div>
       <div className={`relative flex items-center overflow-hidden px-6 py-14 sm:px-12 lg:px-20 ${isStaff ? "atmospheric-motion bg-[linear-gradient(125deg,#8d8781_0%,#eeeae3_32%,#b7ada3_55%,#f7f3ea_72%,#77716d_100%)]" : "bg-transparent"}`}>
         {isStaff ? <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(115deg,transparent_10%,rgba(255,255,255,0.48)_42%,transparent_68%)]" /> : null}
-        <div className={`editorial-rise relative w-full max-w-lg rounded-[2rem] p-7 backdrop-blur-2xl sm:p-10 ${isStaff ? "glass-panel" : "border border-white/45 bg-white/68 shadow-[0_32px_90px_rgba(15,10,8,0.28),inset_0_1px_0_rgba(255,255,255,0.65)]"}`}>
-          <p className="font-mono text-xs uppercase tracking-[0.2em] text-black/60">Secure sign in</p>
-          <h2 className="mt-4 text-3xl font-semibold tracking-[-0.04em]">Welcome back</h2>
+        <div className="editorial-rise glass-panel relative w-full max-w-lg rounded-3xl p-7 sm:p-10">
+          <p className="route-eyebrow text-black/60">Secure sign in</p>
+          <h2 className="route-title mt-4 text-4xl">Welcome back</h2>
           <form className="mt-10 space-y-6" onSubmit={handleSubmit}>
             <label className="block text-sm font-medium">
               Email address
