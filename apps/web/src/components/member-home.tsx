@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { Bell, CalendarDays, CircleUserRound, Search } from "lucide-react";
-import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
+import { useEffect, useRef, useTransition } from "react";
 
 import { markNotificationsRead } from "@/app/member/actions";
 import type { MemberDashboardSummary } from "@/components/member-dashboard";
@@ -15,6 +15,7 @@ type MemberHomeProps = {
     email: string;
     phone: string | null;
   };
+  initialNotificationsOpen?: boolean;
   memberId: string;
   memberSince?: string;
   notificationError?: string;
@@ -44,39 +45,36 @@ const notificationLabels: Record<string, string> = {
 const notificationFormatter = new Intl.DateTimeFormat("en-US", { timeZone, month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
 const memberSinceFormatter = new Intl.DateTimeFormat("en-US", { timeZone, month: "long", year: "numeric" });
 
-export function MemberHome({ account, memberId, memberSince, notificationError, notifications, summary }: MemberHomeProps) {
-  const [notificationsOpen, setNotificationsOpen] = useState(false);
-  const [checkedNotifications, setCheckedNotifications] = useState(false);
+export function MemberHome({ account, initialNotificationsOpen = false, memberId, memberSince, notificationError, notifications, summary }: MemberHomeProps) {
+  const router = useRouter();
+  const notificationsOpen = initialNotificationsOpen;
+  const markedNotificationSignature = useRef("");
   const [, startTransition] = useTransition();
   const firstName = summary.member_name.split(" ")[0];
   const active = summary.membership_status === "active";
-  const unreadCount = checkedNotifications ? 0 : notifications.length;
+  const notificationSignature = notifications.map((notification) => notification.notification_id).join(",");
 
-  function toggleNotifications() {
-    if (notificationsOpen) {
-      setNotificationsOpen(false);
-      setCheckedNotifications(true);
-      return;
-    }
+  useEffect(() => {
+    if (!notificationsOpen || !notificationSignature || markedNotificationSignature.current === notificationSignature) return;
+    markedNotificationSignature.current = notificationSignature;
+    startTransition(async () => {
+      await markNotificationsRead(notifications.map((notification) => notification.notification_id));
+    });
+  }, [notificationSignature, notifications, notificationsOpen]);
 
-    setNotificationsOpen(true);
-    if (notifications.length > 0 && !checkedNotifications) {
-      setCheckedNotifications(true);
-      startTransition(async () => {
-        await markNotificationsRead(notifications.map((notification) => notification.notification_id));
-      });
-    }
+  function closeNotifications() {
+    router.replace("/member");
   }
 
   return <div className="space-y-4 sm:space-y-5">
     <section className="overflow-hidden rounded-3xl bg-[#171717] p-5 text-white shadow-[0_1.5rem_4rem_rgba(17,17,17,0.18)] sm:p-7">
       <div className="grid gap-6 lg:grid-cols-[1fr_auto] lg:items-end">
-        <div><div className="flex flex-col items-start gap-2"><p className="route-eyebrow text-white/65">Member home</p><nav aria-label="Member shortcuts" className="flex items-center gap-1"><Link href="/member/account" aria-label="Open member information" className="inline-flex size-11 items-center justify-center rounded-full text-white/70 transition hover:bg-white/10 hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"><CircleUserRound className="size-5" aria-hidden="true" /></Link><Link href="/member/classes" aria-label="Search classes" className="inline-flex size-11 items-center justify-center rounded-full text-white/70 transition hover:bg-white/10 hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"><Search className="size-5" aria-hidden="true" /></Link><button type="button" onClick={toggleNotifications} aria-expanded={notificationsOpen} aria-controls="member-notifications-panel" aria-label={`${notificationsOpen ? "Close" : "Open"} notifications${unreadCount ? `, ${unreadCount} unread` : ""}`} className="relative inline-flex size-11 items-center justify-center rounded-full text-white/70 transition hover:bg-white/10 hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"><Bell className="size-5" aria-hidden="true" />{unreadCount ? <span className="absolute right-1.5 top-1.5 min-w-4 rounded-full bg-[#ff5b52] px-1 text-center text-[0.62rem] font-bold leading-4 text-white">{unreadCount}</span> : null}</button><Link href="/member/reservations" aria-label="Open reservations calendar" className="inline-flex size-11 items-center justify-center rounded-full text-white/70 transition hover:bg-white/10 hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"><CalendarDays className="size-5" aria-hidden="true" /></Link></nav></div><h1 className="route-title mt-2 text-3xl sm:text-5xl">Hello, {firstName}.</h1><p className="mt-3 max-w-xl text-sm leading-6 text-white/70">{memberSince ? `Member since ${memberSinceFormatter.format(new Date(`${memberSince}T12:00:00Z`))}.` : "Welcome to Pulse Studio."}</p>{account ? <div className="mt-4 flex flex-wrap gap-2 text-xs text-white/75"><span className="inline-flex min-h-9 items-center rounded-full border border-white/15 bg-white/8 px-3"><span className="sr-only">Member ID: </span>ID <strong className="ml-1.5 font-mono font-semibold text-white">{memberId}</strong></span><span className="inline-flex min-h-9 max-w-full items-center rounded-full border border-white/15 bg-white/8 px-3 font-semibold text-white"><span className="break-all">{account.email}</span></span><span className="inline-flex min-h-9 items-center rounded-full border border-white/15 bg-white/8 px-3">{account.phone ?? "Phone not provided"}</span><Link href="/member/account" className="inline-flex min-h-9 items-center rounded-full border border-white/20 px-3 font-semibold text-white underline decoration-[#ff5b52] decoration-2 underline-offset-4 hover:bg-white/10 focus-visible:outline-2 focus-visible:outline-white focus-visible:outline-offset-2">View account</Link></div> : <Link href="/member/account" className="mt-4 inline-flex text-sm font-semibold text-white underline decoration-[#ff5b52] decoration-2 underline-offset-4 focus-visible:rounded focus-visible:outline-2 focus-visible:outline-white focus-visible:outline-offset-2">View account information</Link>}</div>
+        <div><p className="route-eyebrow text-white/65">Member home</p><h1 className="route-title mt-2 text-3xl sm:text-5xl">Hello, {firstName}.</h1><p className="mt-3 max-w-xl text-sm leading-6 text-white/70">{memberSince ? `Member since ${memberSinceFormatter.format(new Date(`${memberSince}T12:00:00Z`))}.` : "Welcome to Pulse Studio."}</p>{account ? <div className="mt-4 flex flex-wrap gap-2 text-xs text-white/75"><span className="inline-flex min-h-9 items-center rounded-full border border-white/15 bg-white/8 px-3"><span className="sr-only">Member ID: </span>ID <strong className="ml-1.5 font-mono font-semibold text-white">{memberId}</strong></span><span className="inline-flex min-h-9 max-w-full items-center rounded-full border border-white/15 bg-white/8 px-3 font-semibold text-white"><span className="break-all">{account.email}</span></span><span className="inline-flex min-h-9 items-center rounded-full border border-white/15 bg-white/8 px-3">{account.phone ?? "Phone not provided"}</span><Link href="/member/account" className="inline-flex min-h-9 items-center rounded-full border border-white/20 px-3 font-semibold text-white underline decoration-[#ff5b52] decoration-2 underline-offset-4 hover:bg-white/10 focus-visible:outline-2 focus-visible:outline-white focus-visible:outline-offset-2">View account</Link></div> : <Link href="/member/account" className="mt-4 inline-flex text-sm font-semibold text-white underline decoration-[#ff5b52] decoration-2 underline-offset-4 focus-visible:rounded focus-visible:outline-2 focus-visible:outline-white focus-visible:outline-offset-2">View account information</Link>}</div>
         <div className="grid grid-cols-3 divide-x divide-white/15 overflow-hidden rounded-2xl border border-white/15 bg-white/8"><div className="p-3 sm:px-5"><p className="text-xs text-white/65">Available</p><p className="text-2xl font-semibold">{summary.classes_remaining}</p></div><div className="p-3 sm:px-5"><p className="text-xs text-white/65">Reserved</p><p className="text-2xl font-semibold">{summary.classes_reserved}</p></div><div className="p-3 sm:px-5"><p className="text-xs text-white/65">Used</p><p className="text-2xl font-semibold">{summary.classes_used}</p></div></div>
       </div>
     </section>
 
-    {notificationsOpen ? <section id="member-notifications-panel" className="rounded-3xl border border-white/65 bg-white/82 p-5 shadow-[0_1.5rem_4rem_rgba(17,17,17,0.14)] backdrop-blur-2xl sm:p-6" aria-labelledby="notifications-title"><div className="flex items-center justify-between gap-4"><div><p className="font-mono text-xs uppercase tracking-[0.14em] text-black/60">Updates</p><h2 id="notifications-title" className="mt-2 text-2xl font-semibold tracking-[-0.035em]">Notifications</h2></div><button type="button" onClick={toggleNotifications} className="inline-flex min-h-11 items-center rounded-full px-4 text-sm font-semibold underline decoration-[#c72c25] decoration-2 underline-offset-4 focus-visible:outline-2 focus-visible:outline-[#c72c25] focus-visible:outline-offset-2">Close</button></div>{notificationError ? <div role="alert" className="mt-4 rounded-2xl border border-black/15 bg-[#c72c25]/5 p-4 text-sm text-[#8e211c]">{notificationError}</div> : notifications.length ? <><ol className="mt-4 divide-y divide-black/10">{notifications.map((notification) => <li key={notification.notification_id} className="grid gap-1 py-3 first:pt-0 last:pb-0 sm:grid-cols-[1fr_auto] sm:items-center"><p className="text-sm font-semibold">{notificationLabels[notification.event_type] ?? "Pulse Studio account update"}</p><time dateTime={notification.created_at} className="text-xs text-black/60">{notificationFormatter.format(new Date(notification.created_at))}</time></li>)}</ol><p className="mt-4 text-xs text-black/60">These updates will clear after you close this panel.</p></> : <p className="mt-4 text-sm text-black/65">You have no unread notifications.</p>}</section> : null}
+    {notificationsOpen ? <section id="member-notifications-panel" className="rounded-3xl border border-white/65 bg-white/82 p-5 shadow-[0_1.5rem_4rem_rgba(17,17,17,0.14)] backdrop-blur-2xl sm:p-6" aria-labelledby="notifications-title"><div className="flex items-center justify-between gap-4"><div><p className="font-mono text-xs uppercase tracking-[0.14em] text-black/60">Updates</p><h2 id="notifications-title" className="mt-2 text-2xl font-semibold tracking-[-0.035em]">Notifications</h2></div><button type="button" onClick={closeNotifications} className="inline-flex min-h-11 items-center rounded-full px-4 text-sm font-semibold underline decoration-[#c72c25] decoration-2 underline-offset-4 focus-visible:outline-2 focus-visible:outline-[#c72c25] focus-visible:outline-offset-2">Close</button></div>{notificationError ? <div role="alert" className="mt-4 rounded-2xl border border-black/15 bg-[#c72c25]/5 p-4 text-sm text-[#8e211c]">{notificationError}</div> : notifications.length ? <><ol className="mt-4 divide-y divide-black/10">{notifications.map((notification) => <li key={notification.notification_id} className="grid gap-1 py-3 first:pt-0 last:pb-0 sm:grid-cols-[1fr_auto] sm:items-center"><p className="text-sm font-semibold">{notificationLabels[notification.event_type] ?? "Pulse Studio account update"}</p><time dateTime={notification.created_at} className="text-xs text-black/60">{notificationFormatter.format(new Date(notification.created_at))}</time></li>)}</ol><p className="mt-4 text-xs text-black/60">These updates will clear after you close this panel.</p></> : <p className="mt-4 text-sm text-black/65">You have no unread notifications.</p>}</section> : null}
 
     <div className="grid gap-4 xl:grid-cols-[minmax(18rem,0.72fr)_minmax(0,1.28fr)] xl:items-stretch">
     <section className="h-full min-w-0">

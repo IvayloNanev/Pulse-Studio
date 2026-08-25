@@ -1,4 +1,5 @@
 import { MemberBottomNavigation } from "@/components/member-bottom-navigation";
+import { MemberUtilityNavigation } from "@/components/member-utility-navigation";
 import { PlatformHeader } from "@/components/platform-header";
 import { PulseAssistantChat } from "@/components/pulse-assistant-chat";
 
@@ -17,6 +18,7 @@ export function PortalShell({ audience, eyebrow, title, description, links, show
   return (
     <div className={`min-h-screen bg-[#f7f6f2] text-[#151515] ${isMember ? "pb-20 lg:pb-0" : ""}`}>
       <PlatformHeader mode="portal" links={links} audience={audience} label={`${eyebrow} navigation`} />
+      {isMember ? <div className="platform-gutter border-b border-black/8 bg-white/45"><div className="mx-auto flex w-full max-w-[90rem] justify-start py-1"><MemberUtilityNavigation /></div></div> : null}
       <main className={`relative min-w-0 overflow-hidden ${showHeader ? "platform-gutter py-8 lg:py-10" : "platform-gutter py-4 sm:py-6 lg:py-7"}`}>
         <div className="pointer-events-none absolute -right-32 -top-24 size-96 rounded-full bg-[#c72c25]/25 blur-3xl" />
         <div className="pointer-events-none absolute -left-24 top-72 size-80 rounded-full bg-black/10 blur-3xl" />
