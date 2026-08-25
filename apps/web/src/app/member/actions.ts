@@ -59,6 +59,24 @@ export type BookClassResult = {
   waitlistPosition?: number | null;
 };
 
+export async function markNotificationsRead(notificationIds: string[]) {
+  const safeIds = notificationIds.filter((id) => /^NTF-[A-Z0-9]+$/.test(id)).slice(0, 20);
+  if (safeIds.length === 0) return { ok: true };
+
+  const { supabase } = await requireMember();
+  const { error } = await supabase.rpc("mark_member_notifications_read", {
+    p_notification_ids: safeIds,
+  });
+
+  if (error) {
+    console.error("mark_member_notifications_read failed", { code: error.code, message: error.message });
+    return { ok: false };
+  }
+
+  revalidatePath("/member");
+  return { ok: true };
+}
+
 export async function bookClass(_previousState: BookClassResult | null, formData: FormData): Promise<BookClassResult> {
   const classSessionId = String(formData.get("class_session_id") ?? "");
   const useDropIn = formData.get("use_drop_in") === "true";
