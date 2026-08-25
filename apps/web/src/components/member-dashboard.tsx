@@ -1,8 +1,8 @@
 "use client";
 
 import { CalendarDays, Check, Clock3 } from "lucide-react";
-import { useEffect, useMemo, useRef, useState } from "react";
-import { useFormStatus } from "react-dom";
+import { useActionState, useEffect, useMemo, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 
 import { bookClass } from "@/app/member/actions";
 import { MemberRefreshButton } from "@/components/member-refresh-button";
@@ -90,14 +90,12 @@ function contextPath(day: string, classType: string, instructor: string) {
   return `/member/classes?${query.toString()}`;
 }
 
-function BookingConfirmationActions({ close, pendingLabel }: { close: () => void; pendingLabel: string }) {
-  const { pending } = useFormStatus();
-  return <div className="mt-5 grid gap-2 sm:grid-cols-2"><button autoFocus type="submit" disabled={pending} aria-busy={pending} className="min-h-11 rounded-full bg-[#c72c25] px-5 text-sm font-semibold text-white transition hover:bg-[#a9231e] focus-visible:outline-2 focus-visible:outline-white focus-visible:outline-offset-2 disabled:opacity-55">{pending ? pendingLabel : "Confirm booking"}</button><button type="button" disabled={pending} onClick={close} className="min-h-11 rounded-full border border-black/20 bg-white/60 px-5 text-sm font-semibold text-black focus-visible:outline-2 focus-visible:outline-[#c72c25] focus-visible:outline-offset-2 disabled:opacity-55">Go back</button></div>;
-}
-
 function BookingConfirmation({ canBook, hasCredits, returnTo, session, summaryAvailable }: { canBook: boolean; hasCredits: boolean; returnTo: string; session: MemberDashboardSession; summaryAvailable: boolean }) {
   const [open, setOpen] = useState(false);
+  const [result, submitAction, pending] = useActionState(bookClass, null);
+  const router = useRouter();
   const triggerRef = useRef<HTMLButtonElement>(null);
+  const handledResult = useRef<typeof result>(null);
   const close = () => {
     setOpen(false);
     window.setTimeout(() => triggerRef.current?.focus(), 0);
@@ -115,7 +113,17 @@ function BookingConfirmation({ canBook, hasCredits, returnTo, session, summaryAv
   const triggerLabel = !summaryAvailable && useDropIn ? "Eligibility unavailable" : !canBook ? "Membership paused" : session.is_full ? (useDropIn ? "$35 only if promoted" : "Join waitlist") : useDropIn ? "Reserve · $35" : "Reserve";
   const pendingLabel = session.is_full ? "Joining…" : "Reserving…";
 
-  return <><button ref={triggerRef} type="button" disabled={disabled} onClick={() => setOpen(true)} className={`min-h-11 rounded-full px-4 text-xs font-semibold transition focus-visible:outline-2 focus-visible:outline-[#c72c25] focus-visible:outline-offset-2 disabled:cursor-not-allowed sm:text-sm ${hasCredits ? "bg-black text-white hover:bg-[#c72c25] disabled:bg-black/25" : "border border-black/25 hover:border-black disabled:opacity-45"}`}>{triggerLabel}</button>{open ? <div className="fixed inset-0 z-[80] grid place-items-center bg-black/20 p-4" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) close(); }}><section role="dialog" aria-modal="true" aria-labelledby={`confirm-booking-${session.class_session_id}`} className="w-full max-w-md rounded-[2rem] border border-white/80 bg-[linear-gradient(135deg,rgba(255,255,255,0.94),rgba(238,230,220,0.88))] p-5 shadow-[0_2rem_5rem_rgba(0,0,0,0.28),inset_0_1px_0_rgba(255,255,255,0.95)] backdrop-blur-2xl sm:p-6"><p className="font-mono text-xs uppercase tracking-[0.16em] text-[#8e211c]">Review your selection</p><h2 id={`confirm-booking-${session.class_session_id}`} className="mt-2 text-3xl font-semibold tracking-[-0.045em]">Confirm Booking</h2><dl className="mt-5 space-y-3 rounded-2xl border border-white/75 bg-white/55 p-4 text-sm"><div className="flex justify-between gap-4"><dt className="text-black/65">Class</dt><dd className="text-right font-semibold">{classNames[session.class_type]}</dd></div><div className="flex justify-between gap-4"><dt className="text-black/65">Instructor</dt><dd className="text-right font-semibold">{session.instructor_name}</dd></div><div className="flex justify-between gap-4"><dt className="text-black/65">Time</dt><dd className="text-right font-semibold">{fullDayFormatter.format(new Date(session.starts_at))} · {timeFormatter.format(new Date(session.starts_at))}</dd></div><div className="flex justify-between gap-4"><dt className="text-black/65">Booking</dt><dd className="text-right font-semibold">{session.is_full ? useDropIn ? "Waitlist · $35 only if promoted" : "Membership waitlist" : useDropIn ? "$35 drop-in" : "Membership credit"}</dd></div></dl><p className="mt-4 text-sm leading-6 text-black/70">{session.is_full ? "You will join the waitlist. A reservation is created only if a place becomes available." : "Your place will be reserved after you confirm."}</p><form action={bookClass}><input type="hidden" name="class_session_id" value={session.class_session_id} /><input type="hidden" name="return_to" value={returnTo} /><input type="hidden" name="use_drop_in" value={String(useDropIn)} /><BookingConfirmationActions close={close} pendingLabel={pendingLabel} /></form><p className="sr-only">Press Escape to close without booking.</p></section></div> : null}</>;
+  useEffect(() => {
+    if (!result?.ok || !result.nextPath || handledResult.current === result) return;
+    handledResult.current = result;
+    setOpen(false);
+    const url = new URL(result.nextPath, window.location.origin);
+    url.searchParams.set("success", result.message);
+    router.replace(`${url.pathname}?${url.searchParams.toString()}${url.hash}`);
+    router.refresh();
+  }, [result, router]);
+
+  return <><button ref={triggerRef} type="button" disabled={disabled} onClick={() => setOpen(true)} className={`min-h-11 rounded-full px-4 text-xs font-semibold transition focus-visible:outline-2 focus-visible:outline-[#c72c25] focus-visible:outline-offset-2 disabled:cursor-not-allowed sm:text-sm ${hasCredits ? "bg-black text-white hover:bg-[#c72c25] disabled:bg-black/25" : "border border-black/25 hover:border-black disabled:opacity-45"}`}>{triggerLabel}</button>{open ? <div className="fixed inset-0 z-[80] grid place-items-center bg-black/20 p-4" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) close(); }}><section role="dialog" aria-modal="true" aria-labelledby={`confirm-booking-${session.class_session_id}`} className="w-full max-w-md rounded-[2rem] border border-white/80 bg-[linear-gradient(135deg,rgba(255,255,255,0.94),rgba(238,230,220,0.88))] p-5 shadow-[0_2rem_5rem_rgba(0,0,0,0.28),inset_0_1px_0_rgba(255,255,255,0.95)] backdrop-blur-2xl sm:p-6"><p className="font-mono text-xs uppercase tracking-[0.16em] text-[#8e211c]">Review your selection</p><h2 id={`confirm-booking-${session.class_session_id}`} className="mt-2 text-3xl font-semibold tracking-[-0.045em]">Confirm Booking</h2><dl className="mt-5 space-y-3 rounded-2xl border border-white/75 bg-white/55 p-4 text-sm"><div className="flex justify-between gap-4"><dt className="text-black/65">Class</dt><dd className="text-right font-semibold">{classNames[session.class_type]}</dd></div><div className="flex justify-between gap-4"><dt className="text-black/65">Instructor</dt><dd className="text-right font-semibold">{session.instructor_name}</dd></div><div className="flex justify-between gap-4"><dt className="text-black/65">Time</dt><dd className="text-right font-semibold">{fullDayFormatter.format(new Date(session.starts_at))} · {timeFormatter.format(new Date(session.starts_at))}</dd></div><div className="flex justify-between gap-4"><dt className="text-black/65">Booking</dt><dd className="text-right font-semibold">{session.is_full ? useDropIn ? "Waitlist · $35 only if promoted" : "Membership waitlist" : useDropIn ? "$35 drop-in" : "Membership credit"}</dd></div></dl><p className="mt-4 text-sm leading-6 text-black/70">{session.is_full ? "You will join the waitlist. A reservation is created only if a place becomes available." : "Your place will be reserved after you confirm."}</p><form action={submitAction}><input type="hidden" name="class_session_id" value={session.class_session_id} /><input type="hidden" name="return_to" value={returnTo} /><input type="hidden" name="use_drop_in" value={String(useDropIn)} />{result && !result.ok ? <p role="alert" className="mt-4 rounded-2xl bg-red-50 p-3 text-sm font-semibold text-[#8e211c]">{result.message}</p> : null}<div className="mt-5 grid gap-2 sm:grid-cols-2"><button autoFocus type="submit" disabled={pending} aria-busy={pending} className="min-h-11 rounded-full bg-[#c72c25] px-5 text-sm font-semibold text-white transition hover:bg-[#a9231e] focus-visible:outline-2 focus-visible:outline-white focus-visible:outline-offset-2 disabled:opacity-55">{pending ? pendingLabel : "Confirm booking"}</button><button type="button" disabled={pending} onClick={close} className="min-h-11 rounded-full border border-black/20 bg-white/60 px-5 text-sm font-semibold text-black focus-visible:outline-2 focus-visible:outline-[#c72c25] focus-visible:outline-offset-2 disabled:opacity-55">Go back</button></div></form><p className="sr-only">Press Escape to close without booking.</p></section></div> : null}</>;
 }
 
 function RefreshSchedule({ fetchedAt }: { fetchedAt: string }) {
