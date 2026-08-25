@@ -1,5 +1,7 @@
 import Link from "next/link";
 
+import { evaluateMemberRisk } from "@/app/staff/actions";
+import { MemberStatusMessage } from "@/components/member-status-message";
 import { PortalShell } from "@/components/portal-shell";
 import { requireStaff } from "@/lib/auth";
 
@@ -23,7 +25,8 @@ type RiskQueueItem = {
 
 const formatter = new Intl.DateTimeFormat("en-US", { timeZone: "America/New_York", month: "short", day: "numeric", year: "numeric" });
 
-export default async function RetentionQueuePage() {
+export default async function RetentionQueuePage({ searchParams }: { searchParams: Promise<{ success?: string; error?: string }> }) {
+  const messages = await searchParams;
   const { supabase } = await requireStaff();
   const { data, error } = await supabase
     .from("product_d_risk_queue")
@@ -34,6 +37,20 @@ export default async function RetentionQueuePage() {
 
   return (
     <PortalShell audience="staff" eyebrow="Staff portal · Product D" title="Members needing attention" description="Prioritized attendance-decline cases with factual evidence, coworker notes, and controlled outreach." links={links}>
+      <MemberStatusMessage success={messages.success} error={messages.error} />
+
+      <section className="glass-panel mb-6 rounded-3xl p-6">
+        <h2 className="text-xl font-semibold">Evaluate a member</h2>
+        <p className="mt-1 text-sm text-black/60">Run the attendance-decline check for one member. A qualifying case is created automatically with an initial outreach draft.</p>
+        <form action={evaluateMemberRisk} className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-end">
+          <div className="flex-1">
+            <label className="text-sm font-semibold" htmlFor="member_id">Member ID</label>
+            <input id="member_id" name="member_id" required placeholder="M101" className="mt-2 min-h-11 w-full border border-black/20 bg-white/60 px-3 focus-visible:outline-2" />
+          </div>
+          <button className="min-h-11 bg-black px-5 text-sm font-semibold text-white transition hover:bg-[#c72c25] focus-visible:outline-2 focus-visible:outline-offset-2">Evaluate</button>
+        </form>
+      </section>
+
       {error ? (
         <div role="alert" className="border border-[#c72c25]/35 bg-[#c72c25]/5 p-6 text-sm text-[#8e211c]">The retention queue could not be loaded.</div>
       ) : cases.length === 0 ? (
