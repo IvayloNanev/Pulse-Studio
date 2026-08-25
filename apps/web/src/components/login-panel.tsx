@@ -4,7 +4,6 @@ import { FormEvent, useEffect, useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 
-import { Brand } from "@/components/brand";
 import { SiteHeader } from "@/components/site-header";
 import { Button } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase/client";
@@ -111,12 +110,20 @@ export function LoginPanel({ audience, initialNotice = null, initialError = null
 
   return (
     <>
-      {!isStaff ? <SiteHeader /> : null}
-      <main className={`relative isolate grid min-w-0 overflow-x-hidden text-[#111] lg:grid-cols-2 ${isStaff ? "min-h-screen bg-[#f3f0e9]" : "min-h-[calc(100vh-5rem)] bg-transparent"}`}>
-      {!isStaff ? <div className="absolute inset-0 -z-20"><Image src="/media/classes/yoga.jpg" alt="Pulse Studio member practicing yoga" fill priority sizes="100vw" className="object-cover object-center" /></div> : null}
-      {!isStaff ? <div className="absolute inset-0 -z-10 bg-black/38" aria-hidden="true" /> : null}
-      <div className={`relative flex min-h-[18rem] min-w-0 flex-col overflow-hidden p-6 text-white sm:p-12 lg:p-16 ${isStaff ? "justify-between bg-[#171717]" : "justify-end bg-transparent"}`}>
-        {isStaff ? <div className="relative z-10"><Brand inverse prominent /></div> : null}
+      <SiteHeader />
+      <main className="relative isolate grid min-h-[calc(100vh-5rem)] min-w-0 overflow-x-hidden bg-transparent text-[#111] lg:grid-cols-2">
+      <div className="absolute inset-0 -z-20">
+        <Image
+          src={isStaff ? "/media/pulse-hiit-editorial.png" : "/media/classes/yoga.jpg"}
+          alt={isStaff ? "Pulse Studio HIIT training" : "Pulse Studio yoga practice"}
+          fill
+          priority
+          sizes="100vw"
+          className={`object-cover ${isStaff ? "object-[68%_center]" : "object-center"}`}
+        />
+      </div>
+      <div className="absolute inset-0 -z-10 bg-black/38" aria-hidden="true" />
+      <div className="relative flex min-h-[18rem] min-w-0 flex-col justify-end overflow-hidden bg-transparent p-6 text-white sm:p-12 lg:p-16">
         <div className="relative z-10">
           <p className="font-mono text-xs uppercase tracking-[0.2em] text-white/70">
             {isStaff ? "Private staff access" : "Member access"}
@@ -126,8 +133,7 @@ export function LoginPanel({ audience, initialNotice = null, initialError = null
           </h1>
         </div>
       </div>
-      <div className={`relative flex items-center overflow-hidden px-6 py-14 sm:px-12 lg:px-20 ${isStaff ? "atmospheric-motion bg-[linear-gradient(125deg,#8d8781_0%,#eeeae3_32%,#b7ada3_55%,#f7f3ea_72%,#77716d_100%)]" : "bg-transparent"}`}>
-        {isStaff ? <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(115deg,transparent_10%,rgba(255,255,255,0.48)_42%,transparent_68%)]" /> : null}
+      <div className="relative flex items-center overflow-hidden bg-transparent px-6 py-14 sm:px-12 lg:px-20">
         <div className="editorial-rise glass-panel relative w-full max-w-lg rounded-3xl p-7 sm:p-10">
           <p className="route-eyebrow text-black/60">Secure sign in</p>
           <h2 className="route-title mt-4 text-4xl">Welcome back</h2>
