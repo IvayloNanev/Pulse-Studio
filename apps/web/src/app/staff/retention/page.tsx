@@ -1,6 +1,9 @@
 import Link from "next/link";
 
+import { evaluateMemberRisk } from "@/app/staff/actions";
+import { MemberStatusMessage } from "@/components/member-status-message";
 import { PortalShell } from "@/components/portal-shell";
+import { StaffSubmitButton } from "@/components/staff-submit-button";
 import { requireStaff } from "@/lib/auth";
 
 const links = [
@@ -22,6 +25,13 @@ type RiskQueueItem = {
   active_note_count: number;
   outreach_status: "draft" | "ready" | "sent" | "completed" | null;
   outreach_blocked_reason: string | null;
+};
+
+type MemberOption = {
+  member_id: string;
+  first_name: string;
+  last_name: string;
+  email: string;
 };
 
 const formatter = new Intl.DateTimeFormat("en-US", { timeZone: "America/New_York", month: "short", day: "numeric", year: "numeric" });
@@ -71,20 +81,49 @@ function CaseSection({ title, description, cases }: { title: string; description
   );
 }
 
-export default async function RetentionQueuePage() {
+export default async function RetentionQueuePage({ searchParams }: { searchParams: Promise<{ success?: string; error?: string }> }) {
+  const messages = await searchParams;
   const { supabase } = await requireStaff();
-  const { data, error } = await supabase
-    .from("product_d_risk_queue")
-    .select("risk_assessment_id,member_name,risk_level,review_status,evaluated_at,previous_visits,current_visits,decline_percentage,last_attended_at,active_note_count,outreach_status,outreach_blocked_reason")
-    .order("risk_priority", { ascending: true })
-    .order("evaluated_at", { ascending: true });
+  const [{ data, error }, { data: memberData, error: membersError }] = await Promise.all([
+    supabase
+      .from("product_d_risk_queue")
+      .select("risk_assessment_id,member_name,risk_level,review_status,evaluated_at,previous_visits,current_visits,decline_percentage,last_attended_at,active_note_count,outreach_status,outreach_blocked_reason")
+      .order("risk_priority", { ascending: true })
+      .order("evaluated_at", { ascending: true }),
+    supabase.from("members").select("member_id,first_name,last_name,email").order("last_name").order("first_name"),
+  ]);
   const cases = (data ?? []) as RiskQueueItem[];
+  const members = (memberData ?? []) as MemberOption[];
   const pending = cases.filter((item) => item.review_status === "pending");
   const inProgress = cases.filter((item) => item.review_status === "in_progress");
   const highPriority = cases.filter((item) => item.risk_level === "high").length;
 
   return (
     <PortalShell audience="staff" eyebrow="Staff portal · Product D" title="Member retention" description="Review attendance decline, coordinate staff notes, and complete member outreach from one prioritized workspace." links={links}>
+      <MemberStatusMessage success={messages.success} error={messages.error} />
+      <section aria-labelledby="evaluate-member-heading" className="glass-panel mb-8 rounded-3xl p-5 sm:p-6">
+        <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(20rem,0.8fr)] lg:items-end">
+          <div>
+            <p className="font-mono text-xs uppercase tracking-[0.16em] text-[#a9231e]">New evaluation</p>
+            <h2 id="evaluate-member-heading" className="mt-2 text-2xl font-semibold">Check attendance decline</h2>
+            <p className="mt-2 max-w-2xl text-sm leading-6 text-black/65">Choose a member to compare their two latest 30-day attendance periods. A case is created only when the approved history and decline thresholds are met.</p>
+          </div>
+          {membersError ? (
+            <p role="alert" className="rounded-2xl bg-[#c72c25]/8 p-4 text-sm font-medium text-[#8e211c]">Members are temporarily unavailable. Refresh before running an evaluation.</p>
+          ) : (
+            <form action={evaluateMemberRisk} className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end">
+              <div className="min-w-0">
+                <label htmlFor="evaluation-member" className="text-sm font-semibold">Member</label>
+                <select id="evaluation-member" name="member_id" required defaultValue="" className="mt-2 min-h-11 w-full rounded-xl border border-black/20 bg-white/70 px-3 text-sm focus-visible:outline-2 focus-visible:outline-[#c72c25] focus-visible:outline-offset-2">
+                  <option value="" disabled>Select a member</option>
+                  {members.map((member) => <option key={member.member_id} value={member.member_id}>{member.last_name}, {member.first_name} · {member.email}</option>)}
+                </select>
+              </div>
+              <StaffSubmitButton pendingLabel="Evaluating…" disabled={!members.length}>Evaluate</StaffSubmitButton>
+            </form>
+          )}
+        </div>
+      </section>
       {error ? (
         <div role="alert" className="rounded-2xl border border-black/15 bg-white/65 p-6 text-sm text-[#8e211c] backdrop-blur-xl">The retention queue could not be loaded.</div>
       ) : cases.length === 0 ? (
