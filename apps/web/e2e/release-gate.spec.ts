@@ -29,12 +29,12 @@ for (const [name, destination] of publicLinks) {
   });
 }
 
-for (const [index, plan] of ["PLAN-004", "PLAN-008", "PLAN-012"].entries()) {
+for (const plan of ["PLAN-004", "PLAN-008", "PLAN-012"]) {
   test(`membership selection preserves ${plan}`, async ({ page }) => {
     await page.goto("/membership");
     const planLinks = page.locator('a[href^="/join?plan="]');
     await expect(planLinks).toHaveCount(3);
-    await planLinks.nth(index).click();
+    await page.locator(`a[href="/join?plan=${plan}"]`).click();
     await expect(page).toHaveURL(new RegExp(`/join\\?plan=${plan}$`));
   });
 }
