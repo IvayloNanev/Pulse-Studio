@@ -36,21 +36,25 @@ export default async function Home() {
     <main className="min-h-screen bg-[#f3f0e9] text-[#111111]">
       <SiteHeader />
 
-      <section className="overflow-hidden border-b border-black/15">
-        <div className="grid min-h-[calc(100vh-5rem)] lg:grid-cols-[1.15fr_0.85fr]">
-          <div className="flex flex-col justify-between border-b border-black/15 px-6 py-12 sm:px-10 lg:border-b-0 lg:border-r lg:px-16 lg:py-16">
-            <div className="flex items-center gap-3 font-mono text-xs uppercase tracking-[0.22em] text-black/55">
+      <section className="relative overflow-hidden border-b border-white/15 bg-black text-white">
+        <video className="absolute inset-0 size-full object-cover opacity-75" autoPlay muted loop playsInline preload="metadata" poster="/media/pulse-hiit-editorial.png" aria-hidden="true">
+          <source src="/media/pulse-hiit-neutral-burpees.mp4" type="video/mp4" />
+        </video>
+        <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(0,0,0,0.88)_0%,rgba(0,0,0,0.68)_48%,rgba(20,5,4,0.52)_72%,rgba(0,0,0,0.72)_100%)]" />
+        <div className="relative z-10 grid min-h-[calc(100vh-5rem)] lg:grid-cols-[1.15fr_0.85fr]">
+          <div className="flex flex-col justify-between px-6 py-12 sm:px-10 lg:px-16 lg:py-16">
+            <div className="flex items-center gap-3 font-mono text-xs uppercase tracking-[0.22em] text-white/70">
               <span className="signal-line h-1 w-14 bg-[#e23b32]" aria-hidden="true" />
               Boutique training · New York
             </div>
             <div className="editorial-rise py-16">
-              <p className="mb-6 text-sm font-semibold uppercase tracking-[0.2em] text-black/55">Train together. Progress individually.</p>
+              <p className="mb-6 text-sm font-semibold uppercase tracking-[0.2em] text-white/70">Train together. Progress individually.</p>
               <h1 className="display-pulse max-w-5xl text-[clamp(4.4rem,11vw,10rem)] uppercase leading-[0.78]">
                 Train with
                 <br />
                 <em>intent.</em>
               </h1>
-              <p className="mt-9 max-w-xl text-lg leading-7 text-black/60">
+              <p className="mt-9 max-w-xl text-lg leading-7 text-white/75">
                 Yoga, cycling, and HIIT in one focused studio. Build consistency through coached classes and a membership designed around your week.
               </p>
             </div>
@@ -58,15 +62,14 @@ export default async function Home() {
               <Button asChild size="lg" className="h-13 rounded-full bg-[#d8332c] px-8 text-white hover:bg-[#f0443b]">
                 <Link href="/join">Start membership <ArrowRight aria-hidden="true" /></Link>
               </Button>
-              <Link href="/classes" className="inline-flex items-center gap-3 text-sm font-semibold uppercase tracking-[0.14em] text-black/60 transition hover:text-black">
+              <Link href="/classes" className="inline-flex min-h-11 items-center gap-3 rounded-full px-2 text-sm font-semibold uppercase tracking-[0.14em] text-white/80 transition hover:text-white focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white">
                 View class schedule <ArrowRight className="size-4" aria-hidden="true" />
               </Link>
             </div>
           </div>
 
-          <div className="atmospheric-motion relative flex items-center overflow-hidden bg-[linear-gradient(125deg,#0b0b0b_5%,#531512_35%,#211f1d_58%,#090909_82%,#6f1c18_100%)] px-6 py-12 text-white sm:px-10 lg:px-12">
-            <div className="absolute inset-0 bg-[linear-gradient(115deg,transparent_20%,rgba(255,255,255,0.08)_48%,transparent_70%)]" />
-            <div className="glass-panel-dark relative z-10 w-full rounded-[2rem] p-6 sm:p-8">
+          <div className="relative flex items-center px-6 py-12 text-white sm:px-10 lg:px-12">
+            <div className="glass-panel-dark relative w-full rounded-[2rem] p-6 sm:p-8">
               <div className="flex items-center justify-between border-b border-white/15 pb-5">
                 <div>
                   <p className="font-mono text-[0.65rem] uppercase tracking-[0.22em] text-white/70">Coming up at Pulse</p>
