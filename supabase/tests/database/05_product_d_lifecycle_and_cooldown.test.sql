@@ -118,22 +118,9 @@ select is(
 -- ==========================================================================
 -- PART 2 — Paused and cancelled members.
 --
--- DISCREPANCY FOUND (documented, not silently fixed): the coverage
--- assumption is that a paused or cancelled member should not produce a
--- standard qualifying risk assessment at all. The actual implementation in
--- evaluate_member_risk (supabase/migrations/20260823160000_add_product_d_risk_evaluation_command.sql)
--- only checks current membership status when deciding whether to create the
--- INITIAL OUTREACH DRAFT (the same do_not_contact-style suppression already
--- covered in 03_product_d_risk_workflows.test.sql). It does not check
--- current membership status when deciding whether to create the
--- risk_assessments row itself -- only membership.start_date, for the
--- "insufficient_membership_history" check.
---
--- The tests below document the ACTUAL current behavior (assessment
--- created, outreach suppressed) rather than the assumed one, per the
--- instruction to report a discrepancy instead of silently changing
--- approved business logic. This should be confirmed with the team before
--- any code change.
+-- Approved Product D behavior: paused and cancelled members may retain a
+-- factual historical risk assessment, while outreach is created only for an
+-- active, contactable membership. See docs/04-business-rules-v1.md section 14.
 -- ==========================================================================
 
 -- Paused member.
@@ -177,7 +164,7 @@ create temporary table eval_paused as select * from public.evaluate_member_risk(
 select is(
   (select evaluation_result from eval_paused),
   'qualifying_assessment_created',
-  'ACTUAL BEHAVIOR: a currently-paused member still receives a qualifying risk assessment (see discrepancy note above)'
+  'a currently-paused member retains a factual qualifying risk assessment'
 );
 select is(
   (select count(*)::integer from public.outreach_records where risk_assessment_id = (select risk_assessment_id from eval_paused)),
@@ -225,7 +212,7 @@ create temporary table eval_cancelled as select * from public.evaluate_member_ri
 select is(
   (select evaluation_result from eval_cancelled),
   'qualifying_assessment_created',
-  'ACTUAL BEHAVIOR: a cancelled member still receives a qualifying risk assessment (see discrepancy note above)'
+  'a cancelled member retains a factual qualifying risk assessment'
 );
 select is(
   (select count(*)::integer from public.outreach_records where risk_assessment_id = (select risk_assessment_id from eval_cancelled)),
