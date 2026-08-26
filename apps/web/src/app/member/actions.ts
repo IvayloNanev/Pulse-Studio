@@ -51,12 +51,38 @@ function safeCancellationError(message: string) {
   return "We could not cancel this reservation. Refresh and try again.";
 }
 
-export async function bookClass(formData: FormData) {
+export type BookClassResult = {
+  ok: boolean;
+  message: string;
+  nextPath?: string;
+  reservationStatus?: string;
+  waitlistPosition?: number | null;
+};
+
+export async function markNotificationsRead(notificationIds: string[]) {
+  const safeIds = notificationIds.filter((id) => /^NTF-[A-Z0-9]+$/.test(id)).slice(0, 20);
+  if (safeIds.length === 0) return { ok: true };
+
+  const { supabase } = await requireMember();
+  const { error } = await supabase.rpc("mark_member_notifications_read", {
+    p_notification_ids: safeIds,
+  });
+
+  if (error) {
+    console.error("mark_member_notifications_read failed", { code: error.code, message: error.message });
+    return { ok: false };
+  }
+
+  revalidatePath("/member");
+  return { ok: true };
+}
+
+export async function bookClass(_previousState: BookClassResult | null, formData: FormData): Promise<BookClassResult> {
   const classSessionId = String(formData.get("class_session_id") ?? "");
   const useDropIn = formData.get("use_drop_in") === "true";
   const nextPath = returnPath(formData, "/member/classes");
 
-  if (!classSessionId) redirect(destination(nextPath, "error", "Choose a class to reserve."));
+  if (!classSessionId) return { ok: false as const, message: "Choose a class to reserve." };
 
   const { supabase } = await requireMember();
   const { data, error } = await supabase.rpc("book_class_session", {
@@ -66,12 +92,23 @@ export async function bookClass(formData: FormData) {
 
   if (error) {
     console.error("book_class_session failed", { code: error.code, message: error.message });
-    redirect(destination(nextPath, "error", safeBookingError(error.message)));
+    return { ok: false as const, message: safeBookingError(error.message) };
   }
 
   const status = data?.[0]?.reservation_status;
+  const reservationId = data?.[0]?.reservation_id;
+  let waitlistPosition: number | null = null;
+  if (status === "waitlisted" && reservationId) {
+    const { data: position, error: positionError } = await supabase.rpc("member_waitlist_position", {
+      p_reservation_id: reservationId,
+    });
+    if (positionError) console.error("member_waitlist_position failed", { code: positionError.code, message: positionError.message });
+    if (typeof position === "number") waitlistPosition = position;
+  }
   const message = status === "waitlisted"
-    ? "You joined the waitlist. We will notify you if a spot opens."
+    ? waitlistPosition
+      ? `You joined the waitlist at position #${waitlistPosition}. No credit is held until promotion.`
+      : "You joined the waitlist. No credit is held until promotion."
     : useDropIn
       ? "Class confirmed with the $35 drop-in."
       : "Class confirmed. One membership credit is reserved.";
@@ -79,7 +116,7 @@ export async function bookClass(formData: FormData) {
   revalidatePath("/member");
   revalidatePath("/member/classes");
   revalidatePath("/member/reservations");
-  redirect(destination(nextPath, "success", message));
+  return { ok: true as const, message, nextPath, reservationStatus: status ?? "confirmed", waitlistPosition };
 }
 
 export async function cancelReservation(formData: FormData) {

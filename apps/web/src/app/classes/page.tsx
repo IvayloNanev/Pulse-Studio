@@ -81,15 +81,16 @@ export default async function ClassesPage({ searchParams }: { searchParams: Prom
 
   return (
     <PublicPage
+      compact
       heroImage={selectedClassType ? `/media/classes/${selectedClassType}.jpg` : "/media/classes/cycling.jpg"}
       heroImageAlt={`${selectedClassType ? classNames[selectedClassType] : "Pulse Studio"} class`}
       eyebrow={selectedClassType ? `${classNames[selectedClassType]} schedule` : "Weekly schedule"}
       title={selectedClassType ? classNames[selectedClassType] : "Move through the city."}
       introduction={selectedClassType ? classIntroductions[selectedClassType] : "Explore Yoga, Cycling, and HIIT sessions, with current availability from the Pulse Studio schedule."}
     >
-      <section className="mx-4 my-8 rounded-[2.5rem] border border-white/55 bg-[#f3f0e9]/95 px-6 py-12 shadow-[0_32px_90px_rgba(0,0,0,0.24)] backdrop-blur-none sm:mx-8 sm:bg-[#f3f0e9]/88 sm:px-10 sm:backdrop-blur-xl lg:mx-12 lg:px-12 lg:py-16">
+      <section className="mx-4 my-5 rounded-3xl border border-white/55 bg-[#f3f0e9]/95 px-6 py-8 shadow-[0_32px_90px_rgba(0,0,0,0.24)] backdrop-blur-none sm:mx-6 sm:my-6 sm:bg-[#f3f0e9]/88 sm:px-8 sm:backdrop-blur-xl lg:mx-10 lg:px-10 lg:py-10 xl:mx-12 xl:px-12">
         <p className="mb-2 text-xs font-semibold uppercase tracking-[0.12em] text-black/60 sm:hidden">Swipe to see every discipline →</p>
-        <nav aria-label="Filter schedule by discipline" className="mb-8 flex gap-2 overflow-x-auto scroll-smooth pb-3 pr-10 [mask-image:linear-gradient(to_right,black_calc(100%-2.5rem),transparent)] sm:pr-0 sm:[mask-image:none]">
+        <nav aria-label="Filter schedule by discipline" className="mb-6 flex gap-2 overflow-x-auto scroll-smooth pb-3 pr-10 [mask-image:linear-gradient(to_right,black_calc(100%-2.5rem),transparent)] sm:pr-0 sm:[mask-image:none]">
           {[
             { label: "All classes", href: "/classes", type: undefined },
             { label: "Yoga", href: "/classes?class_type=yoga", type: "yoga" },
@@ -100,7 +101,7 @@ export default async function ClassesPage({ searchParams }: { searchParams: Prom
             return <Link key={filter.label} href={filter.href} aria-current={active ? "page" : undefined} className={`inline-flex min-h-11 shrink-0 items-center rounded-full border px-5 text-xs font-bold uppercase tracking-[0.12em] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#c72c25] ${active ? "border-black bg-black text-white" : "border-black/20 bg-white/55 text-black hover:bg-white"}`}>{filter.label}</Link>;
           })}
         </nav>
-        <div className="mb-12 flex flex-col justify-between gap-4 border-b border-black/20 pb-6 sm:flex-row sm:items-end">
+        <div className="mb-8 flex flex-col justify-between gap-4 border-b border-black/20 pb-5 sm:flex-row sm:items-end">
           <div>
             <p className="font-mono text-xs uppercase tracking-[0.2em] text-black/60">Next 30 days · New York</p>
             <h2 className="display-pulse mt-3 text-4xl sm:text-5xl">{selectedClassType ? `${classNames[selectedClassType]} classes.` : "Live studio schedule."}</h2>
@@ -111,30 +112,30 @@ export default async function ClassesPage({ searchParams }: { searchParams: Prom
         </div>
 
         {error ? (
-          <div role="alert" className="border border-[#c72c25]/35 bg-[#c72c25]/5 p-6 text-sm text-[#8e211c]">
+          <div role="alert" className="rounded-2xl border border-black/15 bg-[#c72c25]/5 p-6 text-sm text-[#8e211c]">
             The class schedule is temporarily unavailable. Please refresh and try again.
           </div>
         ) : sessions.length === 0 ? (
-          <div className="border border-black/15 p-8 text-sm text-black/65">No {selectedClassType ? classNames[selectedClassType] : "sessions"} are currently scheduled in the next 30 days.</div>
+          <div className="rounded-2xl border border-black/15 bg-white/55 p-8 text-sm text-black/65">No {selectedClassType ? classNames[selectedClassType] : "sessions"} are currently scheduled in the next 30 days.</div>
         ) : (
-          <div className="space-y-14">
+          <div className="space-y-9">
             {[...groupedSessions.entries()].map(([date, daySessions]) => (
               <section key={date} aria-labelledby={`day-${daySessions[0].class_session_id}`}>
                 <h3 id={`day-${daySessions[0].class_session_id}`} className="mb-5 font-mono text-xs uppercase tracking-[0.2em] text-black/60">{date}</h3>
-                <div className="border-t border-black/20">
+                <div className="grid gap-3">
                   {daySessions.map((session) => (
-                    <article key={session.class_session_id} className="group grid gap-4 border-b border-black/20 py-7 transition-colors hover:bg-white/45 md:grid-cols-[7rem_1.2fr_0.9fr_minmax(13rem,auto)] md:items-center md:px-3">
+                    <article key={session.class_session_id} className="session-card group transition-colors hover:bg-white/75 md:grid-cols-[7rem_minmax(0,1fr)] lg:grid-cols-[7rem_1.2fr_0.9fr_minmax(13rem,auto)] lg:items-center">
                       <time dateTime={session.starts_at} className="font-mono text-sm">{timeFormatter.format(new Date(session.starts_at))}</time>
                       <div>
                         <h4 className="text-2xl font-semibold tracking-[-0.035em]">{classNames[session.class_type]}</h4>
                         <p className="mt-1 text-sm text-black/60">with {session.instructor_name}</p>
                       </div>
-                      <div className="text-sm text-black/55">
+                      <div className="text-sm text-black/65 md:col-start-2 lg:col-start-auto">
                         <p>{session.class_type_label} · {durationInMinutes(session.starts_at, session.ends_at)} min</p>
                         <p className="mt-1">{session.confirmed_reservations} of {session.capacity} reserved</p>
                       </div>
-                      <div className="flex flex-wrap items-center gap-2 md:justify-end">
-                        <span className={`inline-flex border px-3 py-1.5 font-mono text-xs uppercase tracking-[0.12em] ${session.is_full ? "border-black/20 text-black/60" : "border-[#c72c25]/40 text-[#a9231e]"}`}>
+                      <div className="flex flex-wrap items-center gap-2 md:col-span-2 lg:col-span-1 lg:justify-end">
+                        <span className={`inline-flex rounded-full border bg-white/55 px-3 py-1.5 font-mono text-xs uppercase tracking-[0.12em] ${session.is_full ? "border-black/20 text-black/60" : "border-black/15 text-[#a9231e]"}`}>
                           {session.is_full ? `Waitlist · ${session.waitlisted_reservations}` : `${session.available_spots} spots left`}
                         </span>
                         <Link href={`/login?next=${encodeURIComponent(`/member/classes?day=${dayKeyFormatter.format(new Date(session.starts_at))}&class=${session.class_type}`)}`} className="inline-flex min-h-11 items-center rounded-full bg-black px-4 text-xs font-bold uppercase tracking-[0.1em] text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#c72c25]">Login to reserve</Link>

@@ -16,22 +16,22 @@ export default async function JoinPage({ searchParams }: { searchParams: Promise
   const plans = publicPlansWithFallback((data ?? []) as PublicMembershipPlan[]);
   const selectedPlan = plans.some((plan) => plan.plan_id === params.plan) ? params.plan : plans[0]?.plan_id;
   const selectedPlanDetails = plans.find((plan) => plan.plan_id === selectedPlan) ?? plans[0];
-  const fieldClass = "mt-2 h-12 w-full rounded-xl border border-black/15 bg-white/70 px-4 shadow-sm transition focus-visible:border-[#c72c25] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#c72c25]";
+  const fieldClass = "mt-2 h-12 w-full rounded-xl border border-black/15 bg-white/70 px-4 shadow-sm transition focus-visible:border-black/20 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#c72c25]";
 
   return (
     <PublicPage compact heroImage="/media/classes/hiit.jpg" heroImageAlt="Pulse Studio HIIT class" eyebrow="Join Pulse" title="Begin with intention." introduction="Choose your rhythm and submit your membership application. Applications are accepted automatically; secure member-account setup is a separate step.">
-      <section className="relative overflow-hidden px-6 py-12 sm:px-10 lg:px-16 lg:py-20">
+      <section className="platform-gutter relative overflow-hidden py-8 sm:py-10 lg:py-12">
         <div className="pointer-events-none absolute -left-32 top-20 size-96 rounded-full bg-[#c72c25]/10 blur-3xl" />
         <div className="relative mx-auto grid max-w-[90rem] gap-6 lg:grid-cols-[minmax(18rem,0.72fr)_minmax(0,1.28fr)] lg:items-start">
-          <aside className="overflow-hidden rounded-[2rem] bg-[#171717] text-white shadow-2xl lg:sticky lg:top-28">
-            <div className="border-b border-white/15 bg-[radial-gradient(circle_at_top_right,rgba(199,44,37,0.55),transparent_48%)] p-7 sm:p-9">
+          <aside className="overflow-hidden rounded-3xl border border-black/15 bg-[#c72c25] text-white shadow-[0_30px_80px_rgba(40,30,20,0.2)]">
+            <div className="border-b border-white/20 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.24),transparent_52%)] p-7 sm:p-9 md:p-6 lg:p-9">
               <p className="font-mono text-xs uppercase tracking-[0.2em] text-white/70">Your membership</p>
               <h2 className="mt-5 text-3xl font-semibold tracking-[-0.045em]">{selectedPlanDetails.plan_name}</h2>
               <p className="mt-3 text-sm leading-6 text-white/70">{selectedPlanDetails.classes_per_month} coached Yoga, Cycling, or HIIT classes each month.</p>
               <p className="mt-8 text-5xl font-semibold tracking-[-0.06em]">${Number(selectedPlanDetails.monthly_price)}<span className="ml-2 text-sm font-normal tracking-normal text-white/60">/ month</span></p>
               <Link href="/membership" className="mt-5 inline-flex min-h-11 items-center text-xs font-bold uppercase tracking-[0.14em] text-white underline decoration-white/40 underline-offset-4 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white">Compare memberships</Link>
             </div>
-            <div className="space-y-6 p-7 sm:p-9">
+            <div className="space-y-6 p-7 sm:p-9 md:hidden lg:block">
               {[
                 [Dumbbell, "Choose your training rhythm", "Your plan works across every Pulse discipline."],
                 [CreditCard, "Add a test payment method", "No real charge is processed or stored."],
@@ -39,13 +39,17 @@ export default async function JoinPage({ searchParams }: { searchParams: Promise
               ].map(([Icon, title, detail], index) => (
                 <div key={String(title)} className="grid grid-cols-[2.75rem_1fr] gap-4">
                   <span className="flex size-11 items-center justify-center rounded-full border border-white/20 bg-white/10"><Icon className="size-5 text-[#ff5b52]" aria-hidden="true" /></span>
-                  <div><p className="text-sm font-semibold"><span className="mr-2 font-mono text-xs text-white/45">0{index + 1}</span>{String(title)}</p><p className="mt-1 text-xs leading-5 text-white/65">{String(detail)}</p></div>
+                  <div><p className="text-sm font-semibold"><span className="mr-2 font-mono text-xs text-white/65">0{index + 1}</span>{String(title)}</p><p className="mt-1 text-xs leading-5 text-white/65">{String(detail)}</p></div>
                 </div>
               ))}
             </div>
+            <details className="hidden border-t border-white/15 px-6 py-3 md:block lg:hidden">
+              <summary className="flex min-h-11 cursor-pointer items-center font-semibold focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white">How enrollment works</summary>
+              <p className="pb-3 text-sm leading-6 text-white/70">Choose a plan, add test payment details, and submit. Applications are accepted automatically; secure account sign-in is set up separately.</p>
+            </details>
           </aside>
 
-          <div className="glass-panel rounded-[2rem] border border-white/70 bg-white/55 p-6 shadow-[0_30px_80px_rgba(40,30,20,0.13)] backdrop-blur-xl sm:p-9 lg:p-11">
+          <div className="glass-panel rounded-3xl border border-white/70 bg-white/55 p-6 shadow-[0_30px_80px_rgba(40,30,20,0.13)] backdrop-blur-xl sm:p-9 lg:p-11">
             <div className="mb-8 flex items-start justify-between gap-5 border-b border-black/10 pb-7">
               <div><p className="font-mono text-xs uppercase tracking-[0.2em] text-[#a9231e]">Secure enrollment</p><h2 className="mt-3 text-3xl font-semibold tracking-[-0.045em]">Create your Pulse profile.</h2></div>
               <span className="hidden size-12 items-center justify-center rounded-full bg-[#c72c25] text-white sm:flex"><Check className="size-5" aria-hidden="true" /></span>

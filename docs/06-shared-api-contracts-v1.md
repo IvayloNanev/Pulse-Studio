@@ -50,11 +50,22 @@ One row represents one non-cancelled class session.
 - No member identity, contact information, reservation identifier, or attendance fact is exposed.
 - Consumers apply their own requested date range and sort by `starts_at`; the shared field meanings never change.
 
-## 2. Product B staff session roster
+## 2. Product B protected sessions and staff roster
+
+**Protected session interface:** `public.staff_product_b_sessions`
+**Access helper:** `public.can_access_product_b_session(class_session_id)`
+
+The protected session interface supplies live session, instructor, capacity, confirmed, waitlisted, and open-spot facts even when the session has zero reservations. Owner/admin sees all Product B sessions; an instructor sees only assigned sessions. Utilization and warning presentation are derived by the application from current facts and are not persisted.
+
+The live warning is `confirmed_reservations / capacity < 50%` for a non-canceled session. Presentation bands are 0–39% Underbooked, 40–69% Moderate, 70–89% Healthy, and 90–100% Nearly full. Historical records in `product_b_underbooking_decisions` do not keep a warning active after current utilization changes.
+
+Owner/admin may create and resolve decisions through `create_product_b_underbooking_decision` and `resolve_product_b_underbooking_decision`. Instructors have read-only decision context for assigned sessions. These commands derive the actor and timestamps and never alter Product A reservations or cancel a class.
+
+### Product B staff session roster
 
 **Database interface:** `public.staff_session_roster`
 **Consumer:** Product B staff scheduling dashboard
-**Authorization:** active authenticated staff only; anonymous users and authenticated members receive no access
+**Authorization:** owner/admin for all sessions; assigned instructor for the assigned session; all others receive no rows
 
 One row represents one confirmed or waitlisted reservation on a non-cancelled class session.
 
@@ -87,6 +98,7 @@ One row represents one confirmed or waitlisted reservation on a non-cancelled cl
 - Waitlisted members can never be marked attended or no-show unless Product A first promotes the reservation to `confirmed`.
 - Email, phone, authentication identifiers, and unrelated membership details are not exposed.
 - Consumers filter by `class_session_id` and sort members as needed; field meanings remain shared.
+- Session detail comes from `staff_product_b_sessions`, so a valid zero-reservation session remains distinguishable from an unauthorized or missing session.
 
 ### Attendance command
 
@@ -103,8 +115,18 @@ The canonical database trigger remains authoritative: it rejects non-confirmed r
 
 Product B writes through two authenticated staff commands:
 
-- `record_attendance(p_reservation_id, p_attendance_status)` creates the initial outcome using the database clock and a generated stable identifier. The client supplies neither `recorded_at` nor `attendance_record_id`.
-- `correct_attendance(p_attendance_record_id, p_new_status, p_reason)` requires a non-empty reason, records the previous and new outcomes with the active staff identifier and correction time, and then updates the current attendance outcome.
+- `record_attendance(p_reservation_id, p_attendance_status)` creates the initial outcome using the database clock and a generated stable identifier only for owner/admin or the session's assigned instructor. The client supplies neither `recorded_at` nor `attendance_record_id`.
+- `correct_attendance(p_attendance_record_id, p_new_status, p_reason)` applies the same session-assignment authorization, requires a non-empty reason, records the previous and new outcomes with the active staff identifier and correction time, and then updates the current attendance outcome.
+
+### Product B Stage 2 attendance workflow
+
+New attendance records store nullable `recorded_by_staff_id`, derived only from the authenticated Staff account. Historical rows remain `NULL` and Staff UI presents them as `Recorder unavailable`; no historical actor is inferred. `record_session_attendance_bulk(p_class_session_id, p_reservation_ids, p_attendance_status)` atomically records one outcome for an authorized set of confirmed, unmarked reservations in one session. It rejects cross-session, waitlisted, cancelled, already-marked, mistimed, or unauthorized targets and never accepts a caller-supplied Staff identity.
+
+### Product B Stage 3 session safeguards
+
+`cancel_class_session(p_class_session_id, p_reason)` remains the sole fixed-purpose studio cancellation command. It is owner/admin-only, rejects cancelled or started sessions, and now rejects any session with recorded attendance so cancellation cannot contradict canonical attendance history. Successful execution retains the existing atomic reservation outcomes, eligible simulated refunds, member notifications, and attributed `class_session_actions` audit record. Capacity editing, instructor reassignment, and date/time editing remain intentionally unsupported because no approved canonical command or cross-product contract exists for them.
+
+Attendance lifecycle is derived from confirmed reservations: zero marked is not started, a partial count is in progress, and all eligible confirmed reservations marked is complete. A session with zero confirmed reservations is `No roster to process`, not complete. `staff_product_b_sessions` exposes narrow attended, no-show, and marked counts; `staff_session_roster` exposes original recorder display and ordered correction history only within the existing Product B access boundary.
 
 Direct attendance-status changes without a matching correction created in the same transaction are rejected. The original reservation association and original recording time remain immutable.
 
@@ -240,17 +262,19 @@ Denial requires a reason and records the owner/admin actor and decision time. A 
 
 ## 4. Product D risk queue and member review
 
-**Database interfaces:** `public.product_d_risk_queue` and `public.product_d_member_detail`
+**Database interfaces:** `public.product_d_risk_queue()`, `public.product_d_member_detail(p_risk_assessment_id)`, `public.product_d_evaluation_member_options()`, and `public.product_d_case_history()`
 **Consumer:** Product D only
 **Authorization:** active authenticated staff only; no anonymous or member access
 
+These fixed-purpose, security-definer functions validate the authenticated active Staff actor internally and return explicit Product D columns. They preserve equal Product D access for instructors and owner/admins without requiring instructors to read global canonical member, reservation, membership, or attendance rows directly. Their execution is revoked from `PUBLIC` and `anon` and granted to `authenticated`; authenticated members and inactive Staff are rejected inside the functions.
+
 ### Open risk queue
 
-`product_d_risk_queue` contains only `pending` and `in_progress` assessments. One row represents one open risk case.
+`product_d_risk_queue()` contains only `pending` and `in_progress` assessments. One row represents one open risk case.
 
 | Field group | Included facts |
 |---|---|
-| Identity | `risk_assessment_id`, `member_id`, `member_name` |
+| Identity | `risk_assessment_id`, `member_name` |
 | Priority | `risk_level`, `risk_priority`, `review_status`, `evaluated_at` |
 | Evidence | Both 30-day windows, previous/current visits, decline, plain-language `risk_reason`, `last_attended_at` |
 | Collaboration | `active_note_count` |
@@ -261,7 +285,7 @@ Consumers sort `risk_priority` ascending, then the oldest unresolved case first.
 
 ### Member review detail
 
-`product_d_member_detail` retains all assessment states, including resolved and dismissed history. It provides:
+`product_d_member_detail(p_risk_assessment_id)` retains all assessment states, including resolved and dismissed history. It provides:
 
 - member email, phone, preferred channel, and do-not-contact state;
 - complete assessment periods and calculation inputs;
@@ -271,6 +295,16 @@ Consumers sort `risk_priority` ascending, then the oldest unresolved case first.
 - the next available class recommendation, preferring the member's historically attended class type.
 
 The class recommendation is nullable when no future non-cancelled class has capacity. It is derived from the shared public schedule and is never stored as an independent fact.
+
+### Evaluation options and case history
+
+`product_d_evaluation_member_options()` exposes only the member ID, first name, last name, and email consumed by the Staff evaluation selector. It does not grant instructors direct global access to `members`.
+
+`product_d_case_history()` exposes only the assessment identity, member display name, evaluation metrics, review/resolution state, and minimal outreach outcome required by the authoritative history graph. It returns no contact details, reservation identifiers, or unrelated canonical facts.
+
+The expanded queue contract supplies the previous/current visit totals and decline percentage rendered by the prioritized queue. The expanded detail contract supplies evaluation, resolution, outreach cooldown, and eligibility facts required by the detail and case-journey screens.
+
+Product B direct instructor reads remain assignment-scoped. Product D's dedicated functions deliberately cross that direct-table boundary for the authorized global retention workflow, so evidence remains complete when the member attended classes taught by other instructors. Product A member-owned policies and Product C public schedule access are unchanged.
 
 ### Product D action rules
 

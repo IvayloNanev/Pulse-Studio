@@ -70,11 +70,11 @@ export function UpdatePasswordForm({ audience, sessionReady, recoveryError }: Up
             Confirm new password
             <input required minLength={8} type="password" autoComplete="new-password" value={confirmation} onChange={(event) => setConfirmation(event.target.value)} className="mt-2 h-12 w-full border border-black/25 bg-transparent px-3 focus-visible:border-black focus-visible:outline-2 focus-visible:outline-offset-2" />
           </label>
-          {error ? <p role="alert" className="text-sm leading-6 text-[#9f1f1a]">{error}</p> : null}
-          <Button disabled={isSubmitting} type="submit" className="h-12 w-full rounded-none bg-[#c72c25] text-white hover:bg-[#a9231e] disabled:cursor-not-allowed disabled:opacity-60">
+          {error ? <p role="alert" className="rounded-xl border border-black/15 bg-[#c72c25]/5 p-3 text-sm leading-6 text-[#9f1f1a]">{error}</p> : null}
+          <Button disabled={isSubmitting} type="submit" className="h-12 w-full rounded-full bg-[#c72c25] text-white hover:bg-[#a9231e] focus-visible:outline-[#c72c25] disabled:cursor-not-allowed disabled:opacity-60">
             {isSubmitting ? "Updating password…" : "Set new password"}
           </Button>
-        </form> : <div className="mt-10"><p role="alert" className="text-sm leading-6 text-[#9f1f1a]">{recoveryMessages[recoveryError ?? "missing_session"] ?? recoveryMessages.missing_session}</p><Link href={audience === "staff" ? "/staff/login" : "/login"} className="mt-5 inline-flex min-h-11 items-center bg-black px-5 text-sm font-semibold text-white focus-visible:outline-2 focus-visible:outline-offset-2">Request a new recovery link</Link></div>}
+        </form> : <div className="mt-10"><p role="alert" className="rounded-xl border border-black/15 bg-[#c72c25]/5 p-3 text-sm leading-6 text-[#9f1f1a]">{recoveryMessages[recoveryError ?? "missing_session"] ?? recoveryMessages.missing_session}</p><Link href={audience === "staff" ? "/staff/login" : "/login"} className="mt-5 inline-flex min-h-11 items-center rounded-full bg-black px-5 text-sm font-semibold text-white focus-visible:outline-2 focus-visible:outline-[#c72c25] focus-visible:outline-offset-2">Request a new recovery link</Link></div>}
         <Link href={audience === "staff" ? "/staff/login" : "/login"} className="mt-7 inline-block text-sm underline underline-offset-4">
           Return to {audience} login
         </Link>

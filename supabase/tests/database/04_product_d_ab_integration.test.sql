@@ -107,12 +107,10 @@ select is(
 -- requirement of book_class_session, which rejects already-started
 -- sessions). Product D correctly excludes it from the current-period count
 -- because the session has not started as of the evaluation time, even
--- though record_attendance itself accepted an 'attended' result for it.
--- NOTE FOR THE TEAM: record_attendance has no time-window restriction of its
--- own (see supabase/migrations/20260823143000_add_product_b_attendance_commands.sql).
--- docs/07-pulse-assistant-coverage-spec.md references a 15-minutes-before to
--- 20-minutes-after check-in window, but it is not enforced at the database
--- layer. Flagging this as a discrepancy rather than changing the rule here.
+-- The attendance command accepts the result because ten minutes before the
+-- session is inside the authoritative -15/+20-minute window enforced by the
+-- validate_attendance database trigger. Product D still excludes it until the
+-- class itself has started.
 select is(
   (select current_visits from eval_f),
   0,

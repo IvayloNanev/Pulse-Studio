@@ -6,14 +6,16 @@ import { Button } from "@/components/ui/button";
 import { confirmRecovery } from "./actions";
 
 type RecoveryPageProps = {
-  searchParams: Promise<{ token_hash?: string; redirect_to?: string }>;
+  searchParams: Promise<{ token_hash?: string; redirect_to?: string; audience?: string }>;
 };
 
-function recoveryAudience(redirectTo?: string) {
+function recoveryAudience(redirectTo?: string, explicitAudience?: string) {
+  if (explicitAudience === "staff") return "staff";
   if (!redirectTo) return "member";
 
   try {
-    return new URL(redirectTo).searchParams.get("audience") === "staff" ? "staff" : "member";
+    const destination = new URL(redirectTo, "https://pulse.local");
+    return destination.searchParams.get("audience") === "staff" || destination.pathname.endsWith("/staff") ? "staff" : "member";
   } catch {
     return "member";
   }
@@ -21,7 +23,7 @@ function recoveryAudience(redirectTo?: string) {
 
 export default async function RecoveryPage({ searchParams }: RecoveryPageProps) {
   const query = await searchParams;
-  const audience = recoveryAudience(query.redirect_to);
+  const audience = recoveryAudience(query.redirect_to, query.audience);
   const loginPath = audience === "staff" ? "/staff/login" : "/login";
 
   return (
@@ -38,17 +40,17 @@ export default async function RecoveryPage({ searchParams }: RecoveryPageProps) 
             <form action={confirmRecovery} className="mt-8">
               <input type="hidden" name="token_hash" value={query.token_hash} />
               <input type="hidden" name="audience" value={audience} />
-              <Button type="submit" className="h-12 w-full rounded-none bg-[#c72c25] text-white hover:bg-[#a9231e]">
+              <Button type="submit" className="h-12 w-full rounded-full bg-[#c72c25] text-white hover:bg-[#a9231e] focus-visible:outline-[#c72c25]">
                 Continue to create a new password
               </Button>
             </form>
           </>
         ) : (
-          <p role="alert" className="mt-8 text-sm leading-6 text-[#9f1f1a]">
+          <p role="alert" className="mt-8 rounded-xl border border-black/15 bg-[#c72c25]/5 p-3 text-sm leading-6 text-[#9f1f1a]">
             This recovery request is incomplete. Return to login and request a new email.
           </p>
         )}
-        <Link href={loginPath} className="mt-7 inline-block min-h-11 text-sm underline underline-offset-4">
+        <Link href={loginPath} className="mt-7 inline-flex min-h-11 items-center rounded-full border border-black/15 bg-white/55 px-4 text-sm font-semibold underline decoration-[#c72c25] decoration-2 underline-offset-4 focus-visible:outline-2 focus-visible:outline-[#c72c25] focus-visible:outline-offset-2">
           Return to {audience} login
         </Link>
       </section>

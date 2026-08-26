@@ -43588,6 +43588,33 @@ insert into public.risk_case_notes (note_id, member_id, risk_assessment_id, body
 
 -- Provision the named operational demo account after the canonical plan catalog
 -- is present. This record is intentionally outside the frozen 250-member CSVs.
+insert into public.reservations (
+  reservation_id,
+  member_id,
+  class_session_id,
+  membership_id,
+  status,
+  reserved_at,
+  cancelled_at,
+  is_late_cancellation
+)
+select
+  'RSV-QA-WAITLIST-' || lpad(fixture.number::text, 2, '0'),
+  'MEM-' || lpad(fixture.number::text, 4, '0'),
+  'SESSION-DEMO-FULL-0829-1400',
+  'MSP-' || lpad(fixture.number::text, 4, '0'),
+  'confirmed'::public.reservation_status,
+  '2026-08-24 12:00:00-04'::timestamptz + (fixture.number * interval '1 minute'),
+  null,
+  null
+from generate_series(1, 8) as fixture(number)
+where exists (
+  select 1
+  from public.class_sessions
+  where class_session_id = 'SESSION-DEMO-FULL-0829-1400'
+)
+on conflict (reservation_id) do nothing;
+
 select public.provision_ethan_demo_member();
 
 commit;

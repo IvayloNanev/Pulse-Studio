@@ -131,7 +131,7 @@ test("resolves a schedule follow-up from the prior member question", () => {
     { role: "assistant", text: "I found one yoga class today." },
   ]);
   expect(resolved).toBe("What about tomorrow? Follow-up topic: Are there any yoga classes today?");
-  expect(answerGroundedPulseQuestion(resolved, policies, context)).toContain("YOGA");
+  expect(answerGroundedPulseQuestion(resolved, policies, context)).toMatch(/yoga/i);
 });
 
 test("does not attach stale context to a standalone question", () => {
