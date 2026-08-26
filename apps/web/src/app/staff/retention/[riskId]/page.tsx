@@ -53,7 +53,7 @@ export default async function RetentionDetailPage({ params, searchParams }: { pa
   const { riskId } = await params;
   const messages = await searchParams;
   const { supabase } = await requireStaff();
-  const { data, error } = await supabase.from("product_d_member_detail").select("*").eq("risk_assessment_id", riskId).maybeSingle();
+  const { data, error } = await supabase.rpc("product_d_member_detail", { p_risk_assessment_id: riskId }).maybeSingle();
   if (!data && !error) notFound();
   const detail = data as RiskDetail | null;
   const latest = detail?.outreach_attempts.at(-1);

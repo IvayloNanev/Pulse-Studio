@@ -25,11 +25,7 @@ const formatter = new Intl.DateTimeFormat("en-US", { timeZone: "America/New_York
 
 export default async function RetentionQueuePage() {
   const { supabase } = await requireStaff();
-  const { data, error } = await supabase
-    .from("product_d_risk_queue")
-    .select("risk_assessment_id,member_name,risk_level,review_status,risk_reason,last_attended_at,active_note_count,outreach_status,outreach_blocked_reason")
-    .order("risk_priority", { ascending: true })
-    .order("evaluated_at", { ascending: true });
+  const { data, error } = await supabase.rpc("product_d_risk_queue");
   const cases = (data ?? []) as RiskQueueItem[];
 
   return (

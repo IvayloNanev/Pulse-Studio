@@ -4,6 +4,8 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import { requireStaff } from "@/lib/auth";
+import { productBDecisionErrorMessage } from "@/lib/product-b/decision-errors";
+import { productDErrorMessage } from "@/lib/product-d/errors";
 
 function rosterDestination(sessionId: string, type: "success" | "error", message: string) {
   return `/staff/rosters/${encodeURIComponent(sessionId)}?${type}=${encodeURIComponent(message)}`;
@@ -11,6 +13,10 @@ function rosterDestination(sessionId: string, type: "success" | "error", message
 
 function riskDestination(riskId: string, type: "success" | "error", message: string) {
   return `/staff/retention/${encodeURIComponent(riskId)}?${type}=${encodeURIComponent(message)}`;
+}
+
+function staffDestination(type: "success" | "error", message: string) {
+  return `/staff?${type}=${encodeURIComponent(message)}`;
 }
 
 async function runRiskCommand(
@@ -21,7 +27,7 @@ async function runRiskCommand(
 ) {
   const { supabase } = await requireStaff();
   const { error } = await supabase.rpc(command, args);
-  if (error) redirect(riskDestination(riskId, "error", error.message));
+  if (error) redirect(riskDestination(riskId, "error", productDErrorMessage(error)));
   revalidatePath("/staff/retention");
   revalidatePath(`/staff/retention/${riskId}`);
   redirect(riskDestination(riskId, "success", success));
@@ -48,6 +54,33 @@ export async function recordAttendance(formData: FormData) {
   revalidatePath("/staff/rosters");
   revalidatePath(`/staff/rosters/${sessionId}`);
   redirect(rosterDestination(sessionId, "success", status === "attended" ? "Member marked attended." : "Member marked no-show."));
+}
+
+export async function createUnderbookingDecision(formData: FormData) {
+  const sessionId = String(formData.get("class_session_id") ?? "");
+  const action = String(formData.get("action") ?? "");
+  const note = String(formData.get("note") ?? "").trim();
+  const allowedActions = ["monitor", "promote_class", "adjust_operations", "review_for_cancellation"];
+  if (!sessionId || note.length > 1000) redirect(staffDestination("error", "Operational decision is incomplete."));
+  if (!allowedActions.includes(action)) redirect(staffDestination("error", "Choose a valid operational action."));
+
+  const { supabase } = await requireStaff();
+  const { error } = await supabase.rpc("create_product_b_underbooking_decision", { p_class_session_id: sessionId, p_action: action, p_note: note || null });
+  if (error) redirect(staffDestination("error", productBDecisionErrorMessage(error)));
+  revalidatePath("/staff");
+  redirect(staffDestination("success", "Operational decision saved."));
+}
+
+export async function resolveUnderbookingDecision(formData: FormData) {
+  const sessionId = String(formData.get("class_session_id") ?? "");
+  const decisionId = String(formData.get("decision_id") ?? "");
+  if (!sessionId || !decisionId) redirect(staffDestination("error", "Decision resolution is incomplete."));
+
+  const { supabase } = await requireStaff();
+  const { error } = await supabase.rpc("resolve_product_b_underbooking_decision", { p_decision_id: decisionId });
+  if (error) redirect(staffDestination("error", productBDecisionErrorMessage(error)));
+  revalidatePath("/staff");
+  redirect(staffDestination("success", "Operational decision resolved."));
 }
 
 export async function startRiskReview(formData: FormData) {

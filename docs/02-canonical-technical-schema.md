@@ -7,7 +7,7 @@
 
 ## 1. Authority and conventions
 
-This document is the machine-readable source of truth for Products A–D. All table, field, enum, and identifier names use `snake_case`. Where the source documents conflicted, this revision applies the requested reconciliation: three class types only, normalized plans, `membership_id` on reservations, retained credit rules, retained Product D formulas, and a separately labeled underbooking recommendation.
+This document is the machine-readable source of truth for Products A–D. All table, field, enum, and identifier names use `snake_case`. Where the source documents conflicted, this revision applies the requested reconciliation: three class types only, normalized plans, `membership_id` on reservations, retained credit rules, retained Product D formulas, and the implemented Product B underbooking rule.
 
 Unless stated otherwise:
 
@@ -186,7 +186,7 @@ Outreach follows `draft → ready → sent → completed`; states may not be ski
 
 `utilization_percentage = (confirmed_count / capacity) * 100`
 
-**New recommended decision:** for a non-cancelled session, `underbooked = true` when `utilization_percentage < 50`. The threshold is an assignment default and should be configurable; exactly `50` is not underbooked. Evaluation timing is supplied by the caller or deterministic test fixture.
+**Current Product B operational warning:** a non-cancelled session warns when `confirmed_count / capacity < 50%`. Exactly `50%` does not warn, cancelled sessions do not warn, and only confirmed reservations contribute. This binary warning is separate from presentation bands: 0–39% `Underbooked`, 40–69% `Moderate`, 70–89% `Healthy`, and 90–100% `Nearly full`. Configurable thresholds are a possible future enhancement; the current implementation uses the fixed 50% rule.
 
 ### 4.2 Membership credits
 

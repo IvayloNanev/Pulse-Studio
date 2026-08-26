@@ -36,7 +36,7 @@ export default async function StaffRostersPage() {
   const now = new Date();
   const through = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
   const { data, error } = await supabase
-    .from("public_class_schedule")
+    .from("staff_product_b_sessions")
     .select("class_session_id,class_type,class_type_label,starts_at,capacity,confirmed_reservations,waitlisted_reservations,available_spots,instructor_name")
     .gte("starts_at", now.toISOString())
     .lt("starts_at", through.toISOString())
