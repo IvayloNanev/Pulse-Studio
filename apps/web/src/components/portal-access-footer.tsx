@@ -6,7 +6,7 @@ export function PortalAccessFooter() {
       <div className="mx-auto flex w-full max-w-[90rem] flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <p className="font-heading text-2xl tracking-[-0.04em]">Pulse Studio</p>
-          <p className="mt-1 text-sm text-white/65">Private access for the Pulse Studio team.</p>
+          <p className="mt-1 text-sm text-white/65">Private access for Pulse Studio staff.</p>
         </div>
         <Link
           href="/staff/login"
