@@ -63,7 +63,7 @@ test("owner sees live underbooking and preserves a decision across refresh", asy
   await expect(page).toHaveURL(/\/staff$/);
   await page.goto("/staff/rosters");
   await expect(page.getByRole("heading", { name: "Class rosters" })).toBeVisible();
-  const attention = page.getByRole("region", { name: "Needs attention" });
+  const attention = page.getByRole("region", { name: "Capacity watch" });
   await expect(attention.getByText("40%", { exact: true })).toBeVisible();
   await expect(attention.getByText("Moderate", { exact: true })).toBeVisible();
   await expect(attention.locator("span").getByText("Needs attention", { exact: true })).toBeVisible();
