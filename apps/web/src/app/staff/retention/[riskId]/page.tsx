@@ -4,14 +4,10 @@ import { notFound } from "next/navigation";
 import { approveOutreach, completeOutreach, createRiskNote, dismissRiskCase, editOutreachDraft, sendOutreach, startRiskReview } from "@/app/staff/actions";
 import { MemberStatusMessage } from "@/components/member-status-message";
 import { PortalShell } from "@/components/portal-shell";
+import { RetentionFollowUpControl } from "@/components/retention-follow-up-control";
 import { StaffSubmitButton } from "@/components/staff-submit-button";
 import { requireStaff } from "@/lib/auth";
-
-const links = [
-  { href: "/staff", label: "Overview" },
-  { href: "/staff/rosters", label: "Rosters" },
-  { href: "/staff/retention", label: "Member retention" },
-];
+import { staffLinks } from "@/lib/staff-navigation";
 
 type Note = { note_id: string; body: string; author_name: string; created_at: string };
 type Evidence = { attendance_record_id: string; class_type: string; starts_at: string };
@@ -24,6 +20,12 @@ type Outreach = {
   status: "draft" | "ready" | "sent" | "completed";
   response_outcome: string | null;
   sent_at: string | null;
+  cooldown_until: string | null;
+};
+type QueueState = {
+  can_start_outreach: boolean;
+  outreach_blocked_reason: string | null;
+  cooldown_until: string | null;
 };
 type RiskDetail = {
   risk_assessment_id: string;
@@ -57,13 +59,17 @@ export default async function RetentionDetailPage({ params, searchParams }: { pa
   const { riskId } = await params;
   const messages = await searchParams;
   const { supabase } = await requireStaff();
-  const { data, error } = await supabase.from("product_d_member_detail").select("*").eq("risk_assessment_id", riskId).maybeSingle();
+  const [{ data, error }, { data: queueData }] = await Promise.all([
+    supabase.from("product_d_member_detail").select("*").eq("risk_assessment_id", riskId).maybeSingle(),
+    supabase.from("product_d_risk_queue").select("can_start_outreach,outreach_blocked_reason,cooldown_until").eq("risk_assessment_id", riskId).maybeSingle(),
+  ]);
   if (!data && !error) notFound();
   const detail = data as RiskDetail | null;
+  const queueState = queueData as QueueState | null;
   const latest = detail?.outreach_attempts.at(-1);
 
   return (
-    <PortalShell audience="staff" eyebrow="Staff portal · Product D" title={detail?.member_name ?? "Retention case"} description={detail?.risk_reason ?? "Review factual attendance evidence and staff-approved outreach."} links={links}>
+    <PortalShell audience="staff" eyebrow="Staff portal · Product D" title={detail?.member_name ?? "Retention case"} description={detail?.risk_reason ?? "Review factual attendance evidence and staff-approved outreach."} links={staffLinks}>
       <MemberStatusMessage success={messages.success} error={messages.error ?? error?.message} />
       <Link href="/staff/retention" className="mb-6 inline-flex min-h-11 items-center rounded-full px-2 text-sm font-semibold underline decoration-[#c72c25] decoration-2 underline-offset-4 focus-visible:outline-2 focus-visible:outline-[#c72c25] focus-visible:outline-offset-2">← Retention queue</Link>
       {detail && (
@@ -107,7 +113,10 @@ export default async function RetentionDetailPage({ params, searchParams }: { pa
                   {latest.status === "draft" && <form action={editOutreachDraft} className="mt-5 space-y-3"><input type="hidden" name="risk_assessment_id" value={riskId} /><input type="hidden" name="outreach_id" value={latest.outreach_id} /><label className="text-sm font-semibold" htmlFor="final-message">Staff-reviewed message</label><textarea id="final-message" name="final_message" required defaultValue={latest.final_message ?? latest.original_message} rows={7} className="w-full rounded-xl border border-black/20 bg-white/60 p-3 focus-visible:outline-2 focus-visible:outline-[#c72c25] focus-visible:outline-offset-2" /><label className="text-sm font-semibold" htmlFor="channel">Channel</label><select id="channel" name="channel" defaultValue={latest.channel} className="min-h-11 w-full rounded-xl border border-black/20 bg-white/60 px-3 focus-visible:outline-2 focus-visible:outline-[#c72c25] focus-visible:outline-offset-2"><option value="email">Email</option>{detail.phone && <option value="sms">SMS</option>} {detail.phone && <option value="phone">Phone</option>}</select><StaffSubmitButton pendingLabel="Saving draft…">Save draft</StaffSubmitButton></form>}
                   {latest.status === "draft" && <form action={approveOutreach} className="mt-3"><input type="hidden" name="risk_assessment_id" value={riskId} /><input type="hidden" name="outreach_id" value={latest.outreach_id} /><StaffSubmitButton pendingLabel="Approving…" disabled={!latest.final_message} tone="secondary">Approve outreach</StaffSubmitButton></form>}
                   {latest.status === "ready" && <form action={sendOutreach} className="mt-5"><input type="hidden" name="risk_assessment_id" value={riskId} /><input type="hidden" name="outreach_id" value={latest.outreach_id} /><StaffSubmitButton pendingLabel="Sending…" disabled={detail.do_not_contact}>Send simulated outreach</StaffSubmitButton></form>}
-                  {latest.status === "sent" && <form action={completeOutreach} className="mt-5 space-y-3"><input type="hidden" name="risk_assessment_id" value={riskId} /><input type="hidden" name="outreach_id" value={latest.outreach_id} /><label className="text-sm font-semibold" htmlFor="response">Member response</label><select id="response" name="response" className="min-h-11 w-full rounded-xl border border-black/20 bg-white/60 px-3 focus-visible:outline-2 focus-visible:outline-[#c72c25] focus-visible:outline-offset-2"><option value="interested">Interested in returning</option><option value="needs_support">Needs support</option><option value="not_interested">Not interested</option><option value="do_not_contact">Do not contact</option></select><StaffSubmitButton pendingLabel="Completing…">Complete outreach</StaffSubmitButton></form>}
+                  {latest.status === "sent" && <>
+                    <form action={completeOutreach} className="mt-5 space-y-3"><input type="hidden" name="risk_assessment_id" value={riskId} /><input type="hidden" name="outreach_id" value={latest.outreach_id} /><label className="text-sm font-semibold" htmlFor="response">Member response</label><select id="response" name="response" className="min-h-11 w-full rounded-xl border border-black/20 bg-white/60 px-3 focus-visible:outline-2 focus-visible:outline-[#c72c25] focus-visible:outline-offset-2"><option value="interested">Interested in returning</option><option value="needs_support">Needs support</option><option value="not_interested">Not interested</option><option value="do_not_contact">Do not contact</option></select><StaffSubmitButton pendingLabel="Completing…">Record response and resolve</StaffSubmitButton></form>
+                    <RetentionFollowUpControl riskId={riskId} attemptNumber={latest.attempt_number} cooldownUntil={latest.cooldown_until} canStartOutreach={queueState?.can_start_outreach ?? false} blockedReason={queueState?.outreach_blocked_reason ?? null} />
+                  </>}
                   {latest.status === "completed" && <p className="mt-5 text-sm font-semibold">Completed · {latest.response_outcome?.replaceAll("_", " ")}</p>}
                 </>
               )}

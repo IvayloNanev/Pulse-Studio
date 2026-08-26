@@ -2,13 +2,9 @@ import Link from "next/link";
 
 import { PortalShell } from "@/components/portal-shell";
 import { StaffRosterRefresh } from "@/components/staff-roster-refresh";
+import { StaffReason, StaffUrgencyBadge, StaffWorkflowLabel } from "@/components/staff-workflow-ui";
 import { requireStaff } from "@/lib/auth";
-
-const links = [
-  { href: "/staff", label: "Overview" },
-  { href: "/staff/rosters", label: "Rosters" },
-  { href: "/staff/retention", label: "Member retention" },
-];
+import { staffLinks } from "@/lib/staff-navigation";
 
 type StaffSession = {
   class_session_id: string;
@@ -58,13 +54,15 @@ function SessionCard({ session, actionable }: { session: StaffSession; actionabl
   return (
     <article className="glass-panel grid h-full gap-5 rounded-3xl p-5 sm:p-6 md:grid-cols-[minmax(0,1fr)_auto] md:items-center">
       <div className="min-w-0">
-        <div className="flex flex-wrap items-center gap-2">
+        <StaffWorkflowLabel product="Product B" workflow="Roster & attendance" />
+        <div className="mt-2 flex flex-wrap items-center gap-2">
           <p className="font-mono text-xs uppercase tracking-[0.16em] text-black/60">{formatter.format(startsAt)}</p>
-          <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${actionable ? "bg-[#c72c25] text-white" : "border border-black/15 bg-white/60 text-black/70"}`}>{timingLabel}</span>
+          <StaffUrgencyBadge level={actionable ? "urgent" : hasRoster ? "ready" : "informational"}>{timingLabel}</StaffUrgencyBadge>
         </div>
         <h3 className="mt-3 text-2xl font-semibold tracking-[-0.03em]">{names[session.class_type]}</h3>
         <p className="mt-2 text-sm text-black/65">{session.class_type_label} with {session.instructor_name}</p>
         <p className="mt-1 text-sm text-black/70">{session.confirmed_reservations}/{session.capacity} confirmed · {session.waitlisted_reservations} waitlisted · {session.available_spots} open</p>
+        {actionable ? <div className="mt-4"><StaffReason>{actionable === "attended" ? "The check-in window is open and attendance can be recorded now." : "The class has passed and eligible no-shows can be recorded now."}</StaffReason></div> : null}
       </div>
       {hasRoster ? (
         <Link href={`/staff/rosters/${encodeURIComponent(session.class_session_id)}`} className="inline-flex min-h-11 items-center justify-center rounded-full bg-black px-5 text-sm font-semibold text-white transition hover:bg-[#c72c25] focus-visible:outline-2 focus-visible:outline-[#c72c25] focus-visible:outline-offset-2">Manage roster</Link>
@@ -114,7 +112,7 @@ export default async function StaffRostersPage() {
   const dataError = scheduleResult.error ?? eligibilityResult.error;
 
   return (
-    <PortalShell audience="staff" eyebrow="Staff portal · Product B" title="Class rosters" description="See what needs action now, manage today’s reservations, and prepare for upcoming sessions." links={links}>
+    <PortalShell audience="staff" eyebrow="Staff portal · Product B" title="Class rosters" description="See what needs action now, manage today’s reservations, and prepare for upcoming sessions." links={staffLinks}>
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3"><StaffRosterRefresh /><p className="text-xs font-semibold text-black/60">New York time</p></div>
       {dataError ? (
         <div role="alert" className="rounded-2xl border border-black/15 bg-white/65 p-6 text-sm text-[#8e211c] backdrop-blur-xl">The staff schedule could not be loaded.</div>
