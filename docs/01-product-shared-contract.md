@@ -61,7 +61,7 @@ Required outcomes:
 - calculate session utilization as confirmed reservations divided by capacity;
 - surface the underbooked state using the rule below.
 
-**New recommended decision — underbooked threshold:** a non-cancelled class is `underbooked` when its utilization is **below 50%** at the evaluation time. Exactly 50% is not underbooked. This is a configurable assignment default because neither source fixed a numeric threshold. Tests must supply a deterministic evaluation time; the schema does not invent a production alert schedule.
+**Implemented Product B rule:** a non-cancelled class has a live underbooking warning when confirmed reservations divided by capacity is **below 50%**. Exactly 50% does not warn. Waitlisted and cancelled reservations do not count. Presentation remains separate: 0–39% Underbooked, 40–69% Moderate, 70–89% Healthy, and 90–100% Nearly full. Historical staff decisions remain preserved when current demand later removes the warning.
 
 ### Product C — Member Support Chatbot
 

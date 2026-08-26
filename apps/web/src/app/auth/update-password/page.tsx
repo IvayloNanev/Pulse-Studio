@@ -7,9 +7,11 @@ type UpdatePasswordPageProps = {
 
 export default async function UpdatePasswordPage({ searchParams }: UpdatePasswordPageProps) {
   const query = await searchParams;
-  const audience = query.audience === "staff" ? "staff" : "member";
+  const requestedAudience = query.audience === "staff" ? "staff" : "member";
   const supabase = await createClient();
   const { data, error } = await supabase.auth.getUser();
+  const { data: staffId } = data.user ? await supabase.rpc("current_staff_id") : { data: null };
+  const audience = staffId ? "staff" : requestedAudience;
 
   return (
     <UpdatePasswordForm
