@@ -10,6 +10,10 @@ export type RetentionPreviewCase = {
   lastAttended: string;
   notes: number;
   nextAction: string;
+  email?: string;
+  phone?: string;
+  preferredChannel?: "email" | "sms" | "phone";
+  doNotContact?: boolean;
 };
 
 export const retentionPreviewCases: RetentionPreviewCase[] = [

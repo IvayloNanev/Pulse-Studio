@@ -13,6 +13,10 @@ function riskDestination(riskId: string, type: "success" | "error", message: str
   return `/staff/retention/${encodeURIComponent(riskId)}?${type}=${encodeURIComponent(message)}`;
 }
 
+function riskJourneyDestination(riskId: string, type: "success" | "error", message: string) {
+  return `/staff/retention/${encodeURIComponent(riskId)}/journey?${type}=${encodeURIComponent(message)}`;
+}
+
 function retentionDestination(type: "success" | "error", message: string) {
   return `/staff/retention?${type}=${encodeURIComponent(message)}`;
 }
@@ -78,16 +82,18 @@ async function runRiskCommand(
   command: string,
   args: Record<string, string>,
   success: string,
+  destination: "journey" | "retention" = "journey",
 ) {
   const { supabase } = await requireStaff();
   const { error } = await supabase.rpc(command, args);
   if (error) {
     console.error("Product D case command failed", { riskId, command, code: error.code });
-    redirect(riskDestination(riskId, "error", "The case update could not be completed. Refresh and verify that the action is still eligible."));
+    redirect(riskJourneyDestination(riskId, "error", "The case update could not be completed. Refresh and verify that the action is still eligible."));
   }
   revalidatePath("/staff/retention");
   revalidatePath(`/staff/retention/${riskId}`);
-  redirect(riskDestination(riskId, "success", success));
+  revalidatePath(`/staff/retention/${riskId}/journey`);
+  redirect(destination === "retention" ? retentionDestination("success", success) : riskJourneyDestination(riskId, "success", success));
 }
 
 export async function recordAttendance(formData: FormData) {
@@ -148,24 +154,24 @@ export async function completeOutreach(formData: FormData) {
   const riskId = String(formData.get("risk_assessment_id") ?? "");
   const outreachId = String(formData.get("outreach_id") ?? "");
   const response = String(formData.get("response") ?? "needs_support");
-  return runRiskCommand(riskId, "complete_outreach", { p_outreach_id: outreachId, p_response: response }, "Outreach completed and risk case resolved.");
+  return runRiskCommand(riskId, "complete_outreach", { p_outreach_id: outreachId, p_response: response }, "Outreach completed and risk case resolved.", "retention");
 }
 
 export async function createOutreachRetry(formData: FormData) {
   const riskId = String(formData.get("risk_assessment_id") ?? "");
   const message = String(formData.get("message") ?? "").trim();
-  if (!riskId || !message) redirect(riskDestination(riskId || "unknown", "error", "A message is required for the next outreach attempt."));
+  if (!riskId || !message) redirect(riskJourneyDestination(riskId || "unknown", "error", "A message is required for the next outreach attempt."));
   return runRiskCommand(riskId, "create_outreach_retry", { p_risk_assessment_id: riskId, p_message: message }, "The next outreach attempt is ready for staff review.");
 }
 
 export async function resolveNoResponse(formData: FormData) {
   const riskId = String(formData.get("risk_assessment_id") ?? "");
   if (!riskId) redirect(retentionDestination("error", "The retention case is missing."));
-  return runRiskCommand(riskId, "resolve_no_response", { p_risk_assessment_id: riskId }, "Case resolved after three unanswered outreach attempts.");
+  return runRiskCommand(riskId, "resolve_no_response", { p_risk_assessment_id: riskId }, "Case resolved after three unanswered outreach attempts.", "retention");
 }
 
 export async function dismissRiskCase(formData: FormData) {
   const riskId = String(formData.get("risk_assessment_id") ?? "");
   const reason = String(formData.get("reason") ?? "");
-  return runRiskCommand(riskId, "dismiss_risk_case", { p_risk_assessment_id: riskId, p_reason: reason }, "Risk case dismissed with a recorded reason.");
+  return runRiskCommand(riskId, "dismiss_risk_case", { p_risk_assessment_id: riskId, p_reason: reason }, "Risk case dismissed with a recorded reason.", "retention");
 }
