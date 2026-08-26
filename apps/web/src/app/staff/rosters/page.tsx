@@ -1,21 +1,23 @@
 import Link from "next/link";
 
+import { MemberStatusMessage } from "@/components/member-status-message";
 import { PortalShell } from "@/components/portal-shell";
 import { StaffRosterRefresh } from "@/components/staff-roster-refresh";
 import { StaffReason, StaffUrgencyBadge, StaffWorkflowLabel } from "@/components/staff-workflow-ui";
+import { type ProductBSession, SessionOperationsCard } from "@/components/staff/session-operations-card";
 import { requireStaff } from "@/lib/auth";
+import { getUnderbookingState } from "@/lib/product-b/underbooking";
 import { staffLinks } from "@/lib/staff-navigation";
 
-type StaffSession = {
+type StaffSession = ProductBSession;
+
+type Decision = {
+  decision_id: string;
   class_session_id: string;
-  class_type: "yoga" | "cycling" | "hiit";
-  class_type_label: string;
-  starts_at: string;
-  capacity: number;
-  confirmed_reservations: number;
-  waitlisted_reservations: number;
-  available_spots: number;
-  instructor_name: string;
+  action: string;
+  note: string | null;
+  state: "open" | "resolved";
+  created_at: string;
 };
 
 type AttendanceEligibility = {
@@ -45,6 +47,10 @@ function SessionCard({ session, actionable }: { session: StaffSession; actionabl
   const hasRoster = session.confirmed_reservations + session.waitlisted_reservations > 0;
   const timingLabel = !hasRoster
     ? "No reservations"
+    : session.marked_count === session.confirmed_reservations
+      ? "Attendance complete"
+      : session.marked_count > 0
+        ? `${session.marked_count}/${session.confirmed_reservations} marked`
     : actionable === "attended"
       ? "Check-in open"
       : actionable === "no_show"
@@ -88,17 +94,28 @@ function SessionSection({ title, description, sessions, actionBySession }: { tit
   );
 }
 
-export default async function StaffRostersPage() {
-  const { supabase } = await requireStaff();
+export default async function StaffRostersPage({ searchParams }: { searchParams: Promise<{ success?: string; error?: string }> }) {
+  const messages = await searchParams;
+  const { supabase, staffId } = await requireStaff();
   const now = new Date();
   const since = new Date(now.getTime() - 24 * 60 * 60 * 1000);
   const through = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
-  const [scheduleResult, eligibilityResult] = await Promise.all([
-    supabase.from("staff_product_b_sessions").select("class_session_id,class_type,class_type_label,starts_at,capacity,confirmed_reservations,waitlisted_reservations,available_spots,instructor_name").gte("starts_at", since.toISOString()).lt("starts_at", through.toISOString()).order("starts_at", { ascending: true }),
+  const [staffResult, scheduleResult, eligibilityResult, decisionResult] = await Promise.all([
+    supabase.from("staff_accounts").select("role").eq("staff_id", staffId).single(),
+    supabase.from("staff_product_b_sessions").select("class_session_id,class_type,class_type_label,starts_at,ends_at,capacity,is_cancelled,confirmed_reservations,waitlisted_reservations,available_spots,instructor_name,attended_count,no_show_count,marked_count").gte("starts_at", since.toISOString()).lt("starts_at", through.toISOString()).order("starts_at", { ascending: true }),
     supabase.from("staff_session_roster").select("class_session_id,attendance_status,reservation_status,can_record_attended,can_record_no_show,starts_at").gte("starts_at", since.toISOString()).lt("starts_at", through.toISOString()),
+    supabase.from("product_b_underbooking_decisions").select("decision_id,class_session_id,action,note,state,created_at").order("created_at", { ascending: false }),
   ]);
   const sessions = (scheduleResult.data ?? []) as StaffSession[];
   const eligibility = (eligibilityResult.data ?? []) as AttendanceEligibility[];
+  const decisions = (decisionResult.data ?? []) as Decision[];
+  const openDecisionBySession = new Map<string, Decision>();
+  const resolvedDecisionsBySession = new Map<string, Decision[]>();
+  for (const decision of decisions) {
+    if (decision.state === "open") openDecisionBySession.set(decision.class_session_id, decision);
+    else resolvedDecisionsBySession.set(decision.class_session_id, [...(resolvedDecisionsBySession.get(decision.class_session_id) ?? []), decision]);
+  }
+  const canManageDecisions = staffResult.data?.role === "owner_admin";
   const actionBySession = new Map<string, "attended" | "no_show">();
   for (const item of eligibility) {
     if (item.reservation_status !== "confirmed" || item.attendance_status) continue;
@@ -107,12 +124,14 @@ export default async function StaffRostersPage() {
   }
   const todayKey = dayKeyFormatter.format(now);
   const needsAttention = sessions.filter((session) => actionBySession.has(session.class_session_id));
+  const capacityAttention = sessions.filter((session) => getUnderbookingState(session.confirmed_reservations, session.capacity, session.is_cancelled).warning);
   const today = sessions.filter((session) => dayKeyFormatter.format(new Date(session.starts_at)) === todayKey && !actionBySession.has(session.class_session_id));
   const upcoming = sessions.filter((session) => dayKeyFormatter.format(new Date(session.starts_at)) !== todayKey && new Date(session.starts_at) > now && !actionBySession.has(session.class_session_id));
-  const dataError = scheduleResult.error ?? eligibilityResult.error;
+  const dataError = scheduleResult.error ?? eligibilityResult.error ?? decisionResult.error ?? staffResult.error;
 
   return (
     <PortalShell audience="staff" eyebrow="Staff portal · Product B" title="Class rosters" description="See what needs action now, manage today’s reservations, and prepare for upcoming sessions." links={staffLinks}>
+      <MemberStatusMessage success={messages.success} error={messages.error} />
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3"><StaffRosterRefresh /><p className="text-xs font-semibold text-black/60">New York time</p></div>
       {dataError ? (
         <div role="alert" className="rounded-2xl border border-black/15 bg-white/65 p-6 text-sm text-[#8e211c] backdrop-blur-xl">The staff schedule could not be loaded.</div>
@@ -120,6 +139,12 @@ export default async function StaffRostersPage() {
         <div className="glass-panel rounded-3xl p-8"><h2 className="text-2xl font-semibold">No roster work scheduled</h2><p className="mt-2 text-sm text-black/65">There are no sessions from the last 24 hours through the next 30 days.</p></div>
       ) : (
         <div className="space-y-10">
+          <section aria-labelledby="capacity-attention-heading">
+            <div className="mb-4"><h2 id="capacity-attention-heading" className="text-2xl font-semibold">Capacity decisions</h2><p className="mt-1 text-sm text-black/65">Owner/admin actions for sessions whose confirmed utilization requires review.</p></div>
+            <div role="region" aria-label="Needs attention">
+              {capacityAttention.length ? <div className="space-y-4">{capacityAttention.map((session) => <SessionOperationsCard key={session.class_session_id} session={session} openDecision={openDecisionBySession.get(session.class_session_id)} resolvedDecisions={resolvedDecisionsBySession.get(session.class_session_id) ?? []} canManageDecisions={canManageDecisions} />)}</div> : <p className="rounded-2xl border border-black/10 bg-white/40 p-5 text-sm text-black/60">No current underbooking warnings.</p>}
+            </div>
+          </section>
           {needsAttention.length ? (
             <SessionSection title="Needs attention" description="Attendance or no-show recording is available now." sessions={needsAttention} actionBySession={actionBySession} />
           ) : (

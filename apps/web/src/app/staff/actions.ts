@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 
 import { requireStaff } from "@/lib/auth";
 import { productBDecisionErrorMessage } from "@/lib/product-b/decision-errors";
+import { attendanceErrorMessage } from "@/lib/product-b/attendance-errors";
 import { productDErrorMessage } from "@/lib/product-d/errors";
 
 function rosterDestination(sessionId: string, type: "success" | "error", message: string) {
@@ -16,7 +17,7 @@ function riskDestination(riskId: string, type: "success" | "error", message: str
 }
 
 function staffDestination(type: "success" | "error", message: string) {
-  return `/staff?${type}=${encodeURIComponent(message)}`;
+  return `/staff/rosters?${type}=${encodeURIComponent(message)}`;
 }
 
 function riskJourneyDestination(riskId: string, type: "success" | "error", message: string) {
@@ -117,12 +118,62 @@ export async function recordAttendance(formData: FormData) {
     p_attendance_status: status,
   });
 
-  if (error) redirect(rosterDestination(sessionId, "error", error.message));
+  if (error) {
+    console.error("Product B attendance command failed", { sessionId, code: error.code });
+    redirect(rosterDestination(sessionId, "error", attendanceErrorMessage(error)));
+  }
 
   revalidatePath("/staff");
   revalidatePath("/staff/rosters");
   revalidatePath(`/staff/rosters/${sessionId}`);
   redirect(rosterDestination(sessionId, "success", status === "attended" ? "Member marked attended." : "Member marked no-show."));
+}
+
+export async function recordAttendanceBulk(formData: FormData) {
+  const sessionId = String(formData.get("class_session_id") ?? "");
+  const status = String(formData.get("attendance_status") ?? "");
+  const reservationIds = formData.getAll("reservation_ids").map(String).filter(Boolean);
+  if (!sessionId || !["attended", "no_show"].includes(status) || reservationIds.length === 0) {
+    redirect(rosterDestination(sessionId || "unknown", "error", "Choose at least one eligible member."));
+  }
+  const { supabase } = await requireStaff();
+  const { error } = await supabase.rpc("record_session_attendance_bulk", {
+    p_class_session_id: sessionId,
+    p_reservation_ids: reservationIds,
+    p_attendance_status: status,
+  });
+  if (error) {
+    console.error("Product B bulk attendance failed", { sessionId, count: reservationIds.length, code: error.code });
+    redirect(rosterDestination(sessionId, "error", attendanceErrorMessage(error)));
+  }
+  revalidatePath("/staff");
+  revalidatePath("/staff/rosters");
+  revalidatePath(`/staff/rosters/${sessionId}`);
+  redirect(rosterDestination(sessionId, "success", `${reservationIds.length} attendance ${reservationIds.length === 1 ? "record" : "records"} saved.`));
+}
+
+export async function correctAttendance(formData: FormData) {
+  const sessionId = String(formData.get("class_session_id") ?? "");
+  const attendanceRecordId = String(formData.get("attendance_record_id") ?? "");
+  const status = String(formData.get("new_status") ?? "");
+  const reason = String(formData.get("reason") ?? "").trim();
+  if (!sessionId || !attendanceRecordId || !["attended", "no_show"].includes(status) || !reason) {
+    redirect(rosterDestination(sessionId || "unknown", "error", "Attendance correction is incomplete."));
+  }
+  const { supabase } = await requireStaff();
+  const { error } = await supabase.rpc("correct_attendance", {
+    p_attendance_record_id: attendanceRecordId,
+    p_new_status: status,
+    p_reason: reason,
+  });
+  if (error) {
+    console.error("Product B attendance correction failed", { sessionId, code: error.code });
+    redirect(rosterDestination(sessionId, "error", attendanceErrorMessage(error)));
+  }
+  revalidatePath("/staff");
+  revalidatePath("/staff/rosters");
+  revalidatePath(`/staff/rosters/${sessionId}`);
+  redirect(rosterDestination(sessionId, "success", "Attendance correction saved with audit history."));
 }
 
 export async function createUnderbookingDecision(formData: FormData) {
@@ -137,6 +188,7 @@ export async function createUnderbookingDecision(formData: FormData) {
   const { error } = await supabase.rpc("create_product_b_underbooking_decision", { p_class_session_id: sessionId, p_action: action, p_note: note || null });
   if (error) redirect(staffDestination("error", productBDecisionErrorMessage(error)));
   revalidatePath("/staff");
+  revalidatePath("/staff/rosters");
   redirect(staffDestination("success", "Operational decision saved."));
 }
 
@@ -149,6 +201,7 @@ export async function resolveUnderbookingDecision(formData: FormData) {
   const { error } = await supabase.rpc("resolve_product_b_underbooking_decision", { p_decision_id: decisionId });
   if (error) redirect(staffDestination("error", productBDecisionErrorMessage(error)));
   revalidatePath("/staff");
+  revalidatePath("/staff/rosters");
   redirect(staffDestination("success", "Operational decision resolved."));
 }
 
