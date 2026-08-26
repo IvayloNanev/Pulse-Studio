@@ -66,6 +66,9 @@ jobs:
       - name: Validate dedicated Ethan demo member
         run: node generator/verify_ethan_demo_member.mjs
 
+      - name: Validate dedicated Ivaylo demo staff
+        run: node generator/verify_ivaylo_demo_staff.mjs
+
       - name: Validate password recovery flow
         run: node generator/verify_password_recovery_flow.mjs
 
