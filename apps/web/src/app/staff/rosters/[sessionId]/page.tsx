@@ -6,6 +6,8 @@ import { StaffAttendanceActions } from "@/components/staff-attendance-actions";
 import { StaffAttendanceBulkActions } from "@/components/staff-attendance-bulk-actions";
 import { StaffAttendanceCorrection } from "@/components/staff-attendance-correction";
 import { StaffRosterRefresh } from "@/components/staff-roster-refresh";
+import { StaffSessionCancellation } from "@/components/staff-session-cancellation";
+import { StaffMetric, StaffUrgencyBadge } from "@/components/staff-workflow-ui";
 import { requireStaff } from "@/lib/auth";
 import { staffLinks } from "@/lib/staff-navigation";
 
@@ -84,8 +86,8 @@ function RosterGroup({ title, description, members, sessionId }: { title: string
 export default async function StaffRosterPage({ params, searchParams }: { params: Promise<{ sessionId: string }>; searchParams: Promise<{ success?: string; error?: string }> }) {
   const { sessionId } = await params;
   const messages = await searchParams;
-  const { supabase } = await requireStaff();
-  const [sessionResult, rosterResult] = await Promise.all([
+  const { supabase, staffId } = await requireStaff();
+  const [sessionResult, rosterResult, staffResult, actionResult] = await Promise.all([
     supabase.from("staff_product_b_sessions")
       .select("class_session_id,class_type_label,starts_at,capacity,confirmed_reservations,waitlisted_reservations,available_spots,instructor_name,is_cancelled")
       .eq("class_session_id", sessionId)
@@ -95,6 +97,8 @@ export default async function StaffRosterPage({ params, searchParams }: { params
       .eq("class_session_id", sessionId)
       .order("reservation_status", { ascending: true })
       .order("member_name", { ascending: true }),
+    supabase.from("staff_accounts").select("role").eq("staff_id", staffId).single(),
+    supabase.from("class_session_actions").select("action_id,reason,performed_at,performed_by_staff_id").eq("class_session_id", sessionId).order("performed_at", { ascending: false }),
   ]);
   const session = sessionResult.data as SessionDetail | null;
   const roster = (rosterResult.data ?? []) as RosterMember[];
@@ -106,7 +110,14 @@ export default async function StaffRosterPage({ params, searchParams }: { params
   const unmarked = confirmed.length - marked;
   const lifecycle = session?.is_cancelled ? "Cancelled session" : confirmed.length === 0 ? "No roster to process" : marked === 0 ? "Attendance not started" : marked === confirmed.length ? "Attendance complete" : "Attendance in progress";
   const bulkTargets = confirmed.filter((member) => !member.attendance_status && (member.can_record_attended || member.can_record_no_show)).map((member) => ({ reservationId: member.reservation_id, memberName: member.member_name, canRecordAttended: member.can_record_attended, canRecordNoShow: member.can_record_no_show }));
-  const dataError = sessionResult.error ?? rosterResult.error;
+  const cancellationHistory = actionResult.data ?? [];
+  const isOwner = staffResult.data?.role === "owner_admin";
+  const startsAt = session ? new Date(session.starts_at) : null;
+  const sessionState = session?.is_cancelled ? "Cancelled" : startsAt && startsAt > new Date() ? "Upcoming" : marked === confirmed.length && confirmed.length > 0 ? "Attendance complete" : "Past";
+  const sessionStateTone = sessionState === "Cancelled" ? "urgent" : sessionState === "Attendance complete" ? "ready" : "informational";
+  const canCancel = Boolean(session && isOwner && !session.is_cancelled && startsAt && startsAt > new Date() && marked === 0);
+  const cancellationBlockedReason = !session || !isOwner || session.is_cancelled || !startsAt ? null : startsAt <= new Date() ? "This session has started and can no longer be cancelled." : marked > 0 ? "Cancellation is blocked because attendance has already been recorded." : null;
+  const dataError = sessionResult.error ?? rosterResult.error ?? staffResult.error ?? actionResult.error;
 
   return (
     <PortalShell audience="staff" eyebrow="Staff portal · Product B" title={session ? `${session.class_type_label} roster` : "Session roster"} description={session ? `${formatter.format(new Date(session.starts_at))} with ${session.instructor_name}` : "Review reservations and attendance eligibility for this session."} links={staffLinks}>
@@ -119,19 +130,17 @@ export default async function StaffRosterPage({ params, searchParams }: { params
       ) : (
         <div className="space-y-10">
           <section aria-labelledby="attendance-summary-heading" className="glass-panel rounded-3xl p-5 sm:p-6">
-            <div className="flex flex-wrap items-center justify-between gap-3"><div><h2 id="attendance-summary-heading" className="text-2xl font-semibold">Attendance summary</h2><p className="mt-1 text-sm font-semibold">{lifecycle}</p></div><p className="text-lg font-semibold">{marked} of {confirmed.length} marked</p></div>
-            <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4"><Metric label="Confirmed" value={confirmed.length} /><Metric label="Attended" value={attended} /><Metric label="No-show" value={noShow} /><Metric label="Unmarked" value={unmarked} /></div>
+            <div className="flex flex-wrap items-start justify-between gap-4"><div><p className="font-mono text-xs font-semibold uppercase tracking-[0.14em] text-[#8e211c]">Current session facts</p><h2 id="attendance-summary-heading" className="mt-2 text-2xl font-semibold tracking-[-0.03em]">Attendance summary</h2><div className="mt-3 flex flex-wrap items-center gap-2"><StaffUrgencyBadge level={sessionStateTone}>Session state: {sessionState}</StaffUrgencyBadge><p className="text-sm font-semibold text-black/70">{lifecycle}</p></div></div><div className="rounded-2xl border border-black/10 bg-white/60 px-4 py-3 text-right"><p className="text-lg font-semibold">{marked} of {confirmed.length} marked</p><p className="text-xs text-black/60">Attendance progress</p></div></div>
+            <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-4"><StaffMetric label="Confirmed" value={confirmed.length} /><StaffMetric label="Attended" value={attended} /><StaffMetric label="No-show" value={noShow} emphasis={noShow > 0} /><StaffMetric label="Unmarked" value={unmarked} emphasis={unmarked > 0 && startsAt !== null && startsAt <= new Date()} /></div>
             {session.is_cancelled ? <p className="mt-4 text-sm text-[#8e211c]">Attendance actions are unavailable because this session is cancelled.</p> : confirmed.length === 0 ? <p className="mt-4 text-sm text-black/65">This valid session has no confirmed reservations. No attendance records will be created.</p> : null}
           </section>
           {!session.is_cancelled ? <StaffAttendanceBulkActions sessionId={sessionId} targets={bulkTargets} /> : null}
+          <section aria-labelledby="session-actions-heading" className="space-y-4"><div><p className="font-mono text-xs font-semibold uppercase tracking-[0.14em] text-[#8e211c]">Authorized controls</p><h2 id="session-actions-heading" className="mt-2 text-2xl font-semibold tracking-[-0.03em]">Session actions</h2><p className="mt-1 text-sm text-black/65">State-changing commands are separated from recommendations and attendance work.</p></div>{canCancel ? <StaffSessionCancellation sessionId={sessionId} sessionLabel={`${session.class_type_label} session`} startsAt={session.starts_at} instructorName={session.instructor_name} confirmed={session.confirmed_reservations} waitlisted={session.waitlisted_reservations} /> : cancellationBlockedReason ? <p className="rounded-2xl border border-black/10 bg-white/55 p-4 text-sm font-semibold">{cancellationBlockedReason}</p> : !isOwner ? <p className="rounded-2xl border border-black/10 bg-white/55 p-4 text-sm font-semibold">Only an owner/admin may cancel a session.</p> : null}</section>
+          {cancellationHistory.length ? <section aria-labelledby="session-history-heading"><p className="font-mono text-xs font-semibold uppercase tracking-[0.14em] text-[#8e211c]">Audit trail</p><h2 id="session-history-heading" className="mt-2 text-2xl font-semibold tracking-[-0.03em]">Session action history</h2><div className="mt-4 space-y-3">{cancellationHistory.map((action) => <div key={action.action_id} className="rounded-2xl border border-black/10 bg-white/55 p-4"><p className="font-semibold">Session cancelled</p><p className="mt-1 text-sm text-black/70">{action.reason}</p><p className="mt-1 font-mono text-xs uppercase tracking-[0.08em] text-black/55">Recorded {formatter.format(new Date(action.performed_at))} · Staff {action.performed_by_staff_id}</p></div>)}</div></section> : null}
           <RosterGroup title="Confirmed" description="Record attendance only when the approved window is open." members={confirmed} sessionId={sessionId} />
           <RosterGroup title="Waitlisted" description="These members remain separate until a confirmed spot becomes available." members={waitlisted} sessionId={sessionId} />
         </div>
       )}
     </PortalShell>
   );
-}
-
-function Metric({ label, value }: { label: string; value: number }) {
-  return <div className="rounded-2xl border border-black/10 bg-white/45 p-3"><p className="text-xs text-black/55">{label}</p><p className="mt-1 text-xl font-semibold">{value}</p></div>;
 }

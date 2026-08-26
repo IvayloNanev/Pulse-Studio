@@ -15,6 +15,14 @@ let productBDecisions = [];
 let productBDecisionSequence = 0;
 const productBStartsAt = new Date(Date.now() - 21 * 60 * 1000).toISOString();
 const productBEndsAt = new Date(Date.now() + 39 * 60 * 1000).toISOString();
+const productBStage3StartsAt = new Date(Date.now() + 48 * 60 * 60 * 1000).toISOString();
+const productBStage3EndsAt = new Date(Date.now() + 49 * 60 * 60 * 1000).toISOString();
+let productBStage3Cancelled = false;
+let productBStage3Actions = [];
+const productBStage3Roster = [
+  { reservation_id: "RSV-E2E-PB3-1", member_id: "MEM-E2E-PB3-1", member_name: "Alex Future", reservation_status: "confirmed", attendance_record_id: null, attendance_status: null, recorded_at: null, recorded_by_staff_name: "Recorder unavailable", correction_history: [], can_record_attended: false, can_record_no_show: false },
+  { reservation_id: "RSV-E2E-PB3-WAIT", member_id: "MEM-E2E-PB3-2", member_name: "Sam Waitlisted", reservation_status: "waitlisted", attendance_record_id: null, attendance_status: null, recorded_at: null, recorded_by_staff_name: "Recorder unavailable", correction_history: [], can_record_attended: false, can_record_no_show: false },
+];
 let productBRoster = [
   { reservation_id: "RSV-E2E-PB-1", member_id: "MEM-E2E-PB-1", member_name: "Avery Stone", reservation_status: "confirmed", attendance_record_id: null, attendance_status: null, recorded_at: null, recorded_by_staff_name: "Recorder unavailable", correction_history: [], can_record_attended: false, can_record_no_show: true },
   { reservation_id: "RSV-E2E-PB-2", member_id: "MEM-E2E-PB-2", member_name: "Blake Rivera", reservation_status: "confirmed", attendance_record_id: null, attendance_status: null, recorded_at: null, recorded_by_staff_name: "Recorder unavailable", correction_history: [], can_record_attended: false, can_record_no_show: true },
@@ -209,6 +217,20 @@ const server = http.createServer(async (request, response) => {
     return;
   }
 
+  if (request.url?.startsWith("/rest/v1/rpc/cancel_class_session")) {
+    const body = await readBody(request);
+    if (body.p_class_session_id !== "SESSION-E2E-PB3-CANCEL") {
+      response.writeHead(400);
+      response.end(JSON.stringify({ code: "P0001", message: "session cancellation conflicts with recorded attendance in function public.cancel_class_session" }));
+      return;
+    }
+    productBStage3Cancelled = true;
+    productBStage3Actions = [{ action_id: "ACT-E2E-PB3", reason: body.p_reason, performed_at: new Date().toISOString(), performed_by_staff_id: "STF-0001" }];
+    response.writeHead(200);
+    response.end(JSON.stringify(null));
+    return;
+  }
+
   if (request.url?.startsWith("/rest/v1/")) {
     response.setHeader("Content-Range", "*/0");
     response.writeHead(200);
@@ -225,6 +247,18 @@ const server = http.createServer(async (request, response) => {
       return;
     }
     if (request.url.startsWith("/rest/v1/staff_product_b_sessions")) {
+      if (request.url.includes("SESSION-E2E-PB3-CANCEL")) {
+        response.end(JSON.stringify([{ class_session_id: "SESSION-E2E-PB3-CANCEL", class_type: "yoga", class_type_label: "Yoga", instructor_name: "Jordan Lee", starts_at: productBStage3StartsAt, ends_at: productBStage3EndsAt, capacity: 12, is_cancelled: productBStage3Cancelled, confirmed_reservations: productBStage3Cancelled ? 0 : 1, waitlisted_reservations: productBStage3Cancelled ? 0 : 1, available_spots: productBStage3Cancelled ? 12 : 11, attended_count: 0, no_show_count: 0, marked_count: 0 }]));
+        return;
+      }
+      if (request.url.includes("SESSION-E2E-PB3-CONFLICT")) {
+        response.end(JSON.stringify([{ class_session_id: "SESSION-E2E-PB3-CONFLICT", class_type: "hiit", class_type_label: "HIIT", instructor_name: "Jordan Lee", starts_at: productBStage3StartsAt, ends_at: productBStage3EndsAt, capacity: 10, is_cancelled: false, confirmed_reservations: 1, waitlisted_reservations: 0, available_spots: 9, attended_count: 1, no_show_count: 0, marked_count: 1 }]));
+        return;
+      }
+      if (request.url.includes("SESSION-E2E-PB3-ZERO")) {
+        response.end(JSON.stringify([{ class_session_id: "SESSION-E2E-PB3-ZERO", class_type: "cycling", class_type_label: "Cycling", instructor_name: "Jordan Lee", starts_at: productBStage3StartsAt, ends_at: productBStage3EndsAt, capacity: 20, is_cancelled: false, confirmed_reservations: 0, waitlisted_reservations: 0, available_spots: 20, attended_count: 0, no_show_count: 0, marked_count: 0 }]));
+        return;
+      }
       const marked = productBRoster.filter((member) => member.reservation_status === "confirmed" && member.attendance_status).length;
       response.end(JSON.stringify([{
         class_session_id: "SESSION-E2E-PB",
@@ -245,7 +279,24 @@ const server = http.createServer(async (request, response) => {
       return;
     }
     if (request.url.startsWith("/rest/v1/staff_session_roster")) {
+      if (request.url.includes("SESSION-E2E-PB3-CANCEL")) {
+        const roster = productBStage3Cancelled ? [] : productBStage3Roster;
+        response.end(JSON.stringify(roster.map((member) => ({ ...member, class_session_id: "SESSION-E2E-PB3-CANCEL", class_type_label: "Yoga", starts_at: productBStage3StartsAt, check_in_opens_at: new Date(new Date(productBStage3StartsAt).getTime() - 15 * 60 * 1000).toISOString(), check_in_closes_at: new Date(new Date(productBStage3StartsAt).getTime() + 20 * 60 * 1000).toISOString() }))));
+        return;
+      }
+      if (request.url.includes("SESSION-E2E-PB3-CONFLICT")) {
+        response.end(JSON.stringify([{ ...productBStage3Roster[0], class_session_id: "SESSION-E2E-PB3-CONFLICT", class_type_label: "HIIT", starts_at: productBStage3StartsAt, attendance_record_id: "ATT-E2E-PB3", attendance_status: "attended", recorded_at: new Date().toISOString(), recorded_by_staff_name: "Jordan Lee", check_in_opens_at: productBStage3StartsAt, check_in_closes_at: productBStage3EndsAt }]));
+        return;
+      }
+      if (request.url.includes("SESSION-E2E-PB3-ZERO")) {
+        response.end(JSON.stringify([]));
+        return;
+      }
       response.end(JSON.stringify(productBRoster.map((member) => ({ ...member, class_session_id: "SESSION-E2E-PB", class_type_label: "Cycling", starts_at: productBStartsAt, check_in_opens_at: new Date(new Date(productBStartsAt).getTime() - 15 * 60 * 1000).toISOString(), check_in_closes_at: new Date(new Date(productBStartsAt).getTime() + 20 * 60 * 1000).toISOString() }))));
+      return;
+    }
+    if (request.url.startsWith("/rest/v1/class_session_actions")) {
+      response.end(JSON.stringify(request.url.includes("SESSION-E2E-PB3-CANCEL") ? productBStage3Actions : []));
       return;
     }
     if (request.url.startsWith("/rest/v1/product_b_underbooking_decisions")) {
