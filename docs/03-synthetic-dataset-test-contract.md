@@ -98,7 +98,7 @@ The 75% case is `high`; the table calls it an upper-interior transition only to 
 
 ## 6. Product B boundary fixtures
 
-**New recommended decision under test:** `underbooked` means utilization below 50%.
+**Current implemented Product B rule under test:** `underbooked` means utilization below 50%.
 
 For a capacity of 10:
 

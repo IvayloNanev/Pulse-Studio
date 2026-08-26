@@ -51,7 +51,7 @@ export default async function RetentionDetailPage({ params, searchParams }: { pa
   const { riskId } = await params;
   const messages = await searchParams;
   const { supabase } = await requireStaff();
-  const { data, error } = await supabase.from("product_d_member_detail").select("*").eq("risk_assessment_id", riskId).maybeSingle();
+  const { data, error } = await supabase.rpc("product_d_member_detail", { p_risk_assessment_id: riskId }).maybeSingle();
   if (!data && !error) notFound();
   const detail = data as RiskDetail | null;
   const latest = detail?.outreach_attempts.at(-1);
@@ -59,7 +59,7 @@ export default async function RetentionDetailPage({ params, searchParams }: { pa
 
   return (
     <PortalShell audience="staff" eyebrow="Staff portal · Product D" title={detail?.member_name ?? "Retention case"} description={detail?.risk_reason ?? "Review factual attendance evidence and staff-approved outreach."} links={staffLinks}>
-      <MemberStatusMessage success={messages.success} error={messages.error ?? error?.message} />
+      <MemberStatusMessage success={messages.success} error={messages.error ?? (error ? "The retention case could not be loaded. Refresh and try again." : undefined)} />
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3"><Link href="/staff/retention" className="inline-flex min-h-11 items-center rounded-full px-2 text-sm font-semibold underline decoration-[#c72c25] decoration-2 underline-offset-4 focus-visible:outline-2 focus-visible:outline-[#c72c25] focus-visible:outline-offset-2">← Member retention</Link><Link href={`/staff/retention/${encodeURIComponent(riskId)}/journey`} className="inline-flex min-h-11 items-center justify-center rounded-full bg-black px-5 text-sm font-semibold text-white transition hover:bg-[#c72c25] focus-visible:outline-2 focus-visible:outline-[#c72c25] focus-visible:outline-offset-2">{journeyLabel} →</Link></div>
       {detail && (
         <div className="space-y-6">

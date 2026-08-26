@@ -22,7 +22,16 @@ type RosterMember = {
   check_in_closes_at: string;
 };
 
-type SessionSummary = { class_session_id: string; class_type_label: string; starts_at: string; instructor_name: string };
+type SessionDetail = {
+  class_session_id: string;
+  class_type_label: string;
+  starts_at: string;
+  capacity: number;
+  confirmed_reservations: number;
+  waitlisted_reservations: number;
+  available_spots: number;
+  instructor_name: string;
+};
 
 const formatter = new Intl.DateTimeFormat("en-US", { timeZone: "America/New_York", weekday: "long", month: "long", day: "numeric", hour: "numeric", minute: "2-digit" });
 
@@ -61,11 +70,18 @@ export default async function StaffRosterPage({ params, searchParams }: { params
   const messages = await searchParams;
   const { supabase } = await requireStaff();
   const [sessionResult, rosterResult] = await Promise.all([
-    supabase.from("public_class_schedule").select("class_session_id,class_type_label,starts_at,instructor_name").eq("class_session_id", sessionId).maybeSingle(),
-    supabase.from("staff_session_roster").select("class_session_id,class_type_label,starts_at,reservation_id,reservation_status,member_id,member_name,attendance_status,can_record_attended,can_record_no_show,check_in_opens_at,check_in_closes_at").eq("class_session_id", sessionId).order("reservation_status", { ascending: true }).order("member_name", { ascending: true }),
+    supabase.from("staff_product_b_sessions")
+      .select("class_session_id,class_type_label,starts_at,capacity,confirmed_reservations,waitlisted_reservations,available_spots,instructor_name")
+      .eq("class_session_id", sessionId)
+      .maybeSingle(),
+    supabase.from("staff_session_roster")
+      .select("class_session_id,class_type_label,starts_at,reservation_id,reservation_status,member_id,member_name,attendance_status,can_record_attended,can_record_no_show,check_in_opens_at,check_in_closes_at")
+      .eq("class_session_id", sessionId)
+      .order("reservation_status", { ascending: true })
+      .order("member_name", { ascending: true }),
   ]);
+  const session = sessionResult.data as SessionDetail | null;
   const roster = (rosterResult.data ?? []) as RosterMember[];
-  const session = sessionResult.data as SessionSummary | null;
   const confirmed = roster.filter((member) => member.reservation_status === "confirmed");
   const waitlisted = roster.filter((member) => member.reservation_status === "waitlisted");
   const dataError = sessionResult.error ?? rosterResult.error;
@@ -77,9 +93,9 @@ export default async function StaffRosterPage({ params, searchParams }: { params
       {dataError ? (
         <div role="alert" className="rounded-2xl border border-black/15 bg-white/65 p-6 text-sm text-[#8e211c] backdrop-blur-xl">This roster could not be loaded.</div>
       ) : !session ? (
-        <div className="glass-panel rounded-3xl p-8"><h2 className="text-2xl font-semibold">Session unavailable</h2><p className="mt-2 text-sm text-black/65">This session was removed or is no longer available to staff.</p></div>
+        <div role="alert" className="glass-panel rounded-3xl p-8"><h2 className="text-2xl font-semibold">Session unavailable</h2><p className="mt-2 text-sm text-black/60">This session does not exist or is outside your Product B access.</p></div>
       ) : roster.length === 0 ? (
-        <div className="glass-panel rounded-3xl p-8"><h2 className="text-2xl font-semibold">No attendance action required</h2><p className="mt-2 text-sm text-black/65">This class has no confirmed or waitlisted reservations. Return to Rosters to choose a populated session.</p></div>
+        <div className="glass-panel rounded-3xl p-8"><h2 className="text-2xl font-semibold">No attendance action required</h2><p className="mt-2 text-sm text-black/65">This valid session has {session.confirmed_reservations}/{session.capacity} confirmed reservations, {session.waitlisted_reservations} waitlisted, and {session.available_spots} open spots.</p></div>
       ) : (
         <div className="space-y-10">
           <RosterGroup title="Confirmed" description="Record attendance only when the approved window is open." members={confirmed} sessionId={sessionId} />

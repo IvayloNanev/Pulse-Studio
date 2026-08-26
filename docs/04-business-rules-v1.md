@@ -109,6 +109,8 @@ Rules:
 - an existing owner/admin invites instructor or owner/admin accounts;
 - Product D is accessible to instructors and owner/admins;
 - instructors and owner/admins have equal Product D permissions to review evidence, add or manage notes, edit and approve drafts, simulate sends, and complete cases;
+- global Product D retention reads are provided through dedicated Product D interfaces that validate the active Staff actor internally;
+- Product D access does not grant instructors unrestricted direct access to canonical member, reservation, membership, or attendance records;
 - the system records which staff account performs each sensitive Product D action and when.
 
 ## 5. Reservation eligibility and capacity
@@ -185,11 +187,11 @@ Included membership credits are derived for the applicable pause-adjusted billin
 
 ## 11. Class demand and schedule changes
 
-For this assignment, a non-cancelled class is `underbooked` when:
+For Product B, a non-cancelled class has a live underbooking warning when:
 
-`confirmed reservations + waitlist entries < capacity`
+`confirmed reservations / capacity < 50%`
 
-This means any unclaimed capacity produces the underbooked label.
+Exactly 50% does not warn. Waitlisted, cancelled, and studio-cancelled reservations do not count. Canceled sessions never warn. Presentation bands are separate from the warning: 0–39% Underbooked, 40–69% Moderate, 70–89% Healthy, and 90–100% Nearly full. Owner/admin operational decisions (`monitor`, `promote_class`, `adjust_operations`, or `review_for_cancellation`) record intent only and remain historical when current demand changes; they do not mutate reservations, staffing, capacity, or cancellation state.
 
 Staff may change a class after reservations exist, subject to these rules:
 

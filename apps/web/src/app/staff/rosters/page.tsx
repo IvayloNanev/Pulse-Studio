@@ -94,7 +94,7 @@ export default async function StaffRostersPage() {
   const since = new Date(now.getTime() - 24 * 60 * 60 * 1000);
   const through = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
   const [scheduleResult, eligibilityResult] = await Promise.all([
-    supabase.from("public_class_schedule").select("class_session_id,class_type,class_type_label,starts_at,capacity,confirmed_reservations,waitlisted_reservations,available_spots,instructor_name").gte("starts_at", since.toISOString()).lt("starts_at", through.toISOString()).order("starts_at", { ascending: true }),
+    supabase.from("staff_product_b_sessions").select("class_session_id,class_type,class_type_label,starts_at,capacity,confirmed_reservations,waitlisted_reservations,available_spots,instructor_name").gte("starts_at", since.toISOString()).lt("starts_at", through.toISOString()).order("starts_at", { ascending: true }),
     supabase.from("staff_session_roster").select("class_session_id,attendance_status,reservation_status,can_record_attended,can_record_no_show,starts_at").gte("starts_at", since.toISOString()).lt("starts_at", through.toISOString()),
   ]);
   const sessions = (scheduleResult.data ?? []) as StaffSession[];

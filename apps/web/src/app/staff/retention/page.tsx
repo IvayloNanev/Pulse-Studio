@@ -84,13 +84,9 @@ export default async function RetentionQueuePage({ searchParams }: { searchParam
   const messages = await searchParams;
   const { supabase } = await requireStaff();
   const [{ data, error }, { data: memberData, error: membersError }, { data: historyData, error: historyError }] = await Promise.all([
-    supabase
-      .from("product_d_risk_queue")
-      .select("risk_assessment_id,member_name,risk_level,review_status,evaluated_at,previous_visits,current_visits,decline_percentage,last_attended_at,active_note_count,outreach_status,outreach_blocked_reason")
-      .order("risk_priority", { ascending: true })
-      .order("evaluated_at", { ascending: true }),
-    supabase.from("members").select("member_id,first_name,last_name,email").order("last_name").order("first_name"),
-    supabase.from("product_d_member_detail").select("risk_assessment_id,member_name,risk_level,review_status,evaluated_at,resolved_at,resolution_reason,previous_visits,current_visits,decline_percentage,outreach_attempts").order("evaluated_at", { ascending: false }),
+    supabase.rpc("product_d_risk_queue"),
+    supabase.rpc("product_d_evaluation_member_options"),
+    supabase.rpc("product_d_case_history"),
   ]);
   const cases = (data ?? []) as RiskQueueItem[];
   const members = (memberData ?? []) as MemberOption[];
