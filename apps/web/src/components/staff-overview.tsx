@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useState } from "react";
 
 export type StaffOverviewSession = {
@@ -22,7 +21,6 @@ type StaffOverviewProps = {
   scheduleError?: boolean;
   allowInstructorFilter?: boolean;
   preview?: boolean;
-  rosterBasePath?: string;
 };
 
 const timeFormatter = new Intl.DateTimeFormat("en-US", {
@@ -55,7 +53,6 @@ export function StaffOverview({
   scheduleError = false,
   allowInstructorFilter = false,
   preview = false,
-  rosterBasePath,
 }: StaffOverviewProps) {
   const [selectedInstructor, setSelectedInstructor] = useState("all");
   const instructors = Array.from(new Set(sessions.map((session) => session.instructor))).sort((a, b) => a.localeCompare(b));
@@ -148,19 +145,8 @@ export function StaffOverview({
                   {calendarDay.sessions.length ? (
                     <ul className="mt-3 space-y-2">
                       {calendarDay.sessions.map((session) => (
-                        <li key={session.id} className={`rounded-xl border-l-4 bg-white/90 shadow-[0_8px_24px_rgba(31,24,18,0.06)] ${sessionAccent(session.name)}`}>
-                          {rosterBasePath ? (
-                            <Link
-                              href={`${rosterBasePath}/${encodeURIComponent(session.id)}`}
-                              aria-label={`Open ${session.name} roster at ${timeFormatter.format(new Date(session.startsAt))}`}
-                              className="block rounded-r-xl p-3 transition hover:bg-black/[0.035] focus-visible:outline-2 focus-visible:outline-[#c72c25] focus-visible:outline-offset-2"
-                            >
-                              <SessionSummary session={session} />
-                              <span className="mt-3 inline-flex text-[0.7rem] font-semibold text-[#a9231e] underline decoration-2 underline-offset-2">Open roster</span>
-                            </Link>
-                          ) : (
-                            <div className="p-3"><SessionSummary session={session} /></div>
-                          )}
+                        <li key={session.id} className={`rounded-xl border-l-4 bg-white/90 p-3 shadow-[0_8px_24px_rgba(31,24,18,0.06)] ${sessionAccent(session.name)}`}>
+                          <SessionSummary session={session} />
                         </li>
                       ))}
                     </ul>

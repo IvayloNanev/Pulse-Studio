@@ -6,6 +6,7 @@ import { redirect } from "next/navigation";
 import { requireStaff } from "@/lib/auth";
 import { productBDecisionErrorMessage } from "@/lib/product-b/decision-errors";
 import { attendanceErrorMessage } from "@/lib/product-b/attendance-errors";
+import { sessionManagementErrorMessage } from "@/lib/product-b/session-errors";
 import { productDErrorMessage } from "@/lib/product-d/errors";
 
 function rosterDestination(sessionId: string, type: "success" | "error", message: string) {
@@ -174,6 +175,25 @@ export async function correctAttendance(formData: FormData) {
   revalidatePath("/staff/rosters");
   revalidatePath(`/staff/rosters/${sessionId}`);
   redirect(rosterDestination(sessionId, "success", "Attendance correction saved with audit history."));
+}
+
+export async function cancelClassSession(formData: FormData) {
+  const sessionId = String(formData.get("class_session_id") ?? "");
+  const reason = String(formData.get("reason") ?? "").trim();
+  if (!sessionId || !reason || reason.length > 1000) {
+    redirect(rosterDestination(sessionId || "unknown", "error", "Enter a reason before cancelling this session."));
+  }
+  const { supabase } = await requireStaff();
+  const { error } = await supabase.rpc("cancel_class_session", { p_class_session_id: sessionId, p_reason: reason });
+  if (error) {
+    console.error("Product B session cancellation failed", { sessionId, code: error.code });
+    redirect(rosterDestination(sessionId, "error", sessionManagementErrorMessage(error)));
+  }
+  revalidatePath("/staff");
+  revalidatePath("/staff/rosters");
+  revalidatePath(`/staff/rosters/${sessionId}`);
+  revalidatePath("/classes");
+  redirect(rosterDestination(sessionId, "success", "Session cancelled. Member impacts and audit history were recorded."));
 }
 
 export async function createUnderbookingDecision(formData: FormData) {

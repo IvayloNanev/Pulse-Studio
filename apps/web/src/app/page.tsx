@@ -2,7 +2,9 @@ import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight, Clock3 } from "lucide-react";
 
+import { AuthInvitationRouter } from "@/components/auth-invitation-router";
 import { HeroVideo } from "@/components/hero-video";
+import { PortalAccessFooter } from "@/components/portal-access-footer";
 import { SiteHeader } from "@/components/site-header";
 import { Button } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase/server";
@@ -51,6 +53,7 @@ export default async function Home() {
   const sessions = (scheduleData ?? []) as HomeSession[];
   return (
     <main className="min-h-screen bg-[#f3f0e9] text-[#111111]">
+      <AuthInvitationRouter />
       <SiteHeader />
 
       <section className="relative overflow-hidden border-b border-white/15 bg-black text-white">
@@ -148,6 +151,8 @@ export default async function Home() {
           </div>
         </div>
       </section>
+
+      <PortalAccessFooter />
 
     </main>
   );
