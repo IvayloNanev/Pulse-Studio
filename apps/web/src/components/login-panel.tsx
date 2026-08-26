@@ -62,7 +62,10 @@ export function LoginPanel({ audience, initialNotice = null, initialError = null
     setIsSendingRecovery(true);
     const supabase = createClient();
     const { error: recoveryError } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/auth/callback?audience=${audience}`,
+      // Keep the portal identity in the path. Some email clients and auth
+      // redirects can discard query parameters, which previously caused staff
+      // recovery links to fall back to the member password flow.
+      redirectTo: `${window.location.origin}/auth/callback/${audience}`,
     });
     setIsSendingRecovery(false);
 
