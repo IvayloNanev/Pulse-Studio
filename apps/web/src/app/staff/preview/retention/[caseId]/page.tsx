@@ -2,7 +2,6 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { PortalShell } from "@/components/portal-shell";
-import { StaffRetentionPreviewAction } from "@/components/staff-retention-preview-action";
 import { StaffMetric, StaffReason, StaffUrgencyBadge } from "@/components/staff-workflow-ui";
 import { staffPreviewLinks } from "@/lib/staff-preview-navigation";
 import { retentionPreviewCases } from "@/lib/staff-retention-preview-data";
@@ -25,7 +24,7 @@ export default async function StaffRetentionCasePreviewPage({ params }: { params
 
   return (
     <PortalShell audience="staff" eyebrow="Member retention · Case preview" title={item.member} description="Review the complete attendance evidence, risk result, workflow state, and recommended staff action." links={staffPreviewLinks}>
-      <div className="mb-5 flex flex-wrap items-center justify-between gap-3"><Link href="/staff/preview/retention" className="inline-flex min-h-11 items-center rounded-full border border-black/15 bg-white/70 px-4 text-sm font-semibold focus-visible:outline-2 focus-visible:outline-[#c72c25] focus-visible:outline-offset-2">← Back to retention graph</Link><span className="rounded-full bg-black px-3 py-1 text-xs font-semibold text-white">Local preview · no live changes</span></div>
+      <div className="mb-5"><Link href="/staff/preview/retention" className="inline-flex min-h-11 items-center rounded-full border border-black/15 bg-white/70 px-4 text-sm font-semibold focus-visible:outline-2 focus-visible:outline-[#c72c25] focus-visible:outline-offset-2">← Back to retention graph</Link></div>
 
       <section className="grid gap-5 xl:grid-cols-[minmax(0,1.25fr)_minmax(20rem,0.75fr)]">
         <article className="glass-panel rounded-3xl p-5 sm:p-6">
@@ -40,7 +39,7 @@ export default async function StaffRetentionCasePreviewPage({ params }: { params
           <p className="font-mono text-xs uppercase tracking-[0.16em] text-[#a9231e]">What staff should do</p>
           <h2 className="mt-2 text-2xl font-semibold">{monitoring ? "Continue monitoring" : item.nextAction}</h2>
           <ol className="mt-5 space-y-3">{actionChecklist(item.status).map((step, index) => <li key={step} className="grid grid-cols-[2rem_minmax(0,1fr)] gap-3 rounded-2xl bg-white/65 p-3"><span className="flex size-8 items-center justify-center rounded-full bg-black text-xs font-semibold text-white">{index + 1}</span><p className="pt-1 text-sm leading-6">{step}</p></li>)}</ol>
-          <div className="mt-5"><StaffRetentionPreviewAction action={item.nextAction} monitoring={monitoring} /></div>
+          <Link href={`/staff/preview/retention/${encodeURIComponent(caseId)}/journey`} className="mt-5 inline-flex min-h-11 w-full items-center justify-center rounded-full bg-[#c72c25] px-5 text-sm font-semibold text-white transition hover:bg-[#a9231e] focus-visible:outline-2 focus-visible:outline-[#c72c25] focus-visible:outline-offset-2">{monitoring ? "View monitoring journey" : item.nextAction}</Link>
         </aside>
       </section>
     </PortalShell>
