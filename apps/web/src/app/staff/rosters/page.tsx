@@ -29,7 +29,7 @@ type AttendanceEligibility = {
   can_record_no_show: boolean;
 };
 
-const names = { yoga: "Studio Flow", cycling: "Pulse Ride", hiit: "Power Interval" };
+const names = { yoga: "Yoga", cycling: "Cycling", hiit: "HIIT" };
 const formatter = new Intl.DateTimeFormat("en-US", {
   timeZone: "America/New_York",
   weekday: "long",

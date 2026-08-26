@@ -1,56 +1,21 @@
 import { PortalShell } from "@/components/portal-shell";
-import { StaffOverview, type StaffOverviewSession } from "@/components/staff-overview";
+import { StaffOverview } from "@/components/staff-overview";
 import { requireStaff } from "@/lib/auth";
 import { staffLinks } from "@/lib/staff-navigation";
 
 type StaffAccount = { first_name: string; last_name: string; role: "owner_admin" | "instructor" };
-type StaffSessionRow = { class_session_id: string; class_type: "yoga" | "cycling" | "hiit"; starts_at: string; capacity: number; confirmed_reservations: number; waitlisted_reservations: number; instructor_name: string };
-
-const classNames = { yoga: "Studio Flow", cycling: "Pulse Ride", hiit: "Power Interval" };
-const dateFormatter = new Intl.DateTimeFormat("en-US", { timeZone: "America/New_York", weekday: "long", month: "long", day: "numeric", year: "numeric" });
-const dayKeyFormatter = new Intl.DateTimeFormat("en-CA", { timeZone: "America/New_York", year: "numeric", month: "2-digit", day: "2-digit" });
+type Risk = { risk_level: "high" | "medium"; review_status: string };
 
 export default async function StaffPortalPage() {
   const { supabase, user, staffId } = await requireStaff();
-  const now = new Date();
-  const todayKey = dayKeyFormatter.format(now);
-  const windowStart = new Date(now.getTime() - 12 * 60 * 60 * 1000);
-  const windowEnd = new Date(now.getTime() + 8 * 24 * 60 * 60 * 1000);
-  const [accountResult, scheduleResult] = await Promise.all([
+  const [accountResult, healthResult, riskResult] = await Promise.all([
     supabase.from("staff_accounts").select("first_name,last_name,role").eq("staff_id", staffId).single(),
-    supabase.from("staff_product_b_sessions").select("class_session_id,class_type,starts_at,capacity,confirmed_reservations,waitlisted_reservations,instructor_name").gte("starts_at", windowStart.toISOString()).lt("starts_at", windowEnd.toISOString()).order("starts_at", { ascending: true }),
+    supabase.rpc("staff_business_health"),
+    supabase.rpc("product_d_risk_queue"),
   ]);
   const account = accountResult.data as StaffAccount | null;
-  const sessions = ((scheduleResult.data ?? []) as StaffSessionRow[]).map((session): StaffOverviewSession => ({
-      id: session.class_session_id,
-      name: classNames[session.class_type],
-      startsAt: session.starts_at,
-      instructor: session.instructor_name,
-      confirmed: session.confirmed_reservations,
-      capacity: session.capacity,
-      waitlisted: session.waitlisted_reservations,
-  }));
   const staffName = account ? `${account.first_name} ${account.last_name}` : user.email ?? "Staff member";
-  const staffRole = account?.role === "owner_admin" ? "Owner / administrator" : account?.role === "instructor" ? "Instructor" : "Staff";
+  const staffRole = account?.role === "owner_admin" ? "Owner / administrator" : "Instructor";
 
-  return (
-    <PortalShell
-      audience="staff"
-      eyebrow="Staff portal · Overview"
-      title="Staff overview"
-      description="Your authorized seven-day schedule."
-      links={staffLinks}
-      showHeader={false}
-    >
-      <StaffOverview
-        dateLabel={dateFormatter.format(now)}
-        todayKey={todayKey}
-        staffName={staffName}
-        staffRole={staffRole}
-        sessions={sessions}
-        scheduleError={Boolean(scheduleResult.error)}
-        allowInstructorFilter={account?.role === "owner_admin"}
-      />
-    </PortalShell>
-  );
+  return <PortalShell audience="staff" eyebrow="Staff portal · Overview" title="Studio overview" description="Business health at a glance." links={staffLinks} showHeader={false}>{account?.role !== "owner_admin" ? <div className="glass-panel rounded-3xl p-7"><h1 className="text-3xl font-semibold">Your teaching day</h1><p className="mt-3 text-sm leading-6 text-black/65">Studio-wide business health is available to the owner/admin. Use Schedule &amp; Attendance to run your classes and Member Retention to complete follow-up work.</p></div> : healthResult.error ? <div role="alert" className="rounded-3xl border border-black/15 bg-white/65 p-7 text-[#8e211c]">Business health is temporarily unavailable. Refresh and try again.</div> : <StaffOverview staffName={staffName} staffRole={staffRole} health={healthResult.data ?? {}} risks={(riskResult.data ?? []) as Risk[]} />}</PortalShell>;
 }

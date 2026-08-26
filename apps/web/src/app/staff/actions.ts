@@ -196,6 +196,39 @@ export async function cancelClassSession(formData: FormData) {
   redirect(rosterDestination(sessionId, "success", "Session cancelled. Member impacts and audit history were recorded."));
 }
 
+export async function createClassSession(formData: FormData) {
+  const classType = String(formData.get("class_type") ?? "");
+  const startsAtLocal = String(formData.get("starts_at_local") ?? "").trim();
+  const durationMinutes = Number(formData.get("duration_minutes"));
+  const capacity = Number(formData.get("capacity"));
+  const instructorStaffId = String(formData.get("instructor_staff_id") ?? "").trim();
+
+  if (!['yoga', 'cycling', 'hiit'].includes(classType) || !startsAtLocal || !Number.isInteger(durationMinutes) || !Number.isInteger(capacity) || !instructorStaffId) {
+    redirect("/staff/manage-classes?error=" + encodeURIComponent("Complete the class details before creating the session."));
+  }
+
+  const { supabase } = await requireStaff();
+  const { data, error } = await supabase.rpc("create_class_session", {
+    p_class_type: classType,
+    p_starts_at_local: startsAtLocal,
+    p_duration_minutes: durationMinutes,
+    p_capacity: capacity,
+    p_instructor_staff_id: instructorStaffId,
+  });
+
+  if (error) {
+    console.error("Product B session creation failed", { classType, code: error.code });
+    redirect("/staff/manage-classes?error=" + encodeURIComponent(sessionManagementErrorMessage(error)));
+  }
+
+  const created = Array.isArray(data) ? data[0] : data;
+  revalidatePath("/staff");
+  revalidatePath("/staff/manage-classes");
+  revalidatePath("/staff/rosters");
+  revalidatePath("/classes");
+  redirect("/staff/manage-classes?success=" + encodeURIComponent(`New ${classType.toUpperCase()} class created${created?.class_session_id ? "." : ""}`));
+}
+
 export async function createUnderbookingDecision(formData: FormData) {
   const sessionId = String(formData.get("class_session_id") ?? "");
   const action = String(formData.get("action") ?? "");

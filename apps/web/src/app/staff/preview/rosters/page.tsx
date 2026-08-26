@@ -5,10 +5,10 @@ import { StaffMetric, StaffReason, StaffUrgencyBadge, StaffWorkflowLabel } from 
 import { staffPreviewLinks } from "@/lib/staff-preview-navigation";
 
 const sessions = [
-  { time: "6:00 PM", name: "Power Interval", instructor: "Jordan Lee", confirmed: 16, capacity: 16, waitlist: 3, status: "Urgent", reason: "The class is full and three members are waiting. Confirm the roster before doors open.", next: "Review roster before 6:00 PM" },
-  { time: "7:15 PM", name: "Studio Flow", instructor: "Mina Patel", confirmed: 14, capacity: 20, waitlist: 0, status: "Ready", reason: "Six places remain and no attendance action is open yet.", next: "Roster opens near class time" },
-  { time: "8:00 PM", name: "Ride 45", instructor: "Avery Brooks", confirmed: 12, capacity: 18, waitlist: 0, status: "Ready", reason: "Six places remain and no waitlist needs review.", next: "Roster opens near class time" },
-  { time: "Tomorrow · 7:00 AM", name: "HIIT Foundations", instructor: "Jordan Lee", confirmed: 10, capacity: 16, waitlist: 0, status: "Upcoming", reason: "This is tomorrow’s first class; review only if the roster changes.", next: "Prepare tomorrow" },
+  { time: "6:00 PM", name: "HIIT", instructor: "Jordan Lee", confirmed: 16, capacity: 16, waitlist: 3, status: "Urgent", reason: "The class is full and three members are waiting. Confirm the roster before doors open.", next: "Review roster before 6:00 PM" },
+  { time: "7:15 PM", name: "Yoga", instructor: "Mina Patel", confirmed: 14, capacity: 20, waitlist: 0, status: "Ready", reason: "Six places remain and no attendance action is open yet.", next: "Roster opens near class time" },
+  { time: "8:00 PM", name: "Cycling", instructor: "Avery Brooks", confirmed: 12, capacity: 18, waitlist: 0, status: "Ready", reason: "Six places remain and no waitlist needs review.", next: "Roster opens near class time" },
+  { time: "Tomorrow · 7:00 AM", name: "HIIT", instructor: "Jordan Lee", confirmed: 10, capacity: 16, waitlist: 0, status: "Upcoming", reason: "This is tomorrow’s first class; review only if the roster changes.", next: "Prepare tomorrow" },
 ];
 
 export default function StaffRostersPreviewPage() {

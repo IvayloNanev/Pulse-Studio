@@ -1,49 +1,31 @@
 import { notFound } from "next/navigation";
 
 import { PortalShell } from "@/components/portal-shell";
-import { StaffOverview, type StaffOverviewSession } from "@/components/staff-overview";
+import { StaffOverview } from "@/components/staff-overview";
 import { staffPreviewLinks } from "@/lib/staff-preview-navigation";
 
-const dateFormatter = new Intl.DateTimeFormat("en-US", { timeZone: "America/New_York", weekday: "long", month: "long", day: "numeric", year: "numeric" });
-const dayPartsFormatter = new Intl.DateTimeFormat("en-CA", { timeZone: "America/New_York", year: "numeric", month: "2-digit", day: "2-digit" });
-const offsetFormatter = new Intl.DateTimeFormat("en-US", { timeZone: "America/New_York", timeZoneName: "shortOffset" });
+const history = Array.from({ length: 26 }, (_, index) => ({ date: new Date(Date.UTC(2026, 1, 23 + index * 7)).toISOString().slice(0, 10), booked: 126 + index * 3 + (index % 3) * 4, capacity: 252 + (index % 4) * 8, attended: 114 + index * 3 + (index % 3) * 3, no_show: 7 + index % 4 }));
+const outlook = Array.from({ length: 4 }, (_, index) => ({ date: new Date(Date.UTC(2026, 7, 24 + index * 7)).toISOString().slice(0, 10), booked: 108 + index * 8, capacity: 254 }));
 
-function representativeSessions(now: Date): StaffOverviewSession[] {
-  const parts = Object.fromEntries(dayPartsFormatter.formatToParts(now).map((part) => [part.type, part.value]));
-  const date = `${parts.year}-${parts.month}-${parts.day}`;
-  const offsetName = offsetFormatter.formatToParts(now).find((part) => part.type === "timeZoneName")?.value ?? "GMT-5";
-  const offsetHours = offsetName.replace("GMT", "");
-  const offset = `${offsetHours.startsWith("-") ? "-" : "+"}${offsetHours.replace(/[+-]/, "").padStart(2, "0")}:00`;
-  const atDay = (dayOffset: number, time: string) => {
-    const dayDate = new Date(now.getTime() + dayOffset * 24 * 60 * 60 * 1000);
-    const dayParts = Object.fromEntries(dayPartsFormatter.formatToParts(dayDate).map((part) => [part.type, part.value]));
-    return `${dayParts.year}-${dayParts.month}-${dayParts.day}T${time}:00${offset}`;
-  };
-  return [
-    { id: "preview-flow", name: "Studio Flow", startsAt: `${date}T08:00:00${offset}`, instructor: "Maya Chen", confirmed: 11, capacity: 16, waitlisted: 0 },
-    { id: "preview-ride", name: "Pulse Ride", startsAt: `${date}T12:30:00${offset}`, instructor: "Jordan Lee", confirmed: 14, capacity: 18, waitlisted: 0 },
-    { id: "preview-interval", name: "Power Interval", startsAt: `${date}T18:00:00${offset}`, instructor: "Jordan Lee", confirmed: 16, capacity: 16, waitlisted: 3 },
-    { id: "preview-next-flow", name: "Studio Flow", startsAt: atDay(1, "09:00"), instructor: "Maya Chen", confirmed: 10, capacity: 16, waitlisted: 0 },
-    { id: "preview-next-ride", name: "Pulse Ride", startsAt: atDay(2, "17:30"), instructor: "Jordan Lee", confirmed: 15, capacity: 18, waitlisted: 0 },
-    { id: "preview-next-hiit", name: "Power Interval", startsAt: atDay(4, "18:00"), instructor: "Jordan Lee", confirmed: 13, capacity: 16, waitlisted: 0 },
-  ];
-}
+const monthlyClassPerformance = [
+  { month: "2026-03", label: "March 2026", classes: [{ class_type: "yoga" as const, booked: 68, capacity: 120, waitlisted: 1, cancelled: 6 }, { class_type: "cycling" as const, booked: 59, capacity: 110, waitlisted: 1, cancelled: 4 }, { class_type: "hiit" as const, booked: 61, capacity: 96, waitlisted: 0, cancelled: 5 }] },
+  { month: "2026-04", label: "April 2026", classes: [{ class_type: "yoga" as const, booked: 73, capacity: 120, waitlisted: 1, cancelled: 5 }, { class_type: "cycling" as const, booked: 64, capacity: 110, waitlisted: 2, cancelled: 5 }, { class_type: "hiit" as const, booked: 64, capacity: 96, waitlisted: 1, cancelled: 4 }] },
+  { month: "2026-05", label: "May 2026", classes: [{ class_type: "yoga" as const, booked: 82, capacity: 120, waitlisted: 2, cancelled: 7 }, { class_type: "cycling" as const, booked: 69, capacity: 110, waitlisted: 2, cancelled: 4 }, { class_type: "hiit" as const, booked: 66, capacity: 96, waitlisted: 1, cancelled: 6 }] },
+  { month: "2026-06", label: "June 2026", classes: [{ class_type: "yoga" as const, booked: 88, capacity: 120, waitlisted: 3, cancelled: 4 }, { class_type: "cycling" as const, booked: 72, capacity: 110, waitlisted: 3, cancelled: 5 }, { class_type: "hiit" as const, booked: 70, capacity: 96, waitlisted: 1, cancelled: 4 }] },
+  { month: "2026-07", label: "July 2026", classes: [{ class_type: "yoga" as const, booked: 84, capacity: 120, waitlisted: 2, cancelled: 6 }, { class_type: "cycling" as const, booked: 73, capacity: 110, waitlisted: 3, cancelled: 3 }, { class_type: "hiit" as const, booked: 68, capacity: 96, waitlisted: 1, cancelled: 5 }] },
+  { month: "2026-08", label: "August 2026", classes: [{ class_type: "yoga" as const, booked: 78, capacity: 120, waitlisted: 2, cancelled: 8 }, { class_type: "cycling" as const, booked: 86, capacity: 110, waitlisted: 4, cancelled: 4 }, { class_type: "hiit" as const, booked: 67, capacity: 96, waitlisted: 1, cancelled: 6 }] },
+];
+
+const monthlyTeacherPerformance = [
+  { month: "2026-03", teachers: [{ name: "Aisha Brooks", classes_taught: 10, bookings: 64, capacity: 100, attendance_rate: 91 }, { name: "Daniel Kim", classes_taught: 9, bookings: 58, capacity: 90, attendance_rate: 89 }, { name: "Mina Patel", classes_taught: 8, bookings: 52, capacity: 80, attendance_rate: 92 }] },
+  { month: "2026-04", teachers: [{ name: "Aisha Brooks", classes_taught: 10, bookings: 69, capacity: 100, attendance_rate: 92 }, { name: "Daniel Kim", classes_taught: 9, bookings: 62, capacity: 90, attendance_rate: 90 }, { name: "Mina Patel", classes_taught: 8, bookings: 56, capacity: 80, attendance_rate: 93 }] },
+  { month: "2026-05", teachers: [{ name: "Aisha Brooks", classes_taught: 10, bookings: 76, capacity: 100, attendance_rate: 91 }, { name: "Daniel Kim", classes_taught: 9, bookings: 67, capacity: 90, attendance_rate: 91 }, { name: "Mina Patel", classes_taught: 8, bookings: 60, capacity: 80, attendance_rate: 94 }] },
+  { month: "2026-06", teachers: [{ name: "Aisha Brooks", classes_taught: 10, bookings: 81, capacity: 100, attendance_rate: 94 }, { name: "Daniel Kim", classes_taught: 9, bookings: 71, capacity: 90, attendance_rate: 92 }, { name: "Mina Patel", classes_taught: 8, bookings: 63, capacity: 80, attendance_rate: 95 }] },
+  { month: "2026-07", teachers: [{ name: "Aisha Brooks", classes_taught: 10, bookings: 78, capacity: 100, attendance_rate: 92 }, { name: "Daniel Kim", classes_taught: 9, bookings: 72, capacity: 90, attendance_rate: 91 }, { name: "Mina Patel", classes_taught: 8, bookings: 61, capacity: 80, attendance_rate: 94 }] },
+  { month: "2026-08", teachers: [{ name: "Aisha Brooks", classes_taught: 10, bookings: 77, capacity: 100, attendance_rate: 93 }, { name: "Daniel Kim", classes_taught: 9, bookings: 79, capacity: 90, attendance_rate: 94 }, { name: "Mina Patel", classes_taught: 8, bookings: 60, capacity: 80, attendance_rate: 95 }] },
+];
 
 export default function StaffPreviewPage() {
   if (process.env.NODE_ENV === "production") notFound();
-  const now = new Date();
-
-  return (
-    <PortalShell audience="staff" eyebrow="Staff portal · Overview" title="Staff overview" description="Your authorized seven-day schedule." links={staffPreviewLinks} showHeader={false}>
-      <StaffOverview
-        preview
-        dateLabel={dateFormatter.format(now)}
-        todayKey={dayPartsFormatter.format(now)}
-        staffName="Ivaylo Nanev"
-        staffRole="Owner / administrator"
-        sessions={representativeSessions(now)}
-        allowInstructorFilter
-      />
-    </PortalShell>
-  );
+  return <PortalShell audience="staff" eyebrow="Staff portal · Overview" title="Studio overview" description="Representative business-health data." links={staffPreviewLinks} showHeader={false}><div role="status" className="mb-6 rounded-2xl bg-black px-5 py-4 text-sm text-white"><strong>Local preview mode.</strong> Representative data only; no changes are saved.</div><StaffOverview staffName="Ivaylo Nanev" staffRole="Owner / administrator" health={{ weekly_history: history, scheduled_outlook: outlook, class_performance: monthlyClassPerformance.at(-1)?.classes, monthly_class_performance: monthlyClassPerformance, monthly_teacher_performance: monthlyTeacherPerformance, memberships: { active: 48, paused: 4 }, history_source: "Representative month-over-month demonstration data" }} risks={[{ risk_level: "high", review_status: "pending" }, { risk_level: "medium", review_status: "in_progress" }]} /></PortalShell>;
 }
