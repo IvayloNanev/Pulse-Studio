@@ -122,6 +122,10 @@ Product B writes through two authenticated staff commands:
 
 New attendance records store nullable `recorded_by_staff_id`, derived only from the authenticated Staff account. Historical rows remain `NULL` and Staff UI presents them as `Recorder unavailable`; no historical actor is inferred. `record_session_attendance_bulk(p_class_session_id, p_reservation_ids, p_attendance_status)` atomically records one outcome for an authorized set of confirmed, unmarked reservations in one session. It rejects cross-session, waitlisted, cancelled, already-marked, mistimed, or unauthorized targets and never accepts a caller-supplied Staff identity.
 
+### Product B Stage 3 session safeguards
+
+`cancel_class_session(p_class_session_id, p_reason)` remains the sole fixed-purpose studio cancellation command. It is owner/admin-only, rejects cancelled or started sessions, and now rejects any session with recorded attendance so cancellation cannot contradict canonical attendance history. Successful execution retains the existing atomic reservation outcomes, eligible simulated refunds, member notifications, and attributed `class_session_actions` audit record. Capacity editing, instructor reassignment, and date/time editing remain intentionally unsupported because no approved canonical command or cross-product contract exists for them.
+
 Attendance lifecycle is derived from confirmed reservations: zero marked is not started, a partial count is in progress, and all eligible confirmed reservations marked is complete. A session with zero confirmed reservations is `No roster to process`, not complete. `staff_product_b_sessions` exposes narrow attended, no-show, and marked counts; `staff_session_roster` exposes original recorder display and ordered correction history only within the existing Product B access boundary.
 
 Direct attendance-status changes without a matching correction created in the same transaction are rejected. The original reservation association and original recording time remain immutable.
