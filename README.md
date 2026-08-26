@@ -63,7 +63,7 @@ simulated Visa ending in `4242`; Pulse stores no password, full card number, or
 security code in the application schema.
 
 The hosted environment may also link the Supabase Auth identity for
-`ivaylo.nanev@pusuit.org` to the active `STF-DEMO-IVAYLO` owner/admin profile.
+`ivaylo.nanev@pursuit.org` to the active `STF-DEMO-IVAYLO` owner/admin profile.
 Supabase Auth remains the only password authority; the application database
 stores the staff identity mapping and role, never the password.
 

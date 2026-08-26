@@ -8,7 +8,7 @@ const migration = fs.readFileSync(
 );
 
 const checks = [
-  ["uses the approved staff email", /ivaylo\.nanev@pusuit\.org/i],
+  ["uses the approved staff email", /ivaylo\.nanev@pursuit\.org/i],
   ["looks up the Supabase Auth identity", /from auth\.users[\s\S]*lower\(auth_user\.email\)/i],
   ["creates an owner-admin staff profile", /'owner_admin'/i],
   ["keeps the staff account active", /'active'/i],

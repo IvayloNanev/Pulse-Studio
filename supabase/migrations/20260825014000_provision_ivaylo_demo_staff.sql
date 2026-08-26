@@ -16,7 +16,7 @@ declare
 begin
   select auth_user.id::text into v_auth_subject
   from auth.users as auth_user
-  where lower(auth_user.email) = 'ivaylo.nanev@pusuit.org'
+  where lower(auth_user.email) = 'ivaylo.nanev@pursuit.org'
   order by auth_user.created_at desc
   limit 1;
 
@@ -26,7 +26,7 @@ begin
   ) values (
     'STF-DEMO-IVAYLO',
     coalesce(v_auth_subject, 'auth_staff_demo_ivaylo_pending'),
-    'Ivaylo', 'Nanev', 'ivaylo.nanev@pusuit.org',
+    'Ivaylo', 'Nanev', 'ivaylo.nanev@pursuit.org',
     'owner_admin', 'active', now()
   )
   on conflict (staff_id) do update set
