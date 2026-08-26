@@ -114,12 +114,12 @@ export function LoginPanel({ audience, initialNotice = null, initialError = null
       <main className="relative isolate grid min-h-[calc(100vh-5rem)] min-w-0 overflow-x-hidden bg-transparent text-[#111] lg:grid-cols-2">
       <div className="absolute inset-0 -z-20">
         <Image
-          src={isStaff ? "/media/pulse-hiit-editorial.png" : "/media/classes/yoga.jpg"}
-          alt={isStaff ? "Pulse Studio HIIT training" : "Pulse Studio yoga practice"}
+          src={isStaff ? "/media/pulse-staff-operations.png" : "/media/classes/yoga.jpg"}
+          alt={isStaff ? "Pulse Studio staff reviewing the class schedule" : "Pulse Studio yoga practice"}
           fill
           priority
           sizes="100vw"
-          className={`object-cover ${isStaff ? "object-[68%_center]" : "object-center"}`}
+          className={`object-cover ${isStaff ? "object-[35%_center]" : "object-center"}`}
         />
       </div>
       <div className="absolute inset-0 -z-10 bg-black/38" aria-hidden="true" />

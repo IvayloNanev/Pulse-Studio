@@ -5,12 +5,7 @@ import { PortalShell } from "@/components/portal-shell";
 import { StaffAttendanceActions } from "@/components/staff-attendance-actions";
 import { StaffRosterRefresh } from "@/components/staff-roster-refresh";
 import { requireStaff } from "@/lib/auth";
-
-const links = [
-  { href: "/staff", label: "Overview" },
-  { href: "/staff/rosters", label: "Rosters" },
-  { href: "/staff/retention", label: "Member retention" },
-];
+import { staffLinks } from "@/lib/staff-navigation";
 
 type RosterMember = {
   class_session_id: string;
@@ -76,7 +71,7 @@ export default async function StaffRosterPage({ params, searchParams }: { params
   const dataError = sessionResult.error ?? rosterResult.error;
 
   return (
-    <PortalShell audience="staff" eyebrow="Staff portal · Product B" title={session ? `${session.class_type_label} roster` : "Session roster"} description={session ? `${formatter.format(new Date(session.starts_at))} with ${session.instructor_name}` : "Review reservations and attendance eligibility for this session."} links={links}>
+    <PortalShell audience="staff" eyebrow="Staff portal · Product B" title={session ? `${session.class_type_label} roster` : "Session roster"} description={session ? `${formatter.format(new Date(session.starts_at))} with ${session.instructor_name}` : "Review reservations and attendance eligibility for this session."} links={staffLinks}>
       <MemberStatusMessage success={messages.success} error={messages.error} />
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3"><Link href="/staff/rosters" className="inline-flex min-h-11 items-center rounded-full px-2 text-sm font-semibold underline decoration-[#c72c25] decoration-2 underline-offset-4 focus-visible:outline-2 focus-visible:outline-[#c72c25] focus-visible:outline-offset-2">← All sessions</Link><StaffRosterRefresh /></div>
       {dataError ? (

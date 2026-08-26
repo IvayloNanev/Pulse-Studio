@@ -4,13 +4,9 @@ import { evaluateMemberRisk } from "@/app/staff/actions";
 import { MemberStatusMessage } from "@/components/member-status-message";
 import { PortalShell } from "@/components/portal-shell";
 import { StaffSubmitButton } from "@/components/staff-submit-button";
+import { StaffReason, StaffUrgencyBadge, StaffWorkflowLabel } from "@/components/staff-workflow-ui";
 import { requireStaff } from "@/lib/auth";
-
-const links = [
-  { href: "/staff", label: "Overview" },
-  { href: "/staff/rosters", label: "Rosters" },
-  { href: "/staff/retention", label: "Member retention" },
-];
+import { staffLinks } from "@/lib/staff-navigation";
 
 type RiskQueueItem = {
   risk_assessment_id: string;
@@ -48,8 +44,9 @@ function CaseCard({ item }: { item: RiskQueueItem }) {
   return (
     <article className="glass-panel grid h-full gap-5 rounded-3xl p-5 sm:p-6 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center">
       <div className="min-w-0">
-        <div className="flex flex-wrap gap-2">
-          <span className={`rounded-full px-2.5 py-1 text-xs font-semibold uppercase ${item.risk_level === "high" ? "bg-[#c72c25] text-white" : "bg-amber-100 text-amber-900"}`}>{item.risk_level} priority</span>
+        <StaffWorkflowLabel product="Product D" workflow="Re-engagement" />
+        <div className="mt-2 flex flex-wrap gap-2">
+          <StaffUrgencyBadge level={item.risk_level === "high" ? "urgent" : "attention"}>{item.risk_level} priority</StaffUrgencyBadge>
           <span className="rounded-full border border-black/15 bg-white/60 px-2.5 py-1 text-xs font-semibold capitalize">{item.review_status.replace("_", " ")}</span>
           {item.outreach_status && <span className="rounded-full border border-black/15 bg-white/60 px-2.5 py-1 text-xs font-semibold capitalize">Outreach {item.outreach_status}</span>}
         </div>
@@ -60,6 +57,7 @@ function CaseCard({ item }: { item: RiskQueueItem }) {
           <div className="rounded-2xl bg-white/55 p-3"><p className="text-2xl font-semibold text-[#a9231e]">−{item.decline_percentage}%</p><p className="text-xs text-black/65">Attendance</p></div>
         </div>
         <p className="mt-4 text-sm text-black/70">Last attended: {item.last_attended_at ? formatter.format(new Date(item.last_attended_at)) : "No recorded attendance"} · {item.active_note_count} staff note{item.active_note_count === 1 ? "" : "s"}</p>
+        <div className="mt-4"><StaffReason>Attendance declined {item.decline_percentage}% from {item.previous_visits} to {item.current_visits} visits. Next step: {nextAction(item).toLowerCase()}.</StaffReason></div>
         {item.outreach_blocked_reason && <p className="mt-2 text-sm font-medium text-[#8e211c]">{item.outreach_blocked_reason}</p>}
       </div>
       <Link href={`/staff/retention/${encodeURIComponent(item.risk_assessment_id)}`} className="inline-flex min-h-11 items-center justify-center rounded-full bg-black px-5 text-sm font-semibold text-white transition hover:bg-[#c72c25] focus-visible:outline-2 focus-visible:outline-[#c72c25] focus-visible:outline-offset-2">{nextAction(item)}</Link>
@@ -99,7 +97,7 @@ export default async function RetentionQueuePage({ searchParams }: { searchParam
   const highPriority = cases.filter((item) => item.risk_level === "high").length;
 
   return (
-    <PortalShell audience="staff" eyebrow="Staff portal · Product D" title="Member retention" description="Review attendance decline, coordinate staff notes, and complete member outreach from one prioritized workspace." links={links}>
+    <PortalShell audience="staff" eyebrow="Staff portal · Product D" title="Member retention" description="Review attendance decline, coordinate staff notes, and complete member outreach from one prioritized workspace." links={staffLinks}>
       <MemberStatusMessage success={messages.success} error={messages.error} />
       <section aria-labelledby="evaluate-member-heading" className="glass-panel mb-8 rounded-3xl p-5 sm:p-6">
         <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(20rem,0.8fr)] lg:items-end">

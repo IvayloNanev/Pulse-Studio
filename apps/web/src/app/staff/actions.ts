@@ -81,7 +81,10 @@ async function runRiskCommand(
 ) {
   const { supabase } = await requireStaff();
   const { error } = await supabase.rpc(command, args);
-  if (error) redirect(riskDestination(riskId, "error", error.message));
+  if (error) {
+    console.error("Product D case command failed", { riskId, command, code: error.code });
+    redirect(riskDestination(riskId, "error", "The case update could not be completed. Refresh and verify that the action is still eligible."));
+  }
   revalidatePath("/staff/retention");
   revalidatePath(`/staff/retention/${riskId}`);
   redirect(riskDestination(riskId, "success", success));
@@ -146,6 +149,19 @@ export async function completeOutreach(formData: FormData) {
   const outreachId = String(formData.get("outreach_id") ?? "");
   const response = String(formData.get("response") ?? "needs_support");
   return runRiskCommand(riskId, "complete_outreach", { p_outreach_id: outreachId, p_response: response }, "Outreach completed and risk case resolved.");
+}
+
+export async function createOutreachRetry(formData: FormData) {
+  const riskId = String(formData.get("risk_assessment_id") ?? "");
+  const message = String(formData.get("message") ?? "").trim();
+  if (!riskId || !message) redirect(riskDestination(riskId || "unknown", "error", "A message is required for the next outreach attempt."));
+  return runRiskCommand(riskId, "create_outreach_retry", { p_risk_assessment_id: riskId, p_message: message }, "The next outreach attempt is ready for staff review.");
+}
+
+export async function resolveNoResponse(formData: FormData) {
+  const riskId = String(formData.get("risk_assessment_id") ?? "");
+  if (!riskId) redirect(retentionDestination("error", "The retention case is missing."));
+  return runRiskCommand(riskId, "resolve_no_response", { p_risk_assessment_id: riskId }, "Case resolved after three unanswered outreach attempts.");
 }
 
 export async function dismissRiskCase(formData: FormData) {
