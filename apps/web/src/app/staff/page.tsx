@@ -1,3 +1,5 @@
+import Image from "next/image";
+
 import { FoundationGrid } from "@/components/foundation-grid";
 import { PortalShell } from "@/components/portal-shell";
 import { requireStaff } from "@/lib/auth";
@@ -16,5 +18,11 @@ const items = [
 
 export default async function StaffPortalPage() {
   await requireStaff();
-  return <PortalShell audience="staff" eyebrow="Staff portal" title="Today at Pulse" description="A separate operational workspace for schedules, attendance, and member re-engagement." links={links}><FoundationGrid items={items} /></PortalShell>;
+  return <PortalShell audience="staff" eyebrow="Staff portal" title="Today at Pulse" description="A separate operational workspace for schedules, attendance, and member re-engagement." links={links}>
+    <div className="mb-5 flex items-center gap-3" aria-label="Staff profile">
+      <Image src="/media/portraits/staff-coach.png" alt="Pulse Studio staff member" width={96} height={96} sizes="48px" className="size-12 rounded-full border border-black/10 object-cover shadow-sm" />
+      <div><p className="text-sm font-semibold">Pulse Studio staff</p><p className="text-xs text-black/60">Operations workspace</p></div>
+    </div>
+    <FoundationGrid items={items} />
+  </PortalShell>;
 }
