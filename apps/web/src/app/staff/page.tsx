@@ -31,7 +31,7 @@ export default async function StaffPortalPage({ searchParams }: { searchParams: 
   const [staffResult, sessionResult, decisionResult] = await Promise.all([
     supabase.from("staff_accounts").select("role").eq("staff_id", staffId).single(),
     supabase.from("staff_product_b_sessions")
-      .select("class_session_id,class_type,class_type_label,instructor_name,starts_at,ends_at,capacity,is_cancelled,confirmed_reservations,waitlisted_reservations,available_spots")
+      .select("class_session_id,class_type,class_type_label,instructor_name,starts_at,ends_at,capacity,is_cancelled,confirmed_reservations,waitlisted_reservations,available_spots,attended_count,no_show_count,marked_count")
       .gte("starts_at", new Date(now.getTime() - 24 * 60 * 60 * 1000).toISOString())
       .lt("starts_at", through.toISOString())
       .order("starts_at", { ascending: true }),

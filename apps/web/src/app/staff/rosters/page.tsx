@@ -16,6 +16,9 @@ type StaffSession = {
   waitlisted_reservations: number;
   available_spots: number;
   instructor_name: string;
+  attended_count: number;
+  no_show_count: number;
+  marked_count: number;
 };
 
 type AttendanceEligibility = {
@@ -45,6 +48,10 @@ function SessionCard({ session, actionable }: { session: StaffSession; actionabl
   const hasRoster = session.confirmed_reservations + session.waitlisted_reservations > 0;
   const timingLabel = !hasRoster
     ? "No reservations"
+    : session.marked_count === session.confirmed_reservations
+      ? "Attendance complete"
+      : session.marked_count > 0
+        ? `${session.marked_count}/${session.confirmed_reservations} marked`
     : actionable === "attended"
       ? "Check-in open"
       : actionable === "no_show"
@@ -94,7 +101,7 @@ export default async function StaffRostersPage() {
   const since = new Date(now.getTime() - 24 * 60 * 60 * 1000);
   const through = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
   const [scheduleResult, eligibilityResult] = await Promise.all([
-    supabase.from("staff_product_b_sessions").select("class_session_id,class_type,class_type_label,starts_at,capacity,confirmed_reservations,waitlisted_reservations,available_spots,instructor_name").gte("starts_at", since.toISOString()).lt("starts_at", through.toISOString()).order("starts_at", { ascending: true }),
+    supabase.from("staff_product_b_sessions").select("class_session_id,class_type,class_type_label,starts_at,capacity,confirmed_reservations,waitlisted_reservations,available_spots,instructor_name,attended_count,no_show_count,marked_count").gte("starts_at", since.toISOString()).lt("starts_at", through.toISOString()).order("starts_at", { ascending: true }),
     supabase.from("staff_session_roster").select("class_session_id,attendance_status,reservation_status,can_record_attended,can_record_no_show,starts_at").gte("starts_at", since.toISOString()).lt("starts_at", through.toISOString()),
   ]);
   const sessions = (scheduleResult.data ?? []) as StaffSession[];

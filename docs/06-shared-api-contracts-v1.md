@@ -118,6 +118,12 @@ Product B writes through two authenticated staff commands:
 - `record_attendance(p_reservation_id, p_attendance_status)` creates the initial outcome using the database clock and a generated stable identifier only for owner/admin or the session's assigned instructor. The client supplies neither `recorded_at` nor `attendance_record_id`.
 - `correct_attendance(p_attendance_record_id, p_new_status, p_reason)` applies the same session-assignment authorization, requires a non-empty reason, records the previous and new outcomes with the active staff identifier and correction time, and then updates the current attendance outcome.
 
+### Product B Stage 2 attendance workflow
+
+New attendance records store nullable `recorded_by_staff_id`, derived only from the authenticated Staff account. Historical rows remain `NULL` and Staff UI presents them as `Recorder unavailable`; no historical actor is inferred. `record_session_attendance_bulk(p_class_session_id, p_reservation_ids, p_attendance_status)` atomically records one outcome for an authorized set of confirmed, unmarked reservations in one session. It rejects cross-session, waitlisted, cancelled, already-marked, mistimed, or unauthorized targets and never accepts a caller-supplied Staff identity.
+
+Attendance lifecycle is derived from confirmed reservations: zero marked is not started, a partial count is in progress, and all eligible confirmed reservations marked is complete. A session with zero confirmed reservations is `No roster to process`, not complete. `staff_product_b_sessions` exposes narrow attended, no-show, and marked counts; `staff_session_roster` exposes original recorder display and ordered correction history only within the existing Product B access boundary.
+
 Direct attendance-status changes without a matching correction created in the same transaction are rejected. The original reservation association and original recording time remain immutable.
 
 ### Studio cancellation command

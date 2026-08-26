@@ -15,6 +15,9 @@ export type ProductBSession = {
   confirmed_reservations: number;
   waitlisted_reservations: number;
   available_spots: number;
+  attended_count: number;
+  no_show_count: number;
+  marked_count: number;
 };
 
 type Decision = {
@@ -48,6 +51,15 @@ export function SessionOperationsCard({
   canManageDecisions: boolean;
 }) {
   const status = getUnderbookingState(session.confirmed_reservations, session.capacity, session.is_cancelled);
+  const attendanceLabel = session.is_cancelled
+    ? "Cancelled session"
+    : session.confirmed_reservations === 0
+      ? "No roster to process"
+      : session.marked_count === 0
+        ? "Attendance not started"
+        : session.marked_count === session.confirmed_reservations
+          ? "Attendance complete"
+          : `${session.marked_count} of ${session.confirmed_reservations} marked`;
 
   return (
     <article className="glass-panel grid gap-5 rounded-3xl p-5 sm:p-6 lg:grid-cols-[minmax(0,1fr)_19rem]">
@@ -60,6 +72,7 @@ export function SessionOperationsCard({
         <p className="mt-4 font-mono text-xs uppercase tracking-[0.14em] text-black/60">{formatter.format(new Date(session.starts_at))}</p>
         <h3 className="mt-1 text-3xl font-semibold tracking-[-0.04em]">{names[session.class_type]}</h3>
         <p className="mt-1 text-sm text-black/60">{session.class_type_label} with {session.instructor_name}</p>
+        <p className="mt-3 text-sm font-semibold">{attendanceLabel}</p>
         <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
           <Metric label="Utilization" value={`${status.utilization}%`} />
           <Metric label="Confirmed" value={`${session.confirmed_reservations}/${session.capacity}`} />
