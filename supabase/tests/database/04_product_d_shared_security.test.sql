@@ -1,7 +1,7 @@
 begin;
 
 create extension if not exists pgtap with schema extensions;
-select plan(31);
+select plan(50);
 
 insert into public.staff_accounts (staff_id, auth_subject, first_name, last_name, email, role, account_status, created_at) values
   ('TEST-PD-OWNER', '50000000-0000-4000-8000-000000000001', 'Retention', 'Owner', 'pd.owner@pulse.example', 'owner_admin', 'active', now()),
@@ -50,8 +50,12 @@ values ('TEST-PD-ACTION', 'TEST-PD-OUTREACH', 'created', 'TEST-PD-OWNER', now() 
 
 select is((select count(*)::integer from information_schema.routine_privileges where routine_schema = 'public' and routine_name = 'product_d_risk_queue' and grantee = 'PUBLIC'), 0, 'PUBLIC has no Product D queue execution grant');
 select is((select count(*)::integer from information_schema.routine_privileges where routine_schema = 'public' and routine_name = 'product_d_member_detail' and grantee = 'PUBLIC'), 0, 'PUBLIC has no Product D detail execution grant');
+select is((select count(*)::integer from information_schema.routine_privileges where routine_schema = 'public' and routine_name = 'product_d_evaluation_member_options' and grantee = 'PUBLIC'), 0, 'PUBLIC has no Product D evaluation-options execution grant');
+select is((select count(*)::integer from information_schema.routine_privileges where routine_schema = 'public' and routine_name = 'product_d_case_history' and grantee = 'PUBLIC'), 0, 'PUBLIC has no Product D case-history execution grant');
 select ok(not has_function_privilege('anon', 'public.product_d_risk_queue()', 'execute'), 'anonymous role has no queue execution privilege');
 select ok(not has_function_privilege('anon', 'public.product_d_member_detail(text)', 'execute'), 'anonymous role has no detail execution privilege');
+select ok(not has_function_privilege('anon', 'public.product_d_evaluation_member_options()', 'execute'), 'anonymous role has no evaluation-options execution privilege');
+select ok(not has_function_privilege('anon', 'public.product_d_case_history()', 'execute'), 'anonymous role has no case-history execution privilege');
 
 select set_config('request.jwt.claim.sub', '50000000-0000-4000-8000-000000000001', true);
 set local role authenticated;
@@ -59,6 +63,10 @@ select is((select count(*)::integer from public.members where member_id = 'TEST-
 select is((select count(*)::integer from public.reservations where member_id = 'TEST-PD-MEMBER'), 2, 'owner retains global canonical reservation access');
 select is((select count(*)::integer from public.product_d_risk_queue() where risk_assessment_id = 'TEST-PD-RISK'), 1, 'owner receives the fixture in the global Product D queue');
 select is((select count(*)::integer from public.product_d_member_detail('TEST-PD-RISK')), 1, 'owner receives Product D member detail');
+select is((select previous_visits from public.product_d_risk_queue() where risk_assessment_id = 'TEST-PD-RISK'), 8, 'owner queue receives expanded previous-visit metrics');
+select is((select decline_percentage from public.product_d_member_detail('TEST-PD-RISK')), 75.0::numeric, 'owner detail receives expanded journey metrics');
+select is((select count(*)::integer from public.product_d_evaluation_member_options() where member_id = 'TEST-PD-MEMBER'), 1, 'owner receives the Product D evaluation member option');
+select is((select count(*)::integer from public.product_d_case_history() where risk_assessment_id = 'TEST-PD-RISK'), 1, 'owner receives fixed-purpose Product D case history');
 reset role;
 
 select set_config('request.jwt.claim.sub', '50000000-0000-4000-8000-000000000002', true);
@@ -82,6 +90,11 @@ select is((select jsonb_array_length(active_notes) from public.product_d_member_
 select is((select jsonb_array_length(outreach_attempts) from public.product_d_member_detail('TEST-PD-RISK')), 1, 'Product D outreach context remains complete');
 select is((select email from public.product_d_member_detail('TEST-PD-RISK')), 'pd.member@pulse.example', 'approved full email visibility is preserved');
 select is((select phone from public.product_d_member_detail('TEST-PD-RISK')), '+1-212-555-0199', 'approved full phone visibility is preserved');
+select is((select count(*)::integer from public.product_d_evaluation_member_options() where member_id = 'TEST-PD-MEMBER'), 1, 'active instructor receives evaluation options through the hardened RPC');
+select is((select count(*)::integer from public.product_d_case_history() where risk_assessment_id = 'TEST-PD-RISK'), 1, 'active instructor receives case history through the hardened RPC');
+select is((select can_start_outreach from public.product_d_member_detail('TEST-PD-RISK')), false, 'detail returns current outreach eligibility for the journey');
+select is((select outreach_blocked_reason from public.product_d_member_detail('TEST-PD-RISK')), 'An outreach attempt is already being prepared', 'detail returns the current outreach block reason');
+select ok((select outreach_attempts -> 0 ? 'cooldown_until' from public.product_d_member_detail('TEST-PD-RISK')), 'detail outreach attempts include the cooldown field required by the journey');
 select ok(not (select to_jsonb(queue) ? 'member_id' from public.product_d_risk_queue() as queue limit 1), 'queue RPC omits unused canonical member ID');
 select ok(not (select attendance_evidence -> 0 ? 'reservation_id' from public.product_d_member_detail('TEST-PD-RISK')), 'detail evidence omits unused reservation ID');
 select is((select review_status::text from public.start_risk_review('TEST-PD-RISK')), 'in_progress', 'active instructor Product D mutation command remains functional');
@@ -91,16 +104,22 @@ reset role;
 select set_config('request.jwt.claim.sub', '50000000-0000-4000-8000-000000000004', true);
 set local role authenticated;
 select throws_ok($$select * from public.product_d_risk_queue()$$, 'P0001', 'active staff account required', 'inactive staff cannot execute Product D queue reads');
+select throws_ok($$select * from public.product_d_evaluation_member_options()$$, 'P0001', 'active staff account required', 'inactive staff cannot execute Product D evaluation-options reads');
+select throws_ok($$select * from public.product_d_case_history()$$, 'P0001', 'active staff account required', 'inactive staff cannot execute Product D case-history reads');
 reset role;
 
 select set_config('request.jwt.claim.sub', '50000000-0000-4000-8000-000000000005', true);
 set local role authenticated;
 select throws_ok($$select * from public.product_d_member_detail('TEST-PD-RISK')$$, 'P0001', 'active staff account required', 'authenticated member cannot execute Product D detail reads');
+select throws_ok($$select * from public.product_d_evaluation_member_options()$$, 'P0001', 'active staff account required', 'authenticated member cannot execute Product D evaluation-options reads');
+select throws_ok($$select * from public.product_d_case_history()$$, 'P0001', 'active staff account required', 'authenticated member cannot execute Product D case-history reads');
 reset role;
 
 set local role anon;
 select throws_ok($$select * from public.product_d_risk_queue()$$, '42501', null, 'anonymous caller cannot execute Product D queue reads');
 select throws_ok($$select * from public.product_d_member_detail('TEST-PD-RISK')$$, '42501', null, 'anonymous caller cannot execute Product D detail reads');
+select throws_ok($$select * from public.product_d_evaluation_member_options()$$, '42501', null, 'anonymous caller cannot execute Product D evaluation-options reads');
+select throws_ok($$select * from public.product_d_case_history()$$, '42501', null, 'anonymous caller cannot execute Product D case-history reads');
 reset role;
 
 select * from finish();

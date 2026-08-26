@@ -12,6 +12,7 @@ Supabase Auth owns credentials. Pulse Studio stores no passwords or password has
 - `owner_admin` and `instructor` are the only staff roles.
 - Product D is available equally to active instructors and owner/admins, as required by Business Rules v1.
 - Product D global retention facts are exposed through fixed-purpose Staff-authorized interfaces; this workflow permission does not grant instructors broad canonical-table access.
+- Product D evaluation selectors and case-history visualizations use dedicated minimal interfaces rather than direct global `members` or risk-detail reads.
 
 ## Access matrix
 

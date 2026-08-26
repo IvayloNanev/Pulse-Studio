@@ -252,7 +252,7 @@ Denial requires a reason and records the owner/admin actor and decision time. A 
 
 ## 4. Product D risk queue and member review
 
-**Database interfaces:** `public.product_d_risk_queue()` and `public.product_d_member_detail(p_risk_assessment_id)`
+**Database interfaces:** `public.product_d_risk_queue()`, `public.product_d_member_detail(p_risk_assessment_id)`, `public.product_d_evaluation_member_options()`, and `public.product_d_case_history()`
 **Consumer:** Product D only
 **Authorization:** active authenticated staff only; no anonymous or member access
 
@@ -264,7 +264,7 @@ These fixed-purpose, security-definer functions validate the authenticated activ
 
 | Field group | Included facts |
 |---|---|
-| Identity | `risk_assessment_id`, `member_id`, `member_name` |
+| Identity | `risk_assessment_id`, `member_name` |
 | Priority | `risk_level`, `risk_priority`, `review_status`, `evaluated_at` |
 | Evidence | Both 30-day windows, previous/current visits, decline, plain-language `risk_reason`, `last_attended_at` |
 | Collaboration | `active_note_count` |
@@ -285,6 +285,14 @@ Consumers sort `risk_priority` ascending, then the oldest unresolved case first.
 - the next available class recommendation, preferring the member's historically attended class type.
 
 The class recommendation is nullable when no future non-cancelled class has capacity. It is derived from the shared public schedule and is never stored as an independent fact.
+
+### Evaluation options and case history
+
+`product_d_evaluation_member_options()` exposes only the member ID, first name, last name, and email consumed by the Staff evaluation selector. It does not grant instructors direct global access to `members`.
+
+`product_d_case_history()` exposes only the assessment identity, member display name, evaluation metrics, review/resolution state, and minimal outreach outcome required by the authoritative history graph. It returns no contact details, reservation identifiers, or unrelated canonical facts.
+
+The expanded queue contract supplies the previous/current visit totals and decline percentage rendered by the prioritized queue. The expanded detail contract supplies evaluation, resolution, outreach cooldown, and eligibility facts required by the detail and case-journey screens.
 
 Product B direct instructor reads remain assignment-scoped. Product D's dedicated functions deliberately cross that direct-table boundary for the authorized global retention workflow, so evidence remains complete when the member attended classes taught by other instructors. Product A member-owned policies and Product C public schedule access are unchanged.
 

@@ -1,13 +1,16 @@
+import { FoundationGrid } from "@/components/foundation-grid";
 import { MemberStatusMessage } from "@/components/member-status-message";
 import { PortalShell } from "@/components/portal-shell";
 import { ProductBSession, SessionOperationsCard } from "@/components/staff/session-operations-card";
 import { requireStaff } from "@/lib/auth";
 import { getUnderbookingState } from "@/lib/product-b/underbooking";
+import { staffLinks } from "@/lib/staff-navigation";
 
-const links = [
-  { href: "/staff", label: "Overview" },
-  { href: "/staff/rosters", label: "Rosters" },
-  { href: "/staff/retention", label: "Member retention" },
+const items = [
+  { href: "/staff/rosters", title: "Schedule and rosters", description: "Open upcoming sessions, check capacity, and review confirmed or waitlisted members.", label: "Product B · Studio operations" },
+  { href: "/staff/rosters", title: "Record attendance", description: "Record attended or no-show outcomes within the approved check-in window.", label: "Product B · Studio operations" },
+  { href: "/staff/retention", title: "Retention queue", description: "Prioritize members whose attendance has declined and review the supporting evidence.", label: "Product D · Re-engagement" },
+  { href: "/staff/retention", title: "Outreach and follow-up", description: "Prepare outreach, record responses, and manage eligible follow-up attempts.", label: "Product D · Re-engagement" },
 ];
 
 type Decision = {
@@ -59,8 +62,12 @@ export default async function StaffPortalPage({ searchParams }: { searchParams: 
   const error = sessionResult.error ?? decisionResult.error ?? staffResult.error;
 
   return (
-    <PortalShell audience="staff" eyebrow="Staff portal · Product B" title="Operations command center" description="Understand current demand, respond to underbooking, and move directly into authorized roster and attendance work." links={links}>
+    <PortalShell audience="staff" eyebrow="Staff portal · Product B" title="Operations command center" description="Understand current demand, respond to underbooking, and move directly into authorized roster and attendance work." links={staffLinks}>
       <MemberStatusMessage success={messages.success} error={messages.error} />
+      <section aria-labelledby="staff-workflows-heading" className="mb-10">
+        <div className="mb-4"><h2 id="staff-workflows-heading" className="text-2xl font-semibold">Staff workflows</h2><p className="mt-1 text-sm text-black/65">Move between studio operations and member re-engagement without leaving the shared Staff workspace.</p></div>
+        <FoundationGrid items={items} />
+      </section>
       {error ? (
         <div role="alert" className="rounded-2xl border border-black/15 bg-white/65 p-6 text-sm text-[#8e211c]">The authorized Product B session feed could not be loaded.</div>
       ) : sessions.length === 0 ? (

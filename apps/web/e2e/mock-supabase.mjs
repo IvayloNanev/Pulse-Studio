@@ -74,11 +74,38 @@ const server = http.createServer(async (request, response) => {
       risk_priority: 1,
       review_status: "pending",
       evaluated_at: new Date().toISOString(),
+      previous_visits: 8,
+      current_visits: 2,
+      decline_percentage: 75,
       risk_reason: "Visits fell from 8 to 2: 75% decline",
       last_attended_at: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString(),
       active_note_count: 1,
       outreach_status: "draft",
       outreach_blocked_reason: "An outreach attempt is already being prepared",
+    }]));
+    return;
+  }
+
+  if (request.url?.startsWith("/rest/v1/rpc/product_d_evaluation_member_options")) {
+    response.writeHead(200);
+    response.end(JSON.stringify([{ member_id: "MEM-E2E-PD", first_name: "Evelyn", last_name: "Rivera", email: "evelyn@pulse.example" }]));
+    return;
+  }
+
+  if (request.url?.startsWith("/rest/v1/rpc/product_d_case_history")) {
+    response.writeHead(200);
+    response.end(JSON.stringify([{
+      risk_assessment_id: "RISK-E2E-PD",
+      member_name: "Evelyn Rivera",
+      risk_level: "high",
+      review_status: "pending",
+      evaluated_at: new Date().toISOString(),
+      resolved_at: null,
+      resolution_reason: null,
+      previous_visits: 8,
+      current_visits: 2,
+      decline_percentage: 75,
+      outreach_attempts: [{ response_outcome: null }],
     }]));
     return;
   }
@@ -97,6 +124,12 @@ const server = http.createServer(async (request, response) => {
       risk_level: "high",
       review_status: "pending",
       risk_reason: "Visits fell from 8 to 2: 75% decline",
+      evaluated_at: new Date().toISOString(),
+      previous_visits: 8,
+      current_visits: 2,
+      decline_percentage: 75,
+      resolved_at: null,
+      resolution_reason: null,
       previous_period_start: new Date(Date.now() - 60 * 24 * 60 * 60 * 1000).toISOString(),
       previous_period_end: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
       current_period_start: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
@@ -106,11 +139,13 @@ const server = http.createServer(async (request, response) => {
         { attendance_record_id: "ATT-E2E-PD-2", class_type: "cycling", starts_at: currentAttendance },
       ],
       active_notes: [{ note_id: "NOTE-E2E-PD", body: "Member preferred evening classes last month.", author_name: "Jordan Lee", created_at: currentAttendance }],
-      outreach_attempts: [{ outreach_id: "OUT-E2E-PD", attempt_number: 1, channel: "email", original_message: "We would love to help you return.", final_message: "We would love to help you return.", status: "draft", response_outcome: null, sent_at: null }],
+      outreach_attempts: [{ outreach_id: "OUT-E2E-PD", attempt_number: 1, channel: "email", original_message: "We would love to help you return.", final_message: "We would love to help you return.", status: "draft", response_outcome: null, sent_at: null, cooldown_until: null }],
       recommended_class_type_label: "Yoga",
       recommended_starts_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
       recommended_instructor_name: "Morgan Chen",
       recommended_available_spots: 4,
+      can_start_outreach: false,
+      outreach_blocked_reason: "An outreach attempt is already being prepared",
     }]));
     return;
   }

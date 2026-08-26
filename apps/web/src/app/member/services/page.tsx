@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { BookOpen, Compass, MessageCircle, PauseCircle, ShieldCheck, TicketCheck, UserRoundPlus, Users } from "lucide-react";
 
 import { MemberPauseRequestForm } from "@/components/member-pause-request-form";
@@ -40,10 +41,10 @@ export default async function MemberServicesPage({ searchParams }: { searchParam
     { title: "Class preparation", detail: "Ask what to bring and how to prepare before your next session.", href: "/member?assistant=open", icon: BookOpen },
   ];
   const memberPrograms = [
-    { key: "friend_referral" as const, title: "Refer a friend", detail: "Invite someone you know to discover Pulse Studio. Submit their information and the studio team will review the introduction.", label: "Submit referral", needsGuest: true, icon: UserRoundPlus },
-    { key: "guest_pass" as const, title: "Guest pass", detail: "Request a studio visit for a friend. Guest-pass availability is reviewed before an invitation is confirmed.", label: "Request guest pass", needsGuest: true, icon: TicketCheck },
-    { key: "mission_guide" as const, title: "Mission Guide", detail: "Enroll for guided monthly movement goals, class suggestions, and milestones designed to keep your routine progressing.", label: "Join Mission Guide", needsGuest: false, icon: Compass },
-    { key: "wellness_orientation" as const, title: "Wellness orientation", detail: "Ask for a studio orientation to discuss class formats, weekly planning, and the best place to begin.", label: "Request orientation", needsGuest: false, icon: Users },
+    { key: "friend_referral" as const, title: "Refer a friend", detail: "Invite someone you know to discover Pulse Studio. Submit their information and the studio team will review the introduction.", label: "Submit referral", needsGuest: true, icon: UserRoundPlus, image: "/media/services/referral.jpg", objectPosition: "center 8%" },
+    { key: "guest_pass" as const, title: "Guest pass", detail: "Request a studio visit for a friend. Guest-pass availability is reviewed before an invitation is confirmed.", label: "Request guest pass", needsGuest: true, icon: TicketCheck, image: "/media/services/guest-pass.jpg", objectPosition: "center 6%" },
+    { key: "mission_guide" as const, title: "Mission Guide", detail: "Enroll for guided monthly movement goals, class suggestions, and milestones designed to keep your routine progressing.", label: "Join Mission Guide", needsGuest: false, icon: Compass, image: "/media/services/mission-guide.jpg", objectPosition: "center top" },
+    { key: "wellness_orientation" as const, title: "Wellness orientation", detail: "Ask for a studio orientation to discuss class formats, weekly planning, and the best place to begin.", label: "Request orientation", needsGuest: false, icon: Users, image: "/media/services/wellness-orientation.jpg", objectPosition: "center 4%" },
   ];
 
   return <PortalShell audience="member" eyebrow="Member portal" title="Services" description="Studio support and membership guidance." links={memberLinks} showHeader={false}>
@@ -55,13 +56,16 @@ export default async function MemberServicesPage({ searchParams }: { searchParam
       <h2 id="member-programs-title" className="mt-2 text-2xl font-semibold tracking-[-0.04em] sm:text-3xl">More ways to take part</h2>
       <p className="mt-2 max-w-2xl text-sm leading-6 text-black/65">Submit a service request here, then return to see whether it is submitted, under review, approved, or completed.</p>
       {programResult.error ? <div role="alert" className="mt-5 rounded-2xl border border-black/15 bg-white/70 p-4 text-sm text-[#8e211c]">Member programs are temporarily unavailable.</div> : <div className="mt-5 grid gap-3 md:grid-cols-2">
-        {memberPrograms.map(({ key, title, detail, label, needsGuest, icon: Icon }) => {
+        {memberPrograms.map(({ key, title, detail, label, needsGuest, icon: Icon, image, objectPosition }) => {
           const openRequest = programRequests.find((request) => request.program_key === key && ["submitted", "in_review", "approved"].includes(request.status));
           const cancellable = openRequest && ["submitted", "in_review"].includes(openRequest.status);
-          return <article key={key} className="flex h-full flex-col rounded-2xl border border-black/10 bg-white/72 p-4 shadow-[0_0.75rem_2rem_rgba(17,17,17,0.05)] backdrop-blur-xl">
-            <div className="flex items-start justify-between gap-3"><span className="grid size-9 place-items-center rounded-full bg-[#c72c25] text-white"><Icon className="size-4" aria-hidden="true" /></span>{openRequest ? <span className="rounded-full border border-black/10 bg-[#f7f4ee] px-2.5 py-1 text-xs font-semibold capitalize text-black/70">{openRequest.status.replace("_", " ")}</span> : null}</div>
-            <h3 className="mt-4 text-lg font-semibold">{title}</h3><p className="mt-1.5 text-sm leading-5 text-black/65">{detail}</p>
-            {openRequest ? <div className="mt-auto pt-4"><p className="rounded-xl border border-black/10 bg-[#f7f4ee] p-3 text-sm text-black/70">Request submitted {dateFormatter.format(new Date(openRequest.requested_at))}{openRequest.guest_name ? ` for ${openRequest.guest_name}` : ""}. {cancellable ? "You may cancel while studio review is pending." : "The studio has approved this request; contact staff if your plans change."}</p>{cancellable ? <CancelMemberProgramRequest requestId={openRequest.program_request_id} /> : null}</div> : <div className="mt-auto pt-4"><MemberProgramRequestForm programKey={key} label={label} needsGuest={needsGuest} /></div>}
+          return <article key={key} className="flex h-full min-w-0 flex-col overflow-hidden rounded-2xl border border-black/10 bg-white/72 shadow-[0_0.75rem_2rem_rgba(17,17,17,0.05)] backdrop-blur-xl">
+            {!openRequest ? <div className="relative aspect-[2/1] overflow-hidden bg-[#d8cec1]"><Image src={image} alt="" fill sizes="(min-width: 1440px) 42rem, (min-width: 768px) 42vw, calc(100vw - 4rem)" className="object-cover" style={{ objectPosition }} /></div> : null}
+            <div className="flex flex-1 flex-col p-4">
+              <div className="flex items-start justify-between gap-3"><span className="grid size-9 place-items-center rounded-full bg-[#c72c25] text-white"><Icon className="size-4" aria-hidden="true" /></span>{openRequest ? <span className="rounded-full border border-black/10 bg-[#f7f4ee] px-2.5 py-1 text-xs font-semibold capitalize text-black/70">{openRequest.status.replace("_", " ")}</span> : null}</div>
+              <h3 className="mt-4 text-lg font-semibold">{title}</h3><p className="mt-1.5 text-sm leading-5 text-black/65">{detail}</p>
+              {openRequest ? <div className="mt-auto pt-4"><p className="rounded-xl border border-black/10 bg-[#f7f4ee] p-3 text-sm text-black/70">Request submitted {dateFormatter.format(new Date(openRequest.requested_at))}{openRequest.guest_name ? ` for ${openRequest.guest_name}` : ""}. {cancellable ? "You may cancel while studio review is pending." : "The studio has approved this request; contact staff if your plans change."}</p>{cancellable ? <CancelMemberProgramRequest requestId={openRequest.program_request_id} /> : null}</div> : <div className="mt-auto pt-4"><MemberProgramRequestForm programKey={key} label={label} needsGuest={needsGuest} /></div>}
+            </div>
           </article>;
         })}
       </div>}
