@@ -61,7 +61,8 @@ test("owner sees live underbooking and preserves a decision across refresh", asy
   await page.getByRole("button", { name: "Sign in as staff" }).click();
 
   await expect(page).toHaveURL(/\/staff$/);
-  await expect(page.getByRole("heading", { name: "Operations command center" })).toBeVisible();
+  await page.goto("/staff/rosters");
+  await expect(page.getByRole("heading", { name: "Class rosters" })).toBeVisible();
   const attention = page.getByRole("region", { name: "Needs attention" });
   await expect(attention.getByText("40%", { exact: true })).toBeVisible();
   await expect(attention.getByText("Moderate", { exact: true })).toBeVisible();
@@ -71,7 +72,7 @@ test("owner sees live underbooking and preserves a decision across refresh", asy
   await attention.getByLabel("Operational response").selectOption("promote_class");
   await attention.getByLabel("Optional note").fill("Promote in the afternoon newsletter");
   const [createResponse] = await Promise.all([
-    page.waitForResponse((response) => response.request().method() === "POST" && new URL(response.url()).pathname === "/staff"),
+    page.waitForResponse((response) => response.request().method() === "POST" && new URL(response.url()).pathname === "/staff/rosters"),
     attention.getByRole("button", { name: "Save decision" }).click(),
   ]);
   const createRedirect = decodeURIComponent(createResponse.headers()["x-action-redirect"] ?? "").split(";")[0];
@@ -84,7 +85,7 @@ test("owner sees live underbooking and preserves a decision across refresh", asy
   await expect(page.getByText("Promote in the afternoon newsletter", { exact: true }).first()).toBeVisible();
 
   const [resolveResponse] = await Promise.all([
-    page.waitForResponse((response) => response.request().method() === "POST" && new URL(response.url()).pathname === "/staff"),
+    page.waitForResponse((response) => response.request().method() === "POST" && new URL(response.url()).pathname === "/staff/rosters"),
     attention.getByRole("button", { name: "Resolve decision" }).click(),
   ]);
   const resolveRedirect = decodeURIComponent(resolveResponse.headers()["x-action-redirect"] ?? "").split(";")[0];
@@ -98,7 +99,7 @@ test("owner sees live underbooking and preserves a decision across refresh", asy
   await attention.getByLabel("Operational response").selectOption("monitor");
   await attention.getByLabel("Optional note").fill("Monitor the renewed underbooking warning");
   const [secondCreateResponse] = await Promise.all([
-    page.waitForResponse((response) => response.request().method() === "POST" && new URL(response.url()).pathname === "/staff"),
+    page.waitForResponse((response) => response.request().method() === "POST" && new URL(response.url()).pathname === "/staff/rosters"),
     attention.getByRole("button", { name: "Save decision" }).click(),
   ]);
   const secondCreateRedirect = decodeURIComponent(secondCreateResponse.headers()["x-action-redirect"] ?? "").split(";")[0];

@@ -150,7 +150,7 @@ export function LoginPanel({ audience, initialNotice = null, initialError = null
               <label htmlFor={`${audience}-password`} className="block text-sm font-medium">Password</label>
               <div className="relative mt-2">
                 <input id={`${audience}-password`} required type={showPassword ? "text" : "password"} autoComplete="current-password" value={password} onChange={(event) => setPassword(event.target.value)} className="h-12 w-full rounded-xl border border-black/20 bg-white/60 px-4 pr-20 focus-visible:border-black/20 focus-visible:outline-2 focus-visible:outline-[#c72c25] focus-visible:outline-offset-2" />
-                <button type="button" aria-pressed={showPassword} aria-label={showPassword ? "Hide password" : "Show password"} onClick={() => setShowPassword((visible) => !visible)} className="absolute inset-y-1 right-1 min-w-16 rounded-lg px-3 text-sm font-semibold text-black/65 transition hover:bg-black/[0.06] hover:text-black focus-visible:outline-2 focus-visible:outline-[#c72c25] focus-visible:outline-offset-2">
+                <button type="button" aria-pressed={showPassword} aria-label={showPassword ? "Conceal entry" : "Reveal entry"} onClick={() => setShowPassword((visible) => !visible)} className="absolute inset-y-1 right-1 min-w-16 rounded-lg px-3 text-sm font-semibold text-black/65 transition hover:bg-black/[0.06] hover:text-black focus-visible:outline-2 focus-visible:outline-[#c72c25] focus-visible:outline-offset-2">
                   {showPassword ? "Hide" : "Show"}
                 </button>
               </div>

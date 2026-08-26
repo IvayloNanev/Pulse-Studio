@@ -17,7 +17,7 @@ function riskDestination(riskId: string, type: "success" | "error", message: str
 }
 
 function staffDestination(type: "success" | "error", message: string) {
-  return `/staff?${type}=${encodeURIComponent(message)}`;
+  return `/staff/rosters?${type}=${encodeURIComponent(message)}`;
 }
 
 function riskJourneyDestination(riskId: string, type: "success" | "error", message: string) {
@@ -188,6 +188,7 @@ export async function createUnderbookingDecision(formData: FormData) {
   const { error } = await supabase.rpc("create_product_b_underbooking_decision", { p_class_session_id: sessionId, p_action: action, p_note: note || null });
   if (error) redirect(staffDestination("error", productBDecisionErrorMessage(error)));
   revalidatePath("/staff");
+  revalidatePath("/staff/rosters");
   redirect(staffDestination("success", "Operational decision saved."));
 }
 
@@ -200,6 +201,7 @@ export async function resolveUnderbookingDecision(formData: FormData) {
   const { error } = await supabase.rpc("resolve_product_b_underbooking_decision", { p_decision_id: decisionId });
   if (error) redirect(staffDestination("error", productBDecisionErrorMessage(error)));
   revalidatePath("/staff");
+  revalidatePath("/staff/rosters");
   redirect(staffDestination("success", "Operational decision resolved."));
 }
 
