@@ -50,7 +50,6 @@ export default async function StaffPortalPage() {
         sessions={sessions}
         scheduleError={Boolean(scheduleResult.error)}
         allowInstructorFilter={account?.role === "owner_admin"}
-        rosterBasePath="/staff/rosters"
       />
     </PortalShell>
   );
