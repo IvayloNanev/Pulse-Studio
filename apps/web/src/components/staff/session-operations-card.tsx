@@ -7,6 +7,7 @@ export type ProductBSession = {
   class_session_id: string;
   class_type: "yoga" | "cycling" | "hiit";
   class_type_label: string;
+  instructor_staff_id: string;
   instructor_name: string;
   starts_at: string;
   ends_at: string;

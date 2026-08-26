@@ -17,6 +17,14 @@ const productBStartsAt = new Date(Date.now() - 21 * 60 * 1000).toISOString();
 const productBEndsAt = new Date(Date.now() + 39 * 60 * 1000).toISOString();
 const productBStage3StartsAt = new Date(Date.now() + 48 * 60 * 60 * 1000).toISOString();
 const productBStage3EndsAt = new Date(Date.now() + 49 * 60 * 60 * 1000).toISOString();
+const productBCalendarYogaStartsAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+const productBCalendarYogaEndsAt = new Date(Date.now() + 25 * 60 * 60 * 1000).toISOString();
+const productBCalendarHiitStartsAt = new Date(Date.now() + 48 * 60 * 60 * 1000).toISOString();
+const productBCalendarHiitEndsAt = new Date(Date.now() + 49 * 60 * 60 * 1000).toISOString();
+const productBCalendarCyclingStartsAt = new Date(Date.now() + 72 * 60 * 60 * 1000).toISOString();
+const productBCalendarCyclingEndsAt = new Date(Date.now() + 73 * 60 * 60 * 1000).toISOString();
+const productBCalendarPriorStartsAt = new Date(Date.now() - 8 * 24 * 60 * 60 * 1000).toISOString();
+const productBCalendarPriorEndsAt = new Date(Date.now() - 8 * 24 * 60 * 60 * 1000 + 60 * 60 * 1000).toISOString();
 let productBStage3Cancelled = false;
 let productBStage3Actions = [];
 const productBStage3Roster = [
@@ -260,10 +268,11 @@ const server = http.createServer(async (request, response) => {
         return;
       }
       const marked = productBRoster.filter((member) => member.reservation_status === "confirmed" && member.attendance_status).length;
-      response.end(JSON.stringify([{
+      const stage2Session = {
         class_session_id: "SESSION-E2E-PB",
         class_type: "cycling",
         class_type_label: "Cycling",
+        instructor_staff_id: "STF-0001",
         instructor_name: "Jordan Lee",
         starts_at: productBStartsAt,
         ends_at: productBEndsAt,
@@ -275,7 +284,80 @@ const server = http.createServer(async (request, response) => {
         attended_count: productBRoster.filter((member) => member.attendance_status === "attended").length,
         no_show_count: productBRoster.filter((member) => member.attendance_status === "no_show").length,
         marked_count: marked,
-      }]));
+      };
+      if (request.url.includes("class_session_id=eq.SESSION-E2E-PB")) {
+        response.end(JSON.stringify([stage2Session]));
+        return;
+      }
+      const calendarSessions = [stage2Session, {
+        class_session_id: "SESSION-E2E-CALENDAR-YOGA",
+        class_type: "yoga",
+        class_type_label: "Yoga",
+        instructor_staff_id: "STF-0001",
+        instructor_name: "Jordan Lee",
+        starts_at: productBCalendarYogaStartsAt,
+        ends_at: productBCalendarYogaEndsAt,
+        capacity: 12,
+        is_cancelled: false,
+        confirmed_reservations: 9,
+        waitlisted_reservations: 0,
+        available_spots: 3,
+        attended_count: 0,
+        no_show_count: 0,
+        marked_count: 0,
+      }, {
+        class_session_id: "SESSION-E2E-CALENDAR-HIIT",
+        class_type: "hiit",
+        class_type_label: "HIIT",
+        instructor_staff_id: "STF-0001",
+        instructor_name: "Jordan Lee",
+        starts_at: productBCalendarHiitStartsAt,
+        ends_at: productBCalendarHiitEndsAt,
+        capacity: 10,
+        is_cancelled: true,
+        confirmed_reservations: 0,
+        waitlisted_reservations: 0,
+        available_spots: 10,
+        attended_count: 0,
+        no_show_count: 0,
+        marked_count: 0,
+      }, {
+        class_session_id: "SESSION-E2E-CALENDAR-CYCLING",
+        class_type: "cycling",
+        class_type_label: "Cycling",
+        instructor_staff_id: "STF-0002",
+        instructor_name: "Morgan Chen",
+        starts_at: productBCalendarCyclingStartsAt,
+        ends_at: productBCalendarCyclingEndsAt,
+        capacity: 20,
+        is_cancelled: false,
+        confirmed_reservations: 16,
+        waitlisted_reservations: 1,
+        available_spots: 4,
+        attended_count: 0,
+        no_show_count: 0,
+        marked_count: 0,
+      }, {
+        class_session_id: "SESSION-E2E-CALENDAR-PRIOR",
+        class_type: "yoga",
+        class_type_label: "Yoga",
+        instructor_staff_id: "STF-0001",
+        instructor_name: "Jordan Lee",
+        starts_at: productBCalendarPriorStartsAt,
+        ends_at: productBCalendarPriorEndsAt,
+        capacity: 12,
+        is_cancelled: false,
+        confirmed_reservations: 8,
+        waitlisted_reservations: 0,
+        available_spots: 4,
+        attended_count: 8,
+        no_show_count: 0,
+        marked_count: 8,
+      }];
+      const scheduleFilters = new URL(request.url, "http://127.0.0.1").searchParams.getAll("starts_at");
+      const lowerBound = scheduleFilters.find((value) => value.startsWith("gte."))?.slice(4);
+      const upperBound = scheduleFilters.find((value) => value.startsWith("lt."))?.slice(3);
+      response.end(JSON.stringify(calendarSessions.filter((session) => (!lowerBound || session.starts_at >= lowerBound) && (!upperBound || session.starts_at < upperBound))));
       return;
     }
     if (request.url.startsWith("/rest/v1/staff_session_roster")) {
