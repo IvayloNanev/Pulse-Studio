@@ -13,6 +13,14 @@ const staffUser = {
 };
 let productBDecisions = [];
 let productBDecisionSequence = 0;
+const productBStartsAt = new Date(Date.now() - 21 * 60 * 1000).toISOString();
+const productBEndsAt = new Date(Date.now() + 39 * 60 * 1000).toISOString();
+let productBRoster = [
+  { reservation_id: "RSV-E2E-PB-1", member_id: "MEM-E2E-PB-1", member_name: "Avery Stone", reservation_status: "confirmed", attendance_record_id: null, attendance_status: null, recorded_at: null, recorded_by_staff_name: "Recorder unavailable", correction_history: [], can_record_attended: false, can_record_no_show: true },
+  { reservation_id: "RSV-E2E-PB-2", member_id: "MEM-E2E-PB-2", member_name: "Blake Rivera", reservation_status: "confirmed", attendance_record_id: null, attendance_status: null, recorded_at: null, recorded_by_staff_name: "Recorder unavailable", correction_history: [], can_record_attended: false, can_record_no_show: true },
+  { reservation_id: "RSV-E2E-PB-HIST", member_id: "MEM-E2E-PB-4", member_name: "Devon Historical", reservation_status: "confirmed", attendance_record_id: "ATT-E2E-PB-HIST", attendance_status: "attended", recorded_at: new Date(Date.now() - 20 * 60 * 1000).toISOString(), recorded_by_staff_name: "Recorder unavailable", correction_history: [], can_record_attended: false, can_record_no_show: false },
+  { reservation_id: "RSV-E2E-PB-WAIT", member_id: "MEM-E2E-PB-3", member_name: "Casey Morgan", reservation_status: "waitlisted", attendance_record_id: null, attendance_status: null, recorded_at: null, recorded_by_staff_name: "Recorder unavailable", correction_history: [], can_record_attended: false, can_record_no_show: false },
+];
 
 function readBody(request) {
   return new Promise((resolve) => {
@@ -183,6 +191,24 @@ const server = http.createServer(async (request, response) => {
     return;
   }
 
+  if (request.url?.startsWith("/rest/v1/rpc/record_session_attendance_bulk")) {
+    const body = await readBody(request);
+    for (const reservationId of body.p_reservation_ids ?? []) {
+      productBRoster = productBRoster.map((member) => member.reservation_id === reservationId ? { ...member, attendance_record_id: `ATT-${reservationId}`, attendance_status: body.p_attendance_status, recorded_at: new Date().toISOString(), recorded_by_staff_name: "Jordan Lee", can_record_attended: false, can_record_no_show: false } : member);
+    }
+    response.writeHead(200);
+    response.end(JSON.stringify([{ class_session_id: body.p_class_session_id, attendance_status: body.p_attendance_status, recorded_count: body.p_reservation_ids?.length ?? 0 }]));
+    return;
+  }
+
+  if (request.url?.startsWith("/rest/v1/rpc/correct_attendance")) {
+    const body = await readBody(request);
+    productBRoster = productBRoster.map((member) => member.attendance_record_id === body.p_attendance_record_id ? { ...member, attendance_status: body.p_new_status, correction_history: [...member.correction_history, { correction_id: "CORR-E2E-PB", previous_status: member.attendance_status, new_status: body.p_new_status, reason: body.p_reason, corrected_at: new Date().toISOString(), corrected_by_staff_name: "Jordan Lee" }] } : member);
+    response.writeHead(200);
+    response.end(JSON.stringify([{ correction_id: "CORR-E2E-PB" }]));
+    return;
+  }
+
   if (request.url?.startsWith("/rest/v1/")) {
     response.setHeader("Content-Range", "*/0");
     response.writeHead(200);
@@ -199,21 +225,27 @@ const server = http.createServer(async (request, response) => {
       return;
     }
     if (request.url.startsWith("/rest/v1/staff_product_b_sessions")) {
-      const startsAt = new Date(Date.now() + 60 * 60 * 1000).toISOString();
-      const endsAt = new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString();
+      const marked = productBRoster.filter((member) => member.reservation_status === "confirmed" && member.attendance_status).length;
       response.end(JSON.stringify([{
         class_session_id: "SESSION-E2E-PB",
         class_type: "cycling",
         class_type_label: "Cycling",
         instructor_name: "Jordan Lee",
-        starts_at: startsAt,
-        ends_at: endsAt,
+        starts_at: productBStartsAt,
+        ends_at: productBEndsAt,
         capacity: 20,
         is_cancelled: false,
         confirmed_reservations: 8,
         waitlisted_reservations: 10,
         available_spots: 12,
+        attended_count: productBRoster.filter((member) => member.attendance_status === "attended").length,
+        no_show_count: productBRoster.filter((member) => member.attendance_status === "no_show").length,
+        marked_count: marked,
       }]));
+      return;
+    }
+    if (request.url.startsWith("/rest/v1/staff_session_roster")) {
+      response.end(JSON.stringify(productBRoster.map((member) => ({ ...member, class_session_id: "SESSION-E2E-PB", class_type_label: "Cycling", starts_at: productBStartsAt, check_in_opens_at: new Date(new Date(productBStartsAt).getTime() - 15 * 60 * 1000).toISOString(), check_in_closes_at: new Date(new Date(productBStartsAt).getTime() + 20 * 60 * 1000).toISOString() }))));
       return;
     }
     if (request.url.startsWith("/rest/v1/product_b_underbooking_decisions")) {

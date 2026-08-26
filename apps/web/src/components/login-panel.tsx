@@ -33,6 +33,7 @@ export function LoginPanel({ audience, initialNotice = null, initialError = null
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSendingRecovery, setIsSendingRecovery] = useState(false);
   const [notice] = useState<string | null>(initialNotice);
@@ -145,10 +146,15 @@ export function LoginPanel({ audience, initialNotice = null, initialError = null
               Email address
               <input required type="email" autoComplete="email" value={email} onChange={(event) => setEmail(event.target.value)} className="mt-2 h-12 w-full rounded-xl border border-black/20 bg-white/60 px-4 focus-visible:border-black/20 focus-visible:outline-2 focus-visible:outline-[#c72c25] focus-visible:outline-offset-2" />
             </label>
-            <label className="block text-sm font-medium">
-              Password
-              <input required type="password" autoComplete="current-password" value={password} onChange={(event) => setPassword(event.target.value)} className="mt-2 h-12 w-full rounded-xl border border-black/20 bg-white/60 px-4 focus-visible:border-black/20 focus-visible:outline-2 focus-visible:outline-[#c72c25] focus-visible:outline-offset-2" />
-            </label>
+            <div>
+              <label htmlFor={`${audience}-password`} className="block text-sm font-medium">Password</label>
+              <div className="relative mt-2">
+                <input id={`${audience}-password`} required type={showPassword ? "text" : "password"} autoComplete="current-password" value={password} onChange={(event) => setPassword(event.target.value)} className="h-12 w-full rounded-xl border border-black/20 bg-white/60 px-4 pr-20 focus-visible:border-black/20 focus-visible:outline-2 focus-visible:outline-[#c72c25] focus-visible:outline-offset-2" />
+                <button type="button" aria-pressed={showPassword} aria-label={showPassword ? "Hide password" : "Show password"} onClick={() => setShowPassword((visible) => !visible)} className="absolute inset-y-1 right-1 min-w-16 rounded-lg px-3 text-sm font-semibold text-black/65 transition hover:bg-black/[0.06] hover:text-black focus-visible:outline-2 focus-visible:outline-[#c72c25] focus-visible:outline-offset-2">
+                  {showPassword ? "Hide" : "Show"}
+                </button>
+              </div>
+            </div>
             {error ? <p role="alert" className="rounded-xl border border-black/15 bg-[#c72c25]/5 p-3 text-sm leading-6 text-[#9f1f1a]">{error}</p> : null}
             {notice ? <p role="status" className="text-sm leading-6 text-black/65">{notice}</p> : null}
             <Button disabled={isSubmitting} type="submit" className="h-12 w-full rounded-full bg-[#c72c25] text-white hover:bg-[#a9231e] focus-visible:outline-[#c72c25] disabled:cursor-not-allowed disabled:opacity-60">
