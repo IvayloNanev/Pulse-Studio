@@ -20,12 +20,12 @@ export function StaffSessionCancellation({ sessionId, sessionLabel, startsAt, in
   const affectedCount = confirmed + waitlisted;
   const confirmation = <>
     <div className="rounded-2xl border border-black/10 bg-white/70 p-4"><p className="font-semibold">{sessionLabel}</p><p className="mt-1 text-sm text-black/70">{formatted} with {instructorName}</p><p className="mt-1 text-sm font-semibold text-black/75">{confirmed} confirmed · {waitlisted} waitlisted</p></div>
-    <p className="text-sm leading-6 text-[#8e211c]">This will cancel open reservations, notify affected members, and record the action in the studio history.</p>
+    <p className="text-sm leading-6 text-[#8e211c]"><span className="font-semibold">Actual state-changing command.</span> This will cancel open reservations, notify affected members, and record the action in the studio history.</p>
     <form action={cancelClassSession} className="space-y-3" onSubmit={(event) => { if (!modal && !window.confirm(`Cancel ${sessionLabel} on ${formatted}? This affects ${affectedCount} member reservation${affectedCount === 1 ? "" : "s"}.`)) event.preventDefault(); }}>
       <input type="hidden" name="class_session_id" value={sessionId} />
       {returnToManageClasses ? <input type="hidden" name="return_to" value="manage-classes" /> : null}
       <label className="block text-sm font-semibold">Cancellation reason<input required name="reason" maxLength={1000} autoFocus={modal} className="mt-2 min-h-11 w-full rounded-xl border border-black/20 bg-white px-3 font-normal focus-visible:outline-2 focus-visible:outline-[#c72c25] focus-visible:outline-offset-2" placeholder="Why is this session being cancelled?" /></label>
-      <button type="submit" className="min-h-11 rounded-full bg-[#8e211c] px-5 text-sm font-semibold text-white transition hover:bg-black focus-visible:outline-2 focus-visible:outline-[#c72c25] focus-visible:outline-offset-2">Yes, cancel this class</button>
+      <button type="submit" aria-label="Confirm session cancellation" className="min-h-11 rounded-full bg-[#8e211c] px-5 text-sm font-semibold text-white transition hover:bg-black focus-visible:outline-2 focus-visible:outline-[#c72c25] focus-visible:outline-offset-2">Yes, cancel this class</button>
     </form>
   </>;
 

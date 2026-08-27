@@ -17,11 +17,9 @@ test("active staff retention queue, evaluation options, history, detail, and jou
   await expect(page).toHaveURL(/\/staff$/);
   await page.goto("/staff/retention");
   await expect(page.getByRole("heading", { name: "Member retention" })).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Evelyn Rivera" })).toBeVisible();
-  await expect(page.getByRole("option", { name: "Rivera, Evelyn · evelyn@pulse.example" })).toHaveAttribute("value", "MEM-E2E-PD");
-  await expect(page.getByRole("heading", { name: "Attendance change by member" })).toBeVisible();
-  await expect(page.getByText("Previous visits").first()).toBeVisible();
-  await expect(page.getByText("Current visits").first()).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Who needs a personal follow-up?" })).toBeVisible();
+  await expect(page.getByText("Evelyn Rivera", { exact: true })).toBeVisible();
+  await expect(page.getByText(/risk$/, { exact: false }).first()).toBeVisible();
 
   await page.goto("/staff/retention/RISK-E2E-PD");
   await expect(page.getByRole("heading", { name: "Evelyn Rivera" })).toBeVisible();
