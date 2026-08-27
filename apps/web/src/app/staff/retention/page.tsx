@@ -1,141 +1,54 @@
 import Link from "next/link";
-
-import { evaluateMemberRisk } from "@/app/staff/actions";
-import { MemberStatusMessage } from "@/components/member-status-message";
+import { completeRetentionFollowUp } from "@/app/staff/actions";
 import { PortalShell } from "@/components/portal-shell";
 import { StaffSubmitButton } from "@/components/staff-submit-button";
-import { StaffRetentionHistoryGraph, type RetentionHistoryItem } from "@/components/staff-retention-history-graph";
-import { StaffReason, StaffUrgencyBadge, StaffWorkflowLabel } from "@/components/staff-workflow-ui";
 import { requireStaff } from "@/lib/auth";
 import { staffLinks } from "@/lib/staff-navigation";
 
-type RiskQueueItem = {
-  risk_assessment_id: string;
-  member_name: string;
-  risk_level: "high" | "medium";
-  review_status: "pending" | "in_progress";
-  evaluated_at: string;
-  previous_visits: number;
-  current_visits: number;
-  decline_percentage: number;
-  last_attended_at: string | null;
-  active_note_count: number;
-  outreach_status: "draft" | "ready" | "sent" | "completed" | null;
-  outreach_blocked_reason: string | null;
-};
+type Member = { risk_assessment_id: string; member_name: string; risk_level: "high" | "medium"; previous_visits: number; current_visits: number; decline_percentage: number; last_attended_at: string | null };
+type Detail = { email: string; phone: string | null };
 
-type MemberOption = {
-  member_id: string;
-  first_name: string;
-  last_name: string;
-  email: string;
-};
-
-const formatter = new Intl.DateTimeFormat("en-US", { timeZone: "America/New_York", month: "short", day: "numeric", year: "numeric" });
-
-function nextAction(item: RiskQueueItem) {
-  if (item.review_status === "pending") return "Start review";
-  if (item.outreach_status === "draft") return "Review draft";
-  if (item.outreach_status === "ready") return "Send outreach";
-  if (item.outreach_status === "sent") return "Record response";
-  return "Continue case";
-}
-
-function CaseCard({ item }: { item: RiskQueueItem }) {
+function Profile({ member, detail }: { member: Member; detail?: Detail }) {
+  const first = member.member_name.split(" ")[0] ?? member.member_name;
+  const email = `Hi ${first},\n\nWe’ve missed seeing you at Pulse Studio. We noticed your visits have dropped recently and would love to help you find a class that works for you. Would you like us to recommend a session?\n\nWarmly,\nPulse Studio`;
+  const text = `Hi ${first}! We’ve missed seeing you at Pulse Studio. Your visits have dropped recently—would you like us to recommend a class that works for you?`;
+  const emailHref = detail?.email ? `mailto:${detail.email}?subject=${encodeURIComponent("A class recommendation from Pulse Studio")}&body=${encodeURIComponent(email)}` : undefined;
+  const textHref = detail?.phone ? `sms:${detail.phone}?body=${encodeURIComponent(text)}` : undefined;
   return (
-    <article className="glass-panel grid h-full gap-5 rounded-3xl p-5 sm:p-6 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center">
-      <div className="min-w-0">
-        <StaffWorkflowLabel product="Product D" workflow="Re-engagement" />
-        <div className="mt-2 flex flex-wrap gap-2">
-          <StaffUrgencyBadge level={item.risk_level === "high" ? "urgent" : "attention"}>{item.risk_level} priority</StaffUrgencyBadge>
-          <span className="rounded-full border border-black/15 bg-white/60 px-2.5 py-1 text-xs font-semibold capitalize">{item.review_status.replace("_", " ")}</span>
-          {item.outreach_status && <span className="rounded-full border border-black/15 bg-white/60 px-2.5 py-1 text-xs font-semibold capitalize">Outreach {item.outreach_status}</span>}
-        </div>
-        <h3 className="mt-4 text-2xl font-semibold tracking-[-0.03em]">{item.member_name}</h3>
-        <div className="mt-4 grid max-w-xl grid-cols-3 gap-2" aria-label="Attendance change">
-          <div className="rounded-2xl bg-white/55 p-3"><p className="text-2xl font-semibold">{item.previous_visits}</p><p className="text-xs text-black/65">Previous visits</p></div>
-          <div className="rounded-2xl bg-white/55 p-3"><p className="text-2xl font-semibold">{item.current_visits}</p><p className="text-xs text-black/65">Current visits</p></div>
-          <div className="rounded-2xl bg-white/55 p-3"><p className="text-2xl font-semibold text-[#a9231e]">−{item.decline_percentage}%</p><p className="text-xs text-black/65">Attendance</p></div>
-        </div>
-        <p className="mt-4 text-sm text-black/70">Last attended: {item.last_attended_at ? formatter.format(new Date(item.last_attended_at)) : "No recorded attendance"} · {item.active_note_count} staff note{item.active_note_count === 1 ? "" : "s"}</p>
-        <div className="mt-4"><StaffReason>Attendance declined {item.decline_percentage}% from {item.previous_visits} to {item.current_visits} visits. Next step: {nextAction(item).toLowerCase()}.</StaffReason></div>
-        {item.outreach_blocked_reason && <p className="mt-2 text-sm font-medium text-[#8e211c]">{item.outreach_blocked_reason}</p>}
-      </div>
-      <Link href={`/staff/retention/${encodeURIComponent(item.risk_assessment_id)}/journey`} className="inline-flex min-h-11 items-center justify-center rounded-full bg-black px-5 text-sm font-semibold text-white transition hover:bg-[#c72c25] focus-visible:outline-2 focus-visible:outline-[#c72c25] focus-visible:outline-offset-2">{nextAction(item)}</Link>
-    </article>
-  );
-}
-
-function CaseSection({ title, description, cases }: { title: string; description: string; cases: RiskQueueItem[] }) {
-  if (!cases.length) return null;
-  const id = `${title.toLowerCase().replaceAll(" ", "-")}-heading`;
-  return (
-    <section aria-labelledby={id}>
-      <div className="mb-4 flex flex-wrap items-end justify-between gap-2">
-        <div><h2 id={id} className="text-2xl font-semibold">{title}</h2><p className="mt-1 text-sm text-black/65">{description}</p></div>
-        <span className="rounded-full bg-black px-3 py-1 text-xs font-semibold text-white">{cases.length}</span>
-      </div>
-      <div className="grid gap-4 xl:grid-cols-2">{cases.map((item) => <CaseCard key={item.risk_assessment_id} item={item} />)}</div>
-    </section>
-  );
-}
-
-export default async function RetentionQueuePage({ searchParams }: { searchParams: Promise<{ success?: string; error?: string }> }) {
-  const messages = await searchParams;
-  const { supabase } = await requireStaff();
-  const [{ data, error }, { data: memberData, error: membersError }, { data: historyData, error: historyError }] = await Promise.all([
-    supabase.rpc("product_d_risk_queue"),
-    supabase.rpc("product_d_evaluation_member_options"),
-    supabase.rpc("product_d_case_history"),
-  ]);
-  const cases = (data ?? []) as RiskQueueItem[];
-  const members = (memberData ?? []) as MemberOption[];
-  const pending = cases.filter((item) => item.review_status === "pending");
-  const inProgress = cases.filter((item) => item.review_status === "in_progress");
-  const highPriority = cases.filter((item) => item.risk_level === "high").length;
-
-  return (
-    <PortalShell audience="staff" eyebrow="Staff portal · Product D" title="Member retention" description="Review attendance decline, coordinate staff notes, and complete member outreach from one prioritized workspace." links={staffLinks}>
-      <MemberStatusMessage success={messages.success} error={messages.error} />
-      <section aria-labelledby="evaluate-member-heading" className="glass-panel mb-8 rounded-3xl p-5 sm:p-6">
-        <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(20rem,0.8fr)] lg:items-end">
+    <div className="fixed inset-0 z-[100] grid place-items-center bg-black/45 p-4 backdrop-blur-sm">
+      <section role="dialog" aria-modal="true" className="max-h-[86vh] w-full max-w-2xl overflow-y-auto rounded-[1.5rem] border border-white/80 bg-white shadow-2xl">
+        <header className="flex items-start justify-between gap-5 bg-[#171717] px-6 py-5 text-white">
           <div>
-            <p className="font-mono text-xs uppercase tracking-[0.16em] text-[#a9231e]">New evaluation</p>
-            <h2 id="evaluate-member-heading" className="mt-2 text-2xl font-semibold">Check attendance decline</h2>
-            <p className="mt-2 max-w-2xl text-sm leading-6 text-black/65">Choose a member to compare their two latest 30-day attendance periods. A case is created only when the approved history and decline thresholds are met.</p>
+            <p className="font-mono text-xs uppercase tracking-[0.16em] text-[#ff776f]">Follow up</p>
+            <h2 className="mt-2 text-2xl font-semibold">{member.member_name}</h2>
+            <p className="mt-1 text-sm text-white/70">Visits fell from {member.previous_visits} to {member.current_visits} in the last 30 days (−{member.decline_percentage}%).</p>
           </div>
-          {membersError ? (
-            <p role="alert" className="rounded-2xl bg-[#c72c25]/8 p-4 text-sm font-medium text-[#8e211c]">Members are temporarily unavailable. Refresh before running an evaluation.</p>
-          ) : (
-            <form action={evaluateMemberRisk} className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end">
-              <div className="min-w-0">
-                <label htmlFor="evaluation-member" className="text-sm font-semibold">Member</label>
-                <select id="evaluation-member" name="member_id" required defaultValue="" className="mt-2 min-h-11 w-full rounded-xl border border-black/20 bg-white/70 px-3 text-sm focus-visible:outline-2 focus-visible:outline-[#c72c25] focus-visible:outline-offset-2">
-                  <option value="" disabled>Select a member</option>
-                  {members.map((member) => <option key={member.member_id} value={member.member_id}>{member.last_name}, {member.first_name} · {member.email}</option>)}
-                </select>
-              </div>
-              <StaffSubmitButton pendingLabel="Evaluating…" disabled={!members.length}>Evaluate</StaffSubmitButton>
-            </form>
-          )}
-        </div>
+          <Link href="/staff/retention" aria-label="Close follow-up" className="shrink-0 text-sm font-semibold text-white/75 transition hover:text-white">Close ×</Link>
+        </header>
+        <form action={completeRetentionFollowUp} className="p-5 sm:p-6">
+          <input type="hidden" name="risk_assessment_id" value={member.risk_assessment_id} />
+          <p className="text-sm text-black/60">Choose a prepared message, add an optional note, then mark the follow-up complete.</p>
+          <div className="mt-4 grid gap-3 sm:grid-cols-2">
+            <section className="rounded-2xl border border-[#eadfd8] bg-[#faf7f3] p-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[#a9231e]">Email ready</p>
+              <p className="mt-2 text-sm leading-5 text-black/70">Hi {first}, we’ve missed seeing you at Pulse Studio. Would you like help finding a class that fits your schedule?</p>
+              {emailHref ? <a href={emailHref} className="mt-4 inline-flex rounded-xl bg-black px-4 py-2 text-sm font-semibold text-white">Open email</a> : <p className="mt-4 text-sm text-black/50">No email address on file.</p>}
+            </section>
+            <section className="rounded-2xl border border-black/10 bg-white p-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[#6e47c8]">Text ready</p>
+              <p className="mt-2 text-sm leading-5 text-black/70">Hi {first}! We’ve missed you. Would you like us to recommend a class that works for you?</p>
+              {textHref ? <a href={textHref} className="mt-4 inline-flex rounded-xl border border-black/15 px-4 py-2 text-sm font-semibold transition hover:bg-black hover:text-white">Open text</a> : <p className="mt-4 text-sm text-black/50">No mobile number on file.</p>}
+            </section>
+          </div>
+          <label className="mt-5 block text-sm font-semibold">Private staff note <span className="font-normal text-black/55">(optional)</span><textarea name="body" rows={2} placeholder="Add context for the next staff member…" className="mt-2 w-full rounded-xl border border-black/20 p-3 font-normal" /></label>
+          <div className="mt-4 flex justify-end"><StaffSubmitButton pendingLabel="Completing…" className="bg-emerald-700 hover:bg-emerald-800">✓ Mark complete</StaffSubmitButton></div>
+        </form>
       </section>
-      {historyError ? <div role="alert" className="mb-8 rounded-2xl bg-white/70 p-5 text-sm text-[#8e211c]">Case history is temporarily unavailable. The active queue remains usable.</div> : <StaffRetentionHistoryGraph cases={(historyData ?? []) as RetentionHistoryItem[]} />}
-      {error ? (
-        <div role="alert" className="rounded-2xl border border-black/15 bg-white/65 p-6 text-sm text-[#8e211c] backdrop-blur-xl">The retention queue could not be loaded.</div>
-      ) : cases.length === 0 ? (
-        <div className="glass-panel rounded-3xl p-8"><h2 className="text-2xl font-semibold">The queue is clear</h2><p className="mt-2 text-sm text-black/65">There are no pending or in-progress attendance-decline cases.</p></div>
-      ) : (
-        <div className="space-y-10">
-          <section aria-label="Retention queue summary" className="grid gap-3 sm:grid-cols-3">
-            <div className="rounded-3xl bg-black p-5 text-white"><p className="text-3xl font-semibold">{cases.length}</p><p className="mt-1 text-sm text-white/70">Open cases</p></div>
-            <div className="rounded-3xl bg-[#c72c25] p-5 text-white"><p className="text-3xl font-semibold">{highPriority}</p><p className="mt-1 text-sm text-white/80">High priority</p></div>
-            <div className="rounded-3xl border border-black/10 bg-white/60 p-5"><p className="text-3xl font-semibold">{inProgress.length}</p><p className="mt-1 text-sm text-black/65">In progress</p></div>
-          </section>
-          <CaseSection title="Ready for review" description="Newly identified members who have not been assessed by staff." cases={pending} />
-          <CaseSection title="In progress" description="Cases with notes, draft outreach, or a response still to record." cases={inProgress} />
-        </div>
-      )}
-    </PortalShell>
+    </div>
   );
+}
+
+export default async function RetentionPage({ searchParams }: { searchParams: Promise<{ member?: string; completed?: string }> }) {
+  const params = await searchParams; const { supabase } = await requireStaff(); const { data, error } = await supabase.rpc("product_d_risk_queue"); const members = ((data ?? []) as Member[]).sort((a, b) => b.decline_percentage - a.decline_percentage); const selected = members.find((item) => item.risk_assessment_id === params.member); let detail: Detail | undefined; if (selected) { const { data } = await supabase.rpc("product_d_member_detail", { p_risk_assessment_id: selected.risk_assessment_id }); detail = (Array.isArray(data) ? data[0] : data) as Detail | undefined; }
+  return <PortalShell audience="staff" eyebrow="Staff portal · Product D" title="Member retention" description="Keep an eye on attendance changes and reach out at the right moment." links={staffLinks} showHeader={false}><header className="staff-control-hero staff-control-hero-connected"><p className="font-mono text-xs uppercase tracking-[0.16em] text-[#ff776f]">Member care</p><h1 className="route-title mt-4 text-5xl">Member retention</h1><p className="mt-3 max-w-2xl text-sm leading-6 text-white/65">Review members whose visits have dropped, then reach out with context.</p></header>{error ? <div className="p-6 text-[#8e211c]">The at-risk member list is temporarily unavailable.</div> : <section className="rounded-b-[2rem] border border-t-0 border-white/90 bg-white/90 p-5 sm:p-7"><h2 className="text-2xl font-semibold">Who needs a personal follow-up?</h2><div className="mt-5 divide-y divide-black/10">{members.map((item) => { const complete = params.completed === item.risk_assessment_id; return <Link key={item.risk_assessment_id} href={`/staff/retention?member=${encodeURIComponent(item.risk_assessment_id)}`} className={`grid gap-3 py-4 sm:grid-cols-[minmax(0,1fr)_8rem_7rem_auto] sm:items-center ${complete ? "bg-emerald-50" : "hover:bg-[#fff0eb]"}`}><div><p className={`font-semibold ${complete ? "text-emerald-700" : ""}`}>{item.member_name}</p><p className="text-sm text-black/60">{item.last_attended_at ? `Last attended ${new Date(item.last_attended_at).toLocaleDateString("en-US", { month: "short", day: "numeric" })}` : "No recent attendance"}</p></div><span className={`w-fit rounded-full px-3 py-1 text-xs font-semibold ${complete ? "bg-emerald-600 text-white" : item.risk_level === "high" ? "bg-[#c72c25] text-white" : "bg-amber-100"}`}>{complete ? "Completed" : `${item.risk_level} risk`}</span><p className={complete ? "font-semibold text-emerald-700" : "font-semibold text-[#a9231e]"}>{complete ? "Done" : `−${item.decline_percentage}%`}</p><span className="text-sm font-semibold">View →</span></Link>; })}</div></section>}{selected ? <Profile member={selected} detail={detail} /> : null}</PortalShell>;
 }

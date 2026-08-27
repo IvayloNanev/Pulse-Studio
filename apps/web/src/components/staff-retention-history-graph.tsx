@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useMemo, useState } from "react";
 
 export type RetentionHistoryItem = {
@@ -33,7 +32,7 @@ function isOpen(item: RetentionHistoryItem) {
   return item.review_status === "pending" || item.review_status === "in_progress";
 }
 
-export function StaffRetentionHistoryGraph({ cases }: { cases: RetentionHistoryItem[] }) {
+export function StaffRetentionHistoryGraph({ cases, connected = false }: { cases: RetentionHistoryItem[]; connected?: boolean }) {
   const [status, setStatus] = useState<"all" | "open" | "completed" | "dismissed">("all");
   const [risk, setRisk] = useState<"all" | "high" | "medium">("all");
   const [sort, setSort] = useState<"date" | "risk" | "decline">("date");
@@ -56,7 +55,7 @@ export function StaffRetentionHistoryGraph({ cases }: { cases: RetentionHistoryI
   const sortLabel = sort === "date" ? "Date · newest first" : sort === "risk" ? "Risk · highest first" : "Decline · largest first";
 
   return (
-    <section aria-labelledby="case-history-heading" className="glass-panel mb-8 rounded-3xl p-5 sm:p-6">
+    <section aria-labelledby="case-history-heading" className={`glass-panel mb-8 p-5 sm:p-6 ${connected ? "mt-0 rounded-b-[2rem] border border-t-0 border-white/70" : "rounded-3xl"}`}>
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <p className="font-mono text-xs uppercase tracking-[0.16em] text-[#a9231e]">Evaluation history</p>
@@ -119,7 +118,7 @@ export function StaffRetentionHistoryGraph({ cases }: { cases: RetentionHistoryI
           return (
             <article key={item.risk_assessment_id} className="grid gap-2 rounded-2xl p-3 transition hover:bg-black/[0.04] sm:grid-cols-[11rem_minmax(0,1fr)_7rem] sm:items-center">
               <div className="min-w-0">
-                <Link href={`/staff/retention/${encodeURIComponent(item.risk_assessment_id)}`} className="block truncate text-sm font-semibold underline decoration-black/30 underline-offset-4 transition hover:text-[#a9231e] hover:decoration-[#a9231e] focus-visible:rounded focus-visible:outline-2 focus-visible:outline-[#c72c25] focus-visible:outline-offset-2">{item.member_name}</Link>
+                <a href={`/staff/retention?member=${encodeURIComponent(item.risk_assessment_id)}`} className="block truncate text-left text-sm font-semibold underline decoration-black/30 underline-offset-4 transition hover:text-[#a9231e] hover:decoration-[#a9231e] focus-visible:rounded focus-visible:outline-2 focus-visible:outline-[#c72c25] focus-visible:outline-offset-2">{item.member_name}</a>
                 <div className="mt-1 flex flex-wrap items-center gap-1.5">
                   <span className={`rounded-full px-2 py-0.5 text-[0.7rem] font-semibold ${completed ? "bg-sky-100 text-sky-950" : dismissed ? "bg-black/10 text-black" : item.risk_level === "high" ? "bg-[#c72c25] text-white" : "bg-amber-100 text-amber-950"}`}>{completed ? "✓ Completed" : dismissed ? "Dismissed" : `${item.risk_level} risk`}</span>
                   <span className="text-xs text-black/60">{formatter.format(new Date(item.evaluated_at))}</span>
@@ -136,7 +135,7 @@ export function StaffRetentionHistoryGraph({ cases }: { cases: RetentionHistoryI
         })}
       </div>
       <div className="mt-5 grid grid-cols-4 text-center text-xs text-black/60 sm:ml-[11rem]"><span>0</span><span>{Math.round(maxVisits / 3)}</span><span>{Math.round((maxVisits * 2) / 3)}</span><span>{maxVisits} visits</span></div>
-      <p className="mt-4 text-center text-xs font-medium text-black/60">Select a member’s name to open their complete case and continue the journey.</p>
+      <p className="mt-4 text-center text-xs font-medium text-black/60">Select a member’s name to review their profile, suggested outreach, and notes.</p>
     </section>
   );
 }

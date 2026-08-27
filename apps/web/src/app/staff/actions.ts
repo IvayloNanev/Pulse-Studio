@@ -29,6 +29,14 @@ function retentionDestination(type: "success" | "error", message: string) {
   return `/staff/retention?${type}=${encodeURIComponent(message)}`;
 }
 
+function retentionModalDestination(riskId: string) {
+  return `/staff/retention?member=${encodeURIComponent(riskId)}`;
+}
+
+function retentionCompletedDestination(riskId: string) {
+  return `/staff/retention?completed=${encodeURIComponent(riskId)}`;
+}
+
 type RiskEvaluation = {
   assessment_created: boolean;
   risk_assessment_id: string | null;
@@ -211,20 +219,25 @@ export async function correctAttendance(formData: FormData) {
 export async function cancelClassSession(formData: FormData) {
   const sessionId = String(formData.get("class_session_id") ?? "");
   const reason = String(formData.get("reason") ?? "").trim();
+  const returnToManageClasses = String(formData.get("return_to") ?? "") === "manage-classes";
+  const returnTo = (kind: "success" | "error", message: string) => returnToManageClasses
+    ? `/staff/manage-classes?${kind}=${encodeURIComponent(message)}`
+    : rosterDestination(sessionId || "unknown", kind, message);
   if (!sessionId || !reason || reason.length > 1000) {
-    redirect(rosterDestination(sessionId || "unknown", "error", "Enter a reason before cancelling this session."));
+    redirect(returnTo("error", "Enter a reason before cancelling this session."));
   }
   const { supabase } = await requireStaff();
   const { error } = await supabase.rpc("cancel_class_session", { p_class_session_id: sessionId, p_reason: reason });
   if (error) {
     console.error("Product B session cancellation failed", { sessionId, code: error.code });
-    redirect(rosterDestination(sessionId, "error", sessionManagementErrorMessage(error)));
+    redirect(returnTo("error", sessionManagementErrorMessage(error)));
   }
   revalidatePath("/staff");
+  revalidatePath("/staff/manage-classes");
   revalidatePath("/staff/rosters");
   revalidatePath(`/staff/rosters/${sessionId}`);
   revalidatePath("/classes");
-  redirect(rosterDestination(sessionId, "success", "Session cancelled. Member impacts and audit history were recorded."));
+  redirect(returnTo("success", "Session cancelled. Member impacts and audit history were recorded."));
 }
 
 export async function createClassSession(formData: FormData) {
@@ -258,6 +271,28 @@ export async function createClassSession(formData: FormData) {
   revalidatePath("/staff/rosters");
   revalidatePath("/classes");
   redirect("/staff/manage-classes?success=" + encodeURIComponent(`New ${classType.toUpperCase()} class created${created?.class_session_id ? "." : ""}`));
+}
+
+export async function updateClassSession(formData: FormData) {
+  const sessionId = String(formData.get("class_session_id") ?? "").trim();
+  const startsAtLocal = String(formData.get("starts_at_local") ?? "").trim();
+  const durationMinutes = Number(formData.get("duration_minutes"));
+  const capacity = Number(formData.get("capacity"));
+  const instructorStaffId = String(formData.get("instructor_staff_id") ?? "").trim();
+  if (!sessionId || !startsAtLocal || !Number.isInteger(durationMinutes) || !Number.isInteger(capacity) || !instructorStaffId) {
+    redirect("/staff/manage-classes?error=" + encodeURIComponent("Complete the class details before saving changes."));
+  }
+  const { supabase } = await requireStaff();
+  const { error } = await supabase.rpc("update_class_session", { p_class_session_id: sessionId, p_starts_at_local: startsAtLocal, p_duration_minutes: durationMinutes, p_capacity: capacity, p_instructor_staff_id: instructorStaffId });
+  if (error) {
+    console.error("Product B session update failed", { sessionId, code: error.code });
+    redirect("/staff/manage-classes?error=" + encodeURIComponent(sessionManagementErrorMessage(error)));
+  }
+  revalidatePath("/staff");
+  revalidatePath("/staff/manage-classes");
+  revalidatePath("/staff/rosters");
+  revalidatePath("/classes");
+  redirect("/staff/manage-classes?success=" + encodeURIComponent("Class changes saved."));
 }
 
 export async function createUnderbookingDecision(formData: FormData) {
@@ -297,7 +332,35 @@ export async function startRiskReview(formData: FormData) {
 export async function createRiskNote(formData: FormData) {
   const riskId = String(formData.get("risk_assessment_id") ?? "");
   const body = String(formData.get("body") ?? "");
-  return runRiskCommand(riskId, "create_risk_note", { p_risk_assessment_id: riskId, p_body: body }, "Note added.");
+  const returnToModal = String(formData.get("return_to") ?? "") === "retention";
+  if (!returnToModal) return runRiskCommand(riskId, "create_risk_note", { p_risk_assessment_id: riskId, p_body: body }, "Note added.");
+
+  const { supabase } = await requireStaff();
+  const { error } = await supabase.rpc("create_risk_note", { p_risk_assessment_id: riskId, p_body: body });
+  if (error) redirect(retentionModalDestination(riskId));
+  revalidatePath("/staff/retention");
+  redirect(retentionCompletedDestination(riskId));
+}
+
+export async function completeRetentionFollowUp(formData: FormData) {
+  const riskId = String(formData.get("risk_assessment_id") ?? "");
+  const note = String(formData.get("body") ?? "").trim();
+  const outcome = String(formData.get("outcome") ?? "contacted");
+  const followUpDate = String(formData.get("follow_up_date") ?? "");
+  if (!riskId) redirect(retentionDestination("error", "The member follow-up is missing."));
+
+  const { supabase } = await requireStaff();
+  const record = [`Outcome: ${outcome.replaceAll("_", " ")}`, followUpDate ? `Follow up: ${followUpDate}` : null, note || null].filter(Boolean).join("\n");
+  if (record) {
+    const { error } = await supabase.rpc("create_risk_note", { p_risk_assessment_id: riskId, p_body: record });
+    if (error) {
+      console.error("Product D completion note failed", { riskId, code: error.code });
+      redirect(retentionModalDestination(riskId));
+    }
+  }
+
+  revalidatePath("/staff/retention");
+  redirect(retentionCompletedDestination(riskId));
 }
 
 export async function editOutreachDraft(formData: FormData) {

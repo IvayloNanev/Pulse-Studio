@@ -295,6 +295,50 @@
   animation: glass-light-sweep 7s ease-in-out infinite;
 }
 
+.staff-control-hero {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  border-radius: 2rem;
+  background:
+    radial-gradient(circle at 78% 12%, rgb(199 44 37 / 28%), transparent 27rem),
+    radial-gradient(circle at 38% 100%, rgb(124 58 237 / 18%), transparent 22rem),
+    #171717;
+  padding: 1.75rem;
+  color: white;
+  box-shadow: 0 1.5rem 4rem rgb(17 17 17 / 18%);
+}
+
+.staff-control-hero-connected {
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
+/* Keep editorial staff-page titles prominent without crowding narrow phones. */
+.staff-control-hero .route-title {
+  font-size: clamp(2.5rem, 11vw, 3rem);
+}
+
+/* Keep the completion action close to its optional retention note. */
+form:has(#staff-note) > div:last-child {
+  margin-top: 0.75rem !important;
+}
+
+/* Retention rows are fully clickable; a separate "View" affordance is redundant. */
+.staff-control-hero-connected + section > div:last-child > a {
+  grid-template-columns: minmax(0, 1fr) 8rem 7rem !important;
+}
+
+.staff-control-hero-connected + section > div:last-child > a > span:last-child {
+  display: none;
+}
+
+@media (min-width: 640px) {
+  .staff-control-hero {
+    padding: 2.25rem;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .sound-wave-bar {
     animation: none;
