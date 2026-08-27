@@ -20,12 +20,36 @@ const bodoniModa = Bodoni_Moda({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://pulse-studio-ivaylo-nanev.vercel.app"),
   title: {
     default: "Pulse Studio",
     template: "%s · Pulse Studio",
   },
   description:
-    "Boutique yoga, cycling, and HIIT classes built around a focused monthly practice.",
+    "One connected boutique-fitness experience for members, staff, and studio owners.",
+  openGraph: {
+    title: "Pulse Studio",
+    description:
+      "A connected boutique-fitness experience for booking, attendance, studio operations, member retention, and AI-powered support.",
+    url: "/",
+    siteName: "Pulse Studio",
+    type: "website",
+    images: [
+      {
+        url: "/media/pulse-staff-operations.png",
+        width: 1680,
+        height: 945,
+        alt: "Pulse Studio staff using the studio operations experience",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Pulse Studio",
+    description:
+      "Boutique-fitness operations, member retention, and AI support in one connected experience.",
+    images: ["/media/pulse-staff-operations.png"],
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
