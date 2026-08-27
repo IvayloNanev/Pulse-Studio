@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 
 import { MemberStatusMessage } from "@/components/member-status-message";
 import { PortalShell } from "@/components/portal-shell";
@@ -99,6 +100,7 @@ export default async function StaffRosterPage({ params, searchParams }: { params
     supabase.from("class_session_actions").select("action_id,reason,performed_at,performed_by_staff_id").eq("class_session_id", sessionId).order("performed_at", { ascending: false }),
   ]);
   const session = sessionResult.data as SessionDetail | null;
+  if (session) redirect(`/staff/rosters?date=${session.starts_at.slice(0, 10)}&roster=${encodeURIComponent(session.class_session_id)}`);
   const roster = (rosterResult.data ?? []) as RosterMember[];
   const confirmed = roster.filter((member) => member.reservation_status === "confirmed");
   const waitlisted = roster.filter((member) => member.reservation_status === "waitlisted");
