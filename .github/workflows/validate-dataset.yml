@@ -111,7 +111,9 @@ jobs:
         run: pnpm --dir apps/web run build
 
       - name: Install browser used by release-gate tests
-        run: pnpm --dir apps/web exec playwright install --with-deps chromium
+        # GitHub-hosted runners already include the required browser libraries.
+        # Avoid `--with-deps`: its apt refresh can fail on a transient runner repository.
+        run: pnpm --dir apps/web exec playwright install chromium
 
       - name: Run browser release-gate tests
         env:

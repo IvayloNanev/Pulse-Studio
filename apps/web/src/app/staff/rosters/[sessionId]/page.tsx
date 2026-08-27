@@ -86,8 +86,8 @@ function RosterGroup({ title, description, members, sessionId }: { title: string
 export default async function StaffRosterPage({ params, searchParams }: { params: Promise<{ sessionId: string }>; searchParams: Promise<{ success?: string; error?: string }> }) {
   const { sessionId } = await params;
   const messages = await searchParams;
-  const { supabase, staffId } = await requireStaff();
-  const [sessionResult, rosterResult, staffResult, actionResult] = await Promise.all([
+  const { supabase } = await requireStaff();
+  const [sessionResult, rosterResult, actionResult] = await Promise.all([
     supabase.from("staff_product_b_sessions")
       .select("class_session_id,class_type_label,starts_at,capacity,confirmed_reservations,waitlisted_reservations,available_spots,instructor_name,is_cancelled")
       .eq("class_session_id", sessionId)
@@ -97,7 +97,6 @@ export default async function StaffRosterPage({ params, searchParams }: { params
       .eq("class_session_id", sessionId)
       .order("reservation_status", { ascending: true })
       .order("member_name", { ascending: true }),
-    supabase.from("staff_accounts").select("role").eq("staff_id", staffId).single(),
     supabase.from("class_session_actions").select("action_id,reason,performed_at,performed_by_staff_id").eq("class_session_id", sessionId).order("performed_at", { ascending: false }),
   ]);
   const session = sessionResult.data as SessionDetail | null;
@@ -111,13 +110,10 @@ export default async function StaffRosterPage({ params, searchParams }: { params
   const lifecycle = session?.is_cancelled ? "Cancelled session" : confirmed.length === 0 ? "No roster to process" : marked === 0 ? "Attendance not started" : marked === confirmed.length ? "Attendance complete" : "Attendance in progress";
   const bulkTargets = confirmed.filter((member) => !member.attendance_status && (member.can_record_attended || member.can_record_no_show)).map((member) => ({ reservationId: member.reservation_id, memberName: member.member_name, canRecordAttended: member.can_record_attended, canRecordNoShow: member.can_record_no_show }));
   const cancellationHistory = actionResult.data ?? [];
-  const isOwner = staffResult.data?.role === "owner_admin";
   const startsAt = session ? new Date(session.starts_at) : null;
   const sessionState = session?.is_cancelled ? "Cancelled" : startsAt && startsAt > new Date() ? "Upcoming" : marked === confirmed.length && confirmed.length > 0 ? "Attendance complete" : "Past";
   const sessionStateTone = sessionState === "Cancelled" ? "urgent" : sessionState === "Attendance complete" ? "ready" : "informational";
-  const canCancel = Boolean(session && isOwner && !session.is_cancelled && startsAt && startsAt > new Date() && marked === 0);
-  const cancellationBlockedReason = !session || !isOwner || session.is_cancelled || !startsAt ? null : startsAt <= new Date() ? "This session has started and can no longer be cancelled." : marked > 0 ? "Cancellation is blocked because attendance has already been recorded." : null;
-  const dataError = sessionResult.error ?? rosterResult.error ?? staffResult.error ?? actionResult.error;
+  const dataError = sessionResult.error ?? rosterResult.error ?? actionResult.error;
 
   return (
     <PortalShell audience="staff" eyebrow="Staff portal · Product B" title={session ? `${session.class_type_label} roster` : "Session roster"} description={session ? `${formatter.format(new Date(session.starts_at))} with ${session.instructor_name}` : "Review reservations and attendance eligibility for this session."} links={staffLinks}>
@@ -135,7 +131,7 @@ export default async function StaffRosterPage({ params, searchParams }: { params
             {session.is_cancelled ? <p className="mt-4 text-sm text-[#8e211c]">Attendance actions are unavailable because this session is cancelled.</p> : confirmed.length === 0 ? <p className="mt-4 text-sm text-black/65">This valid session has no confirmed reservations. No attendance records will be created.</p> : null}
           </section>
           {!session.is_cancelled ? <StaffAttendanceBulkActions sessionId={sessionId} targets={bulkTargets} /> : null}
-          <section aria-labelledby="session-actions-heading" className="space-y-4"><div><p className="font-mono text-xs font-semibold uppercase tracking-[0.14em] text-[#8e211c]">Authorized controls</p><h2 id="session-actions-heading" className="mt-2 text-2xl font-semibold tracking-[-0.03em]">Session actions</h2><p className="mt-1 text-sm text-black/65">State-changing commands are separated from recommendations and attendance work.</p></div>{canCancel ? <StaffSessionCancellation sessionId={sessionId} sessionLabel={`${session.class_type_label} session`} startsAt={session.starts_at} instructorName={session.instructor_name} confirmed={session.confirmed_reservations} waitlisted={session.waitlisted_reservations} /> : cancellationBlockedReason ? <p className="rounded-2xl border border-black/10 bg-white/55 p-4 text-sm font-semibold">{cancellationBlockedReason}</p> : !isOwner ? <p className="rounded-2xl border border-black/10 bg-white/55 p-4 text-sm font-semibold">Only an owner/admin may cancel a session.</p> : null}</section>
+          <section aria-labelledby="session-actions-heading" className="rounded-3xl border border-black/10 bg-white/55 p-5"><p className="font-mono text-xs font-semibold uppercase tracking-[0.14em] text-[#8e211c]">Schedule management</p><h2 id="session-actions-heading" className="mt-2 text-2xl font-semibold tracking-[-0.03em]">Need to change this class?</h2>{session.is_cancelled ? <p className="mt-2 text-sm text-black/65">This session has already been cancelled.</p> : marked > 0 ? <p className="mt-2 text-sm font-semibold text-[#8e211c]">Cancellation is blocked because attendance has already been recorded.</p> : <StaffSessionCancellation sessionId={session.class_session_id} sessionLabel={session.class_type_label} startsAt={session.starts_at} instructorName={session.instructor_name} confirmed={confirmed.length} waitlisted={waitlisted.length} />}</section>
           {cancellationHistory.length ? <section aria-labelledby="session-history-heading"><p className="font-mono text-xs font-semibold uppercase tracking-[0.14em] text-[#8e211c]">Audit trail</p><h2 id="session-history-heading" className="mt-2 text-2xl font-semibold tracking-[-0.03em]">Session action history</h2><div className="mt-4 space-y-3">{cancellationHistory.map((action) => <div key={action.action_id} className="rounded-2xl border border-black/10 bg-white/55 p-4"><p className="font-semibold">Session cancelled</p><p className="mt-1 text-sm text-black/70">{action.reason}</p><p className="mt-1 font-mono text-xs uppercase tracking-[0.08em] text-black/55">Recorded {formatter.format(new Date(action.performed_at))} · Staff {action.performed_by_staff_id}</p></div>)}</div></section> : null}
           <RosterGroup title="Confirmed" description="Record attendance only when the approved window is open." members={confirmed} sessionId={sessionId} />
           <RosterGroup title="Waitlisted" description="These members remain separate until a confirmed spot becomes available." members={waitlisted} sessionId={sessionId} />

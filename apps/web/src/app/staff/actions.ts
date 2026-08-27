@@ -108,6 +108,8 @@ export async function recordAttendance(formData: FormData) {
   const sessionId = String(formData.get("class_session_id") ?? "");
   const reservationId = String(formData.get("reservation_id") ?? "");
   const status = String(formData.get("attendance_status") ?? "");
+  const returnTo = String(formData.get("return_to") ?? "");
+  const destination = returnTo.startsWith("/staff/rosters?") ? returnTo : rosterDestination(sessionId, "success", status === "attended" ? "Member marked attended." : "Member marked no-show.");
 
   if (!sessionId || !reservationId || !["attended", "no_show"].includes(status)) {
     redirect(rosterDestination(sessionId || "unknown", "error", "Attendance request is incomplete."));
@@ -127,7 +129,7 @@ export async function recordAttendance(formData: FormData) {
   revalidatePath("/staff");
   revalidatePath("/staff/rosters");
   revalidatePath(`/staff/rosters/${sessionId}`);
-  redirect(rosterDestination(sessionId, "success", status === "attended" ? "Member marked attended." : "Member marked no-show."));
+  redirect(destination);
 }
 
 export async function recordAttendanceBulk(formData: FormData) {
@@ -151,6 +153,35 @@ export async function recordAttendanceBulk(formData: FormData) {
   revalidatePath("/staff/rosters");
   revalidatePath(`/staff/rosters/${sessionId}`);
   redirect(rosterDestination(sessionId, "success", `${reservationIds.length} attendance ${reservationIds.length === 1 ? "record" : "records"} saved.`));
+}
+
+export async function recordRosterAttendance(formData: FormData) {
+  const sessionId = String(formData.get("class_session_id") ?? "");
+  const returnTo = String(formData.get("return_to") ?? "");
+  const destination = returnTo.startsWith("/staff/rosters?") ? returnTo : rosterDestination(sessionId, "success", "Attendance saved.");
+  const reservationIds = formData.getAll("reservation_ids").map(String).filter(Boolean);
+  const selections = reservationIds.map((reservationId) => ({
+    reservationId,
+    status: String(formData.get(`attendance_${reservationId}`) ?? ""),
+  }));
+
+  if (!sessionId || selections.length === 0 || selections.some(({ status }) => !["attended", "no_show"].includes(status))) {
+    redirect(`${destination}${destination.includes("?") ? "&" : "?"}error=${encodeURIComponent("Choose Here or Not here for every member before saving.")}`);
+  }
+
+  const { supabase } = await requireStaff();
+  for (const { reservationId, status } of selections) {
+    const { error } = await supabase.rpc("record_attendance", { p_reservation_id: reservationId, p_attendance_status: status });
+    if (error) {
+      console.error("Product B roster attendance failed", { sessionId, reservationId, code: error.code });
+      redirect(`${destination}${destination.includes("?") ? "&" : "?"}error=${encodeURIComponent(attendanceErrorMessage(error))}`);
+    }
+  }
+
+  revalidatePath("/staff");
+  revalidatePath("/staff/rosters");
+  revalidatePath(`/staff/rosters/${sessionId}`);
+  redirect(`${destination}${destination.includes("?") ? "&" : "?"}success=${encodeURIComponent(`${selections.length} attendance ${selections.length === 1 ? "record" : "records"} saved.`)}`);
 }
 
 export async function correctAttendance(formData: FormData) {
@@ -194,6 +225,39 @@ export async function cancelClassSession(formData: FormData) {
   revalidatePath(`/staff/rosters/${sessionId}`);
   revalidatePath("/classes");
   redirect(rosterDestination(sessionId, "success", "Session cancelled. Member impacts and audit history were recorded."));
+}
+
+export async function createClassSession(formData: FormData) {
+  const classType = String(formData.get("class_type") ?? "");
+  const startsAtLocal = String(formData.get("starts_at_local") ?? "").trim();
+  const durationMinutes = Number(formData.get("duration_minutes"));
+  const capacity = Number(formData.get("capacity"));
+  const instructorStaffId = String(formData.get("instructor_staff_id") ?? "").trim();
+
+  if (!['yoga', 'cycling', 'hiit'].includes(classType) || !startsAtLocal || !Number.isInteger(durationMinutes) || !Number.isInteger(capacity) || !instructorStaffId) {
+    redirect("/staff/manage-classes?error=" + encodeURIComponent("Complete the class details before creating the session."));
+  }
+
+  const { supabase } = await requireStaff();
+  const { data, error } = await supabase.rpc("create_class_session", {
+    p_class_type: classType,
+    p_starts_at_local: startsAtLocal,
+    p_duration_minutes: durationMinutes,
+    p_capacity: capacity,
+    p_instructor_staff_id: instructorStaffId,
+  });
+
+  if (error) {
+    console.error("Product B session creation failed", { classType, code: error.code });
+    redirect("/staff/manage-classes?error=" + encodeURIComponent(sessionManagementErrorMessage(error)));
+  }
+
+  const created = Array.isArray(data) ? data[0] : data;
+  revalidatePath("/staff");
+  revalidatePath("/staff/manage-classes");
+  revalidatePath("/staff/rosters");
+  revalidatePath("/classes");
+  redirect("/staff/manage-classes?success=" + encodeURIComponent(`New ${classType.toUpperCase()} class created${created?.class_session_id ? "." : ""}`));
 }
 
 export async function createUnderbookingDecision(formData: FormData) {
