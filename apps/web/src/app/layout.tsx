@@ -20,7 +20,7 @@ const bodoniModa = Bodoni_Moda({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://pulse-studio-ivaylo-nanev.vercel.app"),
+  metadataBase: new URL("https://pulse-studio-nyc.vercel.app"),
   title: {
     default: "Pulse Studio",
     template: "%s · Pulse Studio",
