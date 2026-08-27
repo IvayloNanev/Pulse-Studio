@@ -260,6 +260,28 @@ export async function createClassSession(formData: FormData) {
   redirect("/staff/manage-classes?success=" + encodeURIComponent(`New ${classType.toUpperCase()} class created${created?.class_session_id ? "." : ""}`));
 }
 
+export async function updateClassSession(formData: FormData) {
+  const sessionId = String(formData.get("class_session_id") ?? "").trim();
+  const startsAtLocal = String(formData.get("starts_at_local") ?? "").trim();
+  const durationMinutes = Number(formData.get("duration_minutes"));
+  const capacity = Number(formData.get("capacity"));
+  const instructorStaffId = String(formData.get("instructor_staff_id") ?? "").trim();
+  if (!sessionId || !startsAtLocal || !Number.isInteger(durationMinutes) || !Number.isInteger(capacity) || !instructorStaffId) {
+    redirect("/staff/manage-classes?error=" + encodeURIComponent("Complete the class details before saving changes."));
+  }
+  const { supabase } = await requireStaff();
+  const { error } = await supabase.rpc("update_class_session", { p_class_session_id: sessionId, p_starts_at_local: startsAtLocal, p_duration_minutes: durationMinutes, p_capacity: capacity, p_instructor_staff_id: instructorStaffId });
+  if (error) {
+    console.error("Product B session update failed", { sessionId, code: error.code });
+    redirect("/staff/manage-classes?error=" + encodeURIComponent(sessionManagementErrorMessage(error)));
+  }
+  revalidatePath("/staff");
+  revalidatePath("/staff/manage-classes");
+  revalidatePath("/staff/rosters");
+  revalidatePath("/classes");
+  redirect("/staff/manage-classes?success=" + encodeURIComponent("Class changes saved."));
+}
+
 export async function createUnderbookingDecision(formData: FormData) {
   const sessionId = String(formData.get("class_session_id") ?? "");
   const action = String(formData.get("action") ?? "");
