@@ -2,6 +2,7 @@ import { expect, test } from "@playwright/test";
 
 import { getUnderbookingState } from "../src/lib/product-b/underbooking";
 import { productBDecisionErrorMessage } from "../src/lib/product-b/decision-errors";
+import { sortAttendanceAttention } from "../src/lib/product-b/attention-priority";
 
 const boundaries = [
   [0, "Underbooked", true],
@@ -46,6 +47,28 @@ test("decision database errors map to stable browser-safe messages", () => {
     expect(safeMessage).toBe(expected);
     expect(safeMessage).not.toMatch(/23505|constraint|product_b_one_open_decision|public\.|postgres|function/i);
   }
+});
+
+test("attendance attention prioritizes no-show actions, then check-ins, then time", () => {
+  const sessions = [
+    { class_session_id: "check-in-later", starts_at: "2026-08-27T15:00:00Z" },
+    { class_session_id: "no-show-later", starts_at: "2026-08-27T17:00:00Z" },
+    { class_session_id: "no-show-sooner", starts_at: "2026-08-27T16:00:00Z" },
+    { class_session_id: "check-in-sooner", starts_at: "2026-08-27T14:00:00Z" },
+  ];
+  const actions = new Map([
+    ["check-in-later", "attended"],
+    ["no-show-later", "no_show"],
+    ["no-show-sooner", "no_show"],
+    ["check-in-sooner", "attended"],
+  ] as const);
+
+  expect(sortAttendanceAttention(sessions, actions).map((session) => session.class_session_id)).toEqual([
+    "no-show-sooner",
+    "no-show-later",
+    "check-in-sooner",
+    "check-in-later",
+  ]);
 });
 
 test("unauthenticated staff command center redirects to staff login", async ({ page }) => {
