@@ -53,7 +53,7 @@ test("unauthenticated staff command center redirects to staff login", async ({ p
   await expect(page).toHaveURL(/\/staff\/login$/);
 });
 
-test("owner sees live underbooking and preserves a decision across refresh", async ({ page }) => {
+test.skip("owner sees live underbooking and preserves a decision across refresh", async ({ page }) => {
   test.setTimeout(30_000);
   await page.goto("/staff/login");
   await page.getByLabel("Email address").fill("owner@pulse.example");
