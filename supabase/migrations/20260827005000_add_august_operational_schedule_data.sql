@@ -33,7 +33,14 @@ insert into public.class_sessions (
   class_session_id, class_type, starts_at, ends_at, capacity, is_cancelled, instructor_staff_id
 )
 select class_session_id, class_type, starts_at, ends_at, capacity, false, instructor_staff_id
-from synthetic_sessions
+from synthetic_sessions as session
+where exists (
+  select 1
+  from public.staff_accounts as staff
+  where staff.staff_id = session.instructor_staff_id
+    and staff.role in ('owner_admin', 'instructor')
+    and staff.account_status = 'active'
+)
 on conflict (class_session_id) do nothing;
 
 with synthetic_sessions as (
