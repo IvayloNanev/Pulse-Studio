@@ -1,15 +1,18 @@
 import Link from "next/link";
 
+import { MemberStatusMessage } from "@/components/member-status-message";
 import { StaffRosterCheckIn } from "@/components/staff-roster-check-in";
 import { StaffRosterModal } from "@/components/staff-roster-modal";
+import { type ProductBSession, SessionOperationsCard } from "@/components/staff/session-operations-card";
 import { PortalShell } from "@/components/portal-shell";
 import { requireStaff } from "@/lib/auth";
 import { staffLinks } from "@/lib/staff-navigation";
 
 type Instructor = { staff_id: string; first_name: string; last_name: string };
-type Session = { class_session_id: string; class_type_label: string; starts_at: string; instructor_name: string; confirmed_reservations: number; waitlisted_reservations: number; capacity: number; marked_count: number; is_cancelled: boolean };
+type Session = ProductBSession;
 type CurrentStaff = Instructor & { role: string };
 type RosterMember = { reservation_id: string; member_name: string; reservation_status: "confirmed" | "waitlisted"; attendance_status: "attended" | "no_show" | null; can_record_attended: boolean; can_record_no_show: boolean };
+type Decision = { decision_id: string; class_session_id: string; action: string; note: string | null; state: "open" | "resolved"; created_at: string };
 
 const dayFormatter = new Intl.DateTimeFormat("en-CA", { timeZone: "America/New_York", year: "numeric", month: "2-digit", day: "2-digit" });
 const timeFormatter = new Intl.DateTimeFormat("en-US", { timeZone: "America/New_York", hour: "numeric", minute: "2-digit" });
@@ -46,19 +49,28 @@ export default async function StaffRostersPage({ searchParams }: { searchParams:
   const selectedDate = /^\d{4}-\d{2}-\d{2}$/.test(query.date ?? "") ? query.date! : today;
   const currentMonth = startOfMonth(new Date(`${selectedDate}T12:00:00Z`));
   const nextMonth = new Date(Date.UTC(currentMonth.getUTCFullYear(), currentMonth.getUTCMonth() + 1, 1));
-  const [currentStaffResult, instructorsResult, sessionsResult] = await Promise.all([
+  const [currentStaffResult, instructorsResult, sessionsResult, decisionResult] = await Promise.all([
     supabase.from("staff_accounts").select("staff_id,first_name,last_name,role").eq("staff_id", staffId).maybeSingle(),
     supabase.from("staff_accounts").select("staff_id,first_name,last_name").eq("account_status", "active").eq("role", "instructor").not("first_name", "ilike", "EOD%").not("first_name", "ilike", "Reymundo%").order("last_name", { ascending: true }),
-    supabase.from("staff_product_b_sessions").select("class_session_id,class_type_label,starts_at,instructor_name,confirmed_reservations,waitlisted_reservations,capacity,marked_count,is_cancelled").gte("starts_at", currentMonth.toISOString()).lt("starts_at", nextMonth.toISOString()).order("starts_at", { ascending: true }),
+    supabase.from("staff_product_b_sessions").select("class_session_id,class_type,class_type_label,starts_at,ends_at,instructor_name,confirmed_reservations,waitlisted_reservations,capacity,available_spots,attended_count,no_show_count,marked_count,is_cancelled").gte("starts_at", currentMonth.toISOString()).lt("starts_at", nextMonth.toISOString()).order("starts_at", { ascending: true }),
+    supabase.from("product_b_underbooking_decisions").select("decision_id,class_session_id,action,note,state,created_at").order("created_at", { ascending: false }),
   ]);
   const currentStaff = currentStaffResult.data as CurrentStaff | null;
-  const instructors = (instructorsResult.data ?? []) as Instructor[];
+  const instructors = Array.isArray(instructorsResult.data) ? instructorsResult.data as Instructor[] : [];
   const isOwner = currentStaff?.role === "owner_admin";
   const requestedInstructorId = isOwner ? (query.instructor ?? "all") : staffId;
   const viewingAll = isOwner && requestedInstructorId === "all";
   const selectedInstructor = instructors.find((instructor) => instructor.staff_id === requestedInstructorId) ?? (viewingAll ? undefined : instructors.find((instructor) => instructor.staff_id === staffId));
   const instructorName = selectedInstructor ? `${selectedInstructor.first_name} ${selectedInstructor.last_name}` : "";
-  const operationalSessions = ((sessionsResult.data ?? []) as Session[]).filter((session) => !session.instructor_name.startsWith("EOD ") && session.instructor_name !== "Reymundo Bermejo");
+  const operationalSessions = (Array.isArray(sessionsResult.data) ? sessionsResult.data as Session[] : []).filter((session) => !session.instructor_name.startsWith("EOD ") && session.instructor_name !== "Reymundo Bermejo");
+  const decisions = Array.isArray(decisionResult.data) ? decisionResult.data as Decision[] : [];
+  const openDecisionBySession = new Map<string, Decision>();
+  const resolvedDecisionsBySession = new Map<string, Decision[]>();
+  for (const decision of decisions) {
+    if (decision.state === "open") openDecisionBySession.set(decision.class_session_id, decision);
+    else resolvedDecisionsBySession.set(decision.class_session_id, [...(resolvedDecisionsBySession.get(decision.class_session_id) ?? []), decision]);
+  }
+  const capacityAttention = operationalSessions.filter((session) => !session.is_cancelled && session.capacity > 0 && session.confirmed_reservations / session.capacity < 0.7);
   const scopedSessions = viewingAll ? operationalSessions : operationalSessions.filter((session) => session.instructor_name === instructorName);
   const sessions = scopedSessions.filter((session) => !session.is_cancelled);
   const todaySessions = sessions.filter((session) => dayFormatter.format(new Date(session.starts_at)) === selectedDate);
@@ -85,6 +97,9 @@ export default async function StaffRostersPage({ searchParams }: { searchParams:
   const nextMonthDate = new Date(Date.UTC(currentMonth.getUTCFullYear(), currentMonth.getUTCMonth() + 1, 1)).toISOString().slice(0, 10);
 
   return <PortalShell audience="staff" eyebrow="Staff portal · Operations" title="Schedule & attendance" description="Start with the monthly calendar, then open a day to take attendance." links={staffLinks}>
+<MemberStatusMessage success={query.success} error={query.error} />
+<h2 className="sr-only">Class rosters</h2>
+{capacityAttention.length ? <section aria-label="Needs attention" className="mb-8"><div className="mb-4"><p className="font-mono text-xs font-semibold uppercase tracking-[0.16em] text-[#8e211c]">Capacity decisions</p><h2 className="mt-2 text-2xl font-semibold">Class rosters</h2><p className="mt-1 text-sm text-black/65">Review underfilled classes before the schedule is finalized.</p></div><div className="space-y-4">{capacityAttention.map((session) => <SessionOperationsCard key={session.class_session_id} session={session} openDecision={openDecisionBySession.get(session.class_session_id)} resolvedDecisions={resolvedDecisionsBySession.get(session.class_session_id) ?? []} canManageDecisions={isOwner} />)}</div></section> : null}
 <section className="rounded-3xl bg-[#171717] p-6 text-white shadow-[0_1.5rem_4rem_rgba(17,17,17,0.18)] sm:p-8"><p className="font-mono text-xs font-semibold uppercase tracking-[0.16em] text-[#ff776f]">Schedule view</p><h2 className="route-title mt-4 text-4xl">{isOwner ? "View the studio schedule" : "View your teaching schedule"}</h2><form className={`mt-8 grid gap-4 sm:grid-cols-2 ${isOwner ? "lg:grid-cols-3" : "lg:grid-cols-2"}`} action="/staff/rosters">{isOwner ? <label className="grid gap-2 text-sm font-semibold">Instructor<select name="instructor" defaultValue={viewingAll ? "all" : selectedInstructor?.staff_id ?? "all"} className="h-11 min-h-11 sm:h-[38px] sm:min-h-[38px] w-full rounded-xl border border-white/20 bg-white px-4 py-2 font-normal text-black outline-none"><option value="all">All instructors</option>{instructors.map((instructor) => <option key={instructor.staff_id} value={instructor.staff_id}>{instructor.first_name} {instructor.last_name}</option>)}</select></label> : <input type="hidden" name="instructor" value={staffId} />}<label className="grid gap-2 text-sm font-semibold">Day<input type="date" name="date" defaultValue={selectedDate} className="h-11 min-h-11 sm:h-[38px] sm:min-h-[38px] w-full rounded-xl border border-white/20 bg-white px-4 py-2 font-normal text-black outline-none [&::-webkit-date-and-time-value]:p-0 [&::-webkit-date-and-time-value]:text-left" /></label><div className="grid gap-2"><span className="text-sm font-semibold opacity-0" aria-hidden="true">Action</span><button type="submit" className="h-11 min-h-11 sm:h-[38px] sm:min-h-[38px] w-full rounded-xl bg-[#ff776f] px-6 text-sm font-semibold text-black">Update schedule</button></div></form></section>
 
     {!selectedInstructor && !viewingAll ? <section className="mt-8 rounded-3xl border border-black/10 bg-white/60 p-7"><h2 className="text-2xl font-semibold">No active instructors yet</h2><p className="mt-2 text-sm text-black/65">Add an instructor before scheduling classes or taking attendance.</p></section> : <>
